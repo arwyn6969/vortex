@@ -1,0 +1,51 @@
+// Cursor rules for Vortex project
+{
+    "defaultLinter": "pylint",
+    "formatOnSave": true,
+    "pythonPath": "python3",
+    "exclude": [
+        "**/__pycache__/**",
+        "**/.git/**",
+        "**/venv/**",
+        "**/dist/**",
+        "**/build/**"
+    ],
+    "search": {
+        "exclude": [
+            "**/__pycache__/**",
+            "**/.git/**",
+            "**/venv/**"
+        ]
+    },
+    "python": {
+        "analysis": {
+            "typeCheckingMode": "strict",
+            "diagnosticMode": "workspace",
+            "inlayHints": {
+                "functionReturnTypes": true,
+                "variableTypes": true,
+                "parameterTypes": true
+            },
+            "autoImportCompletions": true
+        },
+        "formatting": {
+            "provider": "black",
+            "blackPath": "black",
+            "blackArgs": ["--line-length", "88"]
+        },
+        "linting": {
+            "pylintEnabled": true,
+            "mypyEnabled": true,
+            "flake8Enabled": true,
+            "banditEnabled": true
+        }
+    },
+    "editor": {
+        "formatOnSave": true,
+        "formatOnPaste": true,
+        "rulers": [88],
+        "wordWrap": "on",
+        "tabSize": 4,
+        "insertSpaces": true
+    }
+} 

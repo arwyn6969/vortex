@@ -1,0 +1,87 @@
+{
+    "sefirot": {
+        "keter": {
+            "name": "Keter",
+            "title": "Crown",
+            "vice": "Pride",
+            "egyptian": {
+                "primary": "Atum/Ra",
+                "description": "Supreme creator god; dawn of divine authority",
+                "ogdoad": {
+                    "deity": "Amun",
+                    "partner": "Amaunet",
+                    "aspect": "The hidden one",
+                    "correspondence": "Transcendent, ineffable aspect"
+                }
+            },
+            "greek": "Uranus",
+            "roman": "Jupiter",
+            "planet": "Sun",
+            "alt_planet": "Neptune",
+            "constellation": "Corona Borealis",
+            "tarot": "The World",
+            "tarot_number": "XXI",
+            "color": ["White", "Gold"]
+        },
+        "chokhmah": {
+            "name": "Chokhmah",
+            "title": "Wisdom",
+            "vice": "Lust (Misguided)",
+            "egyptian": {
+                "primary": "Thoth",
+                "description": "God of wisdom, writing, & knowledge",
+                "ogdoad": {
+                    "deity": "Nun",
+                    "partner": "Naunet",
+                    "aspect": "Primordial waters",
+                    "correspondence": "Potential for all"
+                }
+            },
+            "greek": "Apollo",
+            "roman": "Mercury",
+            "planet": ["Uranus", "Mercury"],
+            "constellation": "Gemini",
+            "tarot": "The Magician",
+            "tarot_number": "I",
+            "color": ["Yellow"]
+        }
+    },
+    "ogdoad_pairs": {
+        "hiddenness": {
+            "male": "Amun",
+            "female": "Amaunet",
+            "domain": "Hiddenness, air, potential",
+            "sefirot_alignments": ["Keter", "Yesod"]
+        },
+        "waters": {
+            "male": "Nun",
+            "female": "Naunet",
+            "domain": "Primordial waters of creation",
+            "sefirot_alignments": ["Chokhmah", "Tiferet", "Malkhut"]
+        },
+        "infinity": {
+            "male": "Huh",
+            "female": "Hauhet",
+            "domain": "Infinity/Boundlessness",
+            "sefirot_alignments": ["Binah"]
+        },
+        "darkness": {
+            "male": "Kuk",
+            "female": "Kauket",
+            "domain": "Darkness, chaos",
+            "sefirot_alignments": ["Gevurah", "Hod"]
+        }
+    },
+    "metadata": {
+        "version": "1.0",
+        "description": "Archetypal mappings for the Vortex of Enlightenment game",
+        "sources": [
+            "Ancient Egyptian Ogdoad",
+            "Kabbalistic Sefirot",
+            "Greek Mythology",
+            "Roman Mythology",
+            "Astrological Correspondences",
+            "Tarot Symbolism"
+        ]
+    }
+} 
