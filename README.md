@@ -1,18 +1,26 @@
 # VORTEX
 
-VORTEX is an advanced AI system designed to handle complex data management, HR operations, and behavioral validation tasks. It incorporates sophisticated memory systems and worker visibility management.
+VORTEX is a mystical journey through interconnected spiritual realms, combining ancient wisdom with modern gameplay mechanics. Players explore sacred spaces, solve challenges, and progress through symbolic pathways while collecting tokens and achievements.
 
 ## Core Features
 
-- **AI Behavior Validation**: Advanced validation systems for AI behavior monitoring
-- **Experience Memory**: Sophisticated memory management for AI learning
-- **HR Department Management**: 
-  - Worker visibility tracking
-  - Department structure management
-- **Data Management**:
-  - User data handling
-  - Statistical auditing
-  - Data validation
+- **Mystical Framework**:
+  - Pond system with unique elemental alignments
+  - Sacred streams connecting different realms
+  - Integration of multiple spiritual traditions
+  - Symbolic progression pathways
+
+- **Gameplay Systems**:
+  - Profile-based challenge adaptation
+  - Token-based advancement
+  - Achievement tracking
+  - Dynamic difficulty scaling
+
+- **Spiritual Integration**:
+  - Sefirot path navigation
+  - Multiple cultural traditions (Egyptian, Dogon, Mayan)
+  - Sacred geometry patterns
+  - Symbolic interpretation challenges
 
 ## Project Structure
 
@@ -20,11 +28,11 @@ VORTEX is an advanced AI system designed to handle complex data management, HR o
 vortex/
 ├── src/
 │   └── core/
-│       ├── validation/
+│       ├── adaptive_game/
+│       ├── mythology/
 │       ├── persistence/
-│       ├── memory/
-│       ├── hr_department/
-│       └── data_management/
+│       ├── profiling/
+│       └── challenges/
 ├── docs/
 │   ├── core/
 │   ├── guides/

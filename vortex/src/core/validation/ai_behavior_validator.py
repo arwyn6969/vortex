@@ -16,7 +16,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.util import ngrams
 
 from ..communication.message_system import Message
-from ..user_profiling.profile_matrix import BehavioralMatrix
+from ..user_profiling.profile_matrix import BehavioralProfile
 
 @dataclass
 class ValidationResult:
@@ -409,7 +409,7 @@ class AIBehaviorValidator:
         self,
         message: Message,
         context: Dict,
-        behavioral_matrix: BehavioralMatrix
+        behavioral_matrix: BehavioralProfile
     ) -> ValidationResult:
         """Validate an AI response against multiple criteria."""
         
@@ -482,7 +482,7 @@ class AIBehaviorValidator:
     async def _check_emotional_intelligence(
         self,
         message: Message,
-        behavioral_matrix: BehavioralMatrix
+        behavioral_matrix: BehavioralProfile
     ) -> Dict:
         """Check for emotional intelligence in responses."""
         content = message.content.lower()
