@@ -1,157 +1,192 @@
-# Vortex of Enlightenment
+# Image Generator AI Application
 
-A mystical terminal-based journey through interconnected realms of wisdom, combining ancient mythological systems with modern behavioral psychology. Experience personal growth through an adaptive system that evolves with your journey.
+A local image generator AI application that allows users to upload images, train a centralized StyleGAN2 model, and generate new images with the learned styles. Generated images are automatically stored in IPFS using Pinata for decentralized access.
 
-[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+## Features
 
-## 🌟 Key Features
+- **Image Upload**: Upload training images in common formats (PNG, JPG, JPEG)
+- **Model Training**: Train a StyleGAN2 model on uploaded images
+- **Image Generation**: Generate new images based on text prompts
+- **IPFS Storage**: Automatic storage of generated images on IPFS via Pinata
+- **REST API**: Simple HTTP endpoints for all functionality
 
-- **Adaptive Learning System**: Personalized journey based on real-time behavioral profiling
-- **Mythological Integration**: Seamless blend of Kabbalistic Sefirot, Egyptian Ogdoad, Dogon, and Mayan wisdom
-- **Dynamic Content**: Challenges and teachings that evolve with your progress
-- **Sacred Geometry**: Hexagonal arrangement of ponds with golden ratio proportions
-- **Intelligent Guides**: Adaptive personality system providing contextual wisdom
-- **Terminal-Based Interface**: Clean, focused, and immersive text experience
-- **Bitcoin Token Integration**: Special multipliers from STAMPS and SRC-20 tokens enhance your journey
+## Prerequisites
 
-## 🚀 Quick Start
+- Python 3.x
+- CUDA-capable GPU (recommended for training)
+- Pinata API credentials
 
-### Prerequisites
-- Python 3.8 or higher
-- pip package manager
-- Terminal with Unicode support
+## Installation
 
-### Installation
-
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/vortex.git
-cd vortex
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start your journey
-python -m vortex start
+git clone <repository-url>
+cd <repository-name>
 ```
 
-## 🌊 The Six Mystical Ponds
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-Each pond represents a unique aspect of wisdom and growth:
+3. Create a `.env` file in the project root with your Pinata credentials:
+```env
+PINATA_API_KEY=your_api_key
+PINATA_API_SECRET=your_api_secret
+PINATA_JWT=your_jwt_token
+```
 
-### Pond of Wisdom
-- **Element**: Air
-- **Color**: Gold
-- **Focus**: Strategic clarity and decisive action
-- **Challenges**: Riddles, strategic games, ethical dilemmas
+## Usage
 
-### Pond of Kindness
-- **Element**: Water
-- **Color**: Blue
-- **Focus**: Compassion and empathetic understanding
-- **Challenges**: Helping scenarios, ethical choices
+### Starting the Server
 
-### Pond of Expression
-- **Element**: Fire
-- **Color**: Red
-- **Focus**: Creative force and emotional truth
-- **Challenges**: Artistic creation, storytelling
+Run the application using:
+```bash
+python -m vortex.src.image_generator
+```
 
-### Pond of Boundaries
-- **Element**: Earth
-- **Color**: Green
-- **Focus**: Protection and balanced limits
-- **Challenges**: Boundary setting, resource management
+Optional command-line arguments:
+- `--host`: Server host (default: 127.0.0.1)
+- `--port`: Server port (default: 5000)
+- `--debug`: Enable debug mode
 
-### Pond of Understanding
-- **Element**: Spirit
-- **Color**: Purple
-- **Focus**: Deep comprehension and wisdom
-- **Challenges**: Teaching, pattern recognition
+### API Endpoints
 
-### Pond of Harmony
-- **Element**: Void
-- **Color**: White
-- **Focus**: Integration and balance
-- **Challenges**: Synthesis tasks, balancing exercises
+#### 1. Upload Images
+Upload images for training the model.
 
-## 🛠 Core Systems
+```bash
+curl -X POST -F "file=@/path/to/image.jpg" http://127.0.0.1:5000/upload
+```
 
-### Behavioral Profiling
-- Enhanced Voight-Kampff questionnaire
-- Multi-dimensional behavioral tracking
-- Real-time profile adaptation
+Response:
+```json
+{
+    "message": "File uploaded successfully",
+    "filename": "image.jpg"
+}
+```
 
-### Mythological Framework
-- Cross-cultural symbolic synthesis
-- Integrated wisdom traditions
-- Dynamic archetype system
+#### 2. Train Model
+Train the model on uploaded images.
 
-### Energy Flow System
-- Inter-pond energy streams
-- Resonance patterns
-- Challenge availability based on system harmony
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"epochs": 1}' http://127.0.0.1:5000/train
+```
 
-### Bitcoin Token System
-- Integration with STAMPS and SRC-20 tokens
-- Special multipliers from token ownership
-- Stackable bonuses up to 4.05x
-- Real-time balance checking and verification
-- Enhanced rewards for token holders
-- Message signing for secure ownership verification
-- Support for multiple Bitcoin address formats
-- Command-line tools for signing and verification
+Response:
+```json
+{
+    "message": "Training completed",
+    "loss": 0.1234
+}
+```
 
-## 📚 Documentation
+#### 3. Generate Images
+Generate new images based on text prompts.
 
-### Essential Guides
-- [Getting Started Guide](docs/guides/getting_started.md)
-- [User Manual](docs/guides/user_manual.md)
-- [Technical Architecture](docs/technical/architecture.md)
-- [Message Signing Guide](docs/technical/message_signing.md)
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"prompt": "A beautiful landscape"}' http://127.0.0.1:5000/generate
+```
 
-### Reference
-- [Pond System](docs/technical/ponds.md)
-- [Mythology Guide](docs/reference/mythology.md)
-- [Glossary](docs/reference/glossary.md)
+Response:
+```json
+{
+    "message": "Image generated successfully",
+    "ipfs_hash": "QmXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx",
+    "ipfs_url": "https://gateway.pinata.cloud/ipfs/QmXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXxXx"
+}
+```
 
-### Development
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [Development Setup](docs/guides/development.md)
-- [API Reference](docs/reference/api.md)
+## Technical Details
 
-## 🤝 Contributing
+### Model Architecture
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
-- Code of Conduct
-- Development process
-- Pull request procedure
-- Community guidelines
+The application uses StyleGAN2 with the following components:
 
-## 🔧 Troubleshooting
+1. **Generator**:
+   - Mapping network for style transformation
+   - Initial convolutional block
+   - Progressive upsampling layers
+   - Output layer generating RGB images
 
-Common issues and solutions:
-1. **Unicode Display Issues**: Ensure your terminal supports Unicode
-2. **Profile Sync Problems**: Use `vortex sync` to force profile synchronization
-3. **Connection Issues**: Check network connectivity for shared features
+2. **Discriminator**:
+   - Progressive downsampling layers
+   - Binary classification output
 
-## 📜 License
+### Training Process
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- Images are resized to 256x256 pixels
+- Normalized to range [-1, 1]
+- Trained using adversarial loss
+- Adam optimizer with learning rate 0.0002
+- Batch size of 32 (configurable)
 
-## 🌟 Acknowledgments
+### Storage
 
-- Ancient wisdom traditions that inspired this project
-- Our amazing community of contributors
-- Open source projects that made this possible
+- Uploaded images stored locally in `uploads/` directory
+- Generated images stored locally in `generated/` directory
+- Generated images automatically uploaded to IPFS via Pinata
+- IPFS hashes and URLs returned for permanent access
 
----
+## Directory Structure
 
-<div align="center">
-  <i>Begin your journey of enlightenment today</i>
-</div>
+```
+vortex/
+├── src/
+│   └── image_generator/
+│       ├── __init__.py
+│       ├── __main__.py
+│       ├── app.py
+│       ├── model.py
+│       └── storage.py
+├── uploads/
+├── generated/
+├── .env
+└── requirements.txt
+```
+
+## Security Considerations
+
+- File upload size limited to 16MB
+- Allowed file extensions: .png, .jpg, .jpeg
+- Environment variables for sensitive credentials
+- Input validation on all endpoints
+- Secure filename handling
+
+## Limitations
+
+- Currently generates random images without text conditioning
+- Training requires significant computational resources
+- Image size fixed at 256x256 pixels
+- No model persistence between restarts
+
+## Future Improvements
+
+1. Implement text-to-image conditioning
+2. Add model checkpointing and loading
+3. Support for larger image sizes
+4. Progressive growing during training
+5. Web interface for easier interaction
+6. Multi-GPU training support
+7. Style mixing capabilities
+8. Image interpolation features
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## License
+
+[MIT License](LICENSE)
+
+## Acknowledgments
+
+- StyleGAN2 paper and implementation
+- Pinata IPFS service
+- Flask web framework
+- PyTorch deep learning framework
