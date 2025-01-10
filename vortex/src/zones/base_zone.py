@@ -7,6 +7,7 @@ from ..guides.base_guide import Guide
 from .stream_manager import StreamManager
 from ..core.user_profiling.profile_matrix import ProfileDimension
 from ..core.user_profiling.personalization import ContentItem
+from ..core.user_profiling.adaptive_learning import AdaptiveLearningPath, LearningPathNode
 
 class Zone(ABC):
     _stream_manager = StreamManager()  # Shared instance for all zones
@@ -21,6 +22,84 @@ class Zone(ABC):
         self.min_dimension_values: Dict[ProfileDimension, float] = {}
         self.current_state: Dict[str, Any] = {}
         self.active_players: List[Any] = []
+        self.learning_path: Optional[AdaptiveLearningPath] = None
+        
+    def initialize_learning_path(
+        self,
+        profile_matrix,
+        personalization_engine
+    ) -> None:
+        """Initialize the adaptive learning path system for this zone."""
+        self.learning_path = AdaptiveLearningPath(
+            profile_matrix,
+            personalization_engine
+        )
+        self._setup_learning_nodes()
+        
+    @abstractmethod
+    def _setup_learning_nodes(self) -> None:
+        """Set up the learning nodes specific to this zone.
+        
+        Override this in specific zone classes to define the zone's
+        learning path structure.
+        """
+        pass
+        
+    def get_next_challenges(self, user_id: str) -> List[ContentItem]:
+        """Get next appropriate challenges based on learning path."""
+        if not self.learning_path:
+            return self.get_available_challenges(
+                self.current_state.get('last_player').profile
+            )
+            
+        current_node = self.current_state.get('current_node')
+        next_nodes = self.learning_path.get_next_nodes(
+            user_id,
+            current_node.node_id if current_node else None
+        )
+        
+        return [node.content for node in next_nodes]
+        
+    def complete_challenge(
+        self,
+        user_id: str,
+        challenge_id: str,
+        performance_score: float
+    ) -> None:
+        """Mark a challenge as completed and update learning path."""
+        if self.learning_path:
+            self.learning_path.mark_node_completed(
+                user_id,
+                challenge_id,
+                performance_score
+            )
+            
+        # Update current node in state
+        next_nodes = self.learning_path.get_next_nodes(user_id, challenge_id)
+        if next_nodes:
+            self.current_state['current_node'] = next_nodes[0]
+            
+    def get_learning_path_progress(self, user_id: str) -> float:
+        """Get user's progress through the zone's learning path."""
+        if not self.learning_path:
+            return self.calculate_mastery_progress(
+                self.current_state.get('last_player').profile
+            )
+            
+        completed = len(self.learning_path.user_progress.get(user_id, []))
+        total = len(self.learning_path.learning_nodes)
+        return completed / total if total > 0 else 0.0
+        
+    def suggest_next_steps(self, user_id: str) -> List[str]:
+        """Get personalized suggestions for next steps."""
+        if not self.learning_path:
+            return []
+            
+        recommended_path = self.learning_path.get_recommended_path(user_id)
+        return [
+            f"Challenge: {node.content.content_id} - {node.content.content}"
+            for node in recommended_path
+        ]
         
     def enter(self, player) -> None:
         """Called when a player enters this zone.

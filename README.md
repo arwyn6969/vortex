@@ -1,68 +1,128 @@
 # Vortex of Enlightenment
 
-A mystical text-based journey through interconnected zones of wisdom, combining Kabbalistic Sefirot and Egyptian Ogdoad mythologies.
+A mystical text-based journey through interconnected zones of wisdom, combining Kabbalistic Sefirot, Egyptian Ogdoad, Dogon, and Mayan mythologies, powered by advanced behavioral profiling.
 
 ## Overview
 
-Vortex of Enlightenment is an immersive terminal-based game that features:
-- Dynamic behavioral profiling through the Voight-Kampff inspired questionnaire
-- Interconnected zones (`Ponds`) linked by mystical pathways (`Streams`)
-- AI-driven `Guides` that adapt to player interactions
-- Rich mythological framework combining Sefirot and Ogdoad elements
+Vortex of Enlightenment is an immersive terminal-based experience featuring:
+- Advanced behavioral profiling through the enhanced Voight-Kampff questionnaire
+- Dynamic pond system with real-time content adaptation
+- Cross-cultural mythological framework integrating multiple traditions
+- Intelligent guide system with adaptive personalities
+- Sophisticated virtue/vice progression mechanics
 
-## Installation
+## The Ponds
 
-1. Requirements:
-   - Python 3.8+
-   - Terminal with Unicode support
-   - Virtual environment (recommended)
+### Wisdom Pond (Chokhmah)
+- Guide: Wise Pepe, the Sage
+- Element: Air/Spirit
+- Focus: Strategic thinking and cosmic understanding
+- Features: Interdimensional puzzles and wisdom teachings
 
-2. Setup:
+### Kindness Pond (Chesed)
+- Guide: Cozy Pepe, the Nurturer
+- Element: Water
+- Focus: Empathy and emotional intelligence
+- Features: Ethical scenarios and compassion challenges
+
+### Expression Pond (Tiferet)
+- Guide: Artist Pepe, the Creator
+- Element: Fire/Air
+- Focus: Creative synthesis and self-expression
+- Features: Artistic challenges and symbolic creation
+
+### Severity Pond (Gevurah)
+- Guide: Giga Pepe, the Warrior
+- Element: Fire
+- Focus: Discipline and boundary-setting
+- Features: Will-testing trials and strength challenges
+
+### Understanding Pond (Binah)
+- Guide: Monk Pepe, the Observer
+- Element: Water/Spirit
+- Focus: Deep comprehension and pattern recognition
+- Features: Philosophical riddles and integration exercises
+
+### Harmony Pond (Yesod)
+- Guide: Ascended Pepe, the Synthesizer
+- Element: All Elements
+- Focus: Balance and transcendence
+- Features: Cross-cultural synthesis and ultimate integration
+
+## Core Systems
+
+### Behavioral Profiling
+- Advanced Voight-Kampff questionnaire
+- Real-time profile adaptation
+- Multi-dimensional behavioral tracking
+- Dynamic content scaling
+
+### Mythological Framework
+- Sefirot-Ogdoad correspondence system
+- Dogon cosmological integration
+- Mayan calendar mechanics
+- Cross-cultural symbolic synthesis
+
+### Guide System
+- Adaptive personality matrices
+- Cultural archetype integration
+- Dynamic teaching methods
+- Personalized challenge creation
+
+### Progression Mechanics
+- Virtue/Vice balance system
+- Token-based advancement
+- Stream unlocking mechanics
+- Cross-cultural achievement tracking
+
+## Getting Started
+
+1. Install dependencies:
 ```bash
-# Create and activate virtual environment (recommended)
-python -m venv venv
-source venv/bin/activate  # On Unix/macOS
-# or
-.\venv\Scripts\activate  # On Windows
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-## Quick Start
-
-1. Launch the game:
+2. Begin your journey:
 ```bash
-python vortex/main.py
+python main.py
 ```
-
-2. Complete the initial questionnaire to determine your starting `Pond`
-3. Interact with your `Guide` to begin your journey
-4. Collect `Tokens` to unlock new `Streams` and progress through the zones
-
-## Core Components
-
-### Zones System
-- `Ponds`: Primary locations representing Sefirot spheres
-- `Streams`: Mystical pathways connecting different Ponds
-- `Guides`: AI personalities providing guidance and challenges
-- `Tokens`: Rewards for completing zone challenges
-
-### Mythological Framework
-- Integration of Kabbalistic Sefirot
-- Egyptian Ogdoad primordial forces
-- Cross-cultural mythological references
-- Deep symbolic connections
 
 ## Documentation
 
-- [Style Guide](docs/style_guide.md) - Documentation standards and terminology
+### Getting Started
+- [Getting Started Guide](docs/getting_started.md) - Complete beginner's guide
+- [FAQ](docs/faq.md) - Frequently asked questions
 - [Project Structure](docs/project_structure.md) - Codebase organization
-- [Development Plan](docs/plan.md) - Implementation roadmap
+
+### Tutorials
+- [Mythology Guide](docs/tutorials/mythology_guide.md) - Understanding the mythological framework
+- [Mechanics Guide](docs/mechanics.md) - Detailed gameplay systems
+- [Integration Guide](docs/integration.md) - System integration details
+
+### Reference
+- [Mythology References](docs/mythology/) - Cultural framework details
+  - [Sefirot System](docs/mythology/sefirot.md)
+  - [Dogon Cosmology](docs/mythology/dogon.md)
+  - [Mayan Calendar](docs/mythology/mayan.md)
+  - [Egyptian Ogdoad](docs/mythology/ogdoad.md)
+
+### Community
+- [Contributing Guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Discord Community](https://discord.gg/vortex)
+
+## Development Status
+
+Current Phase: Polish & Integration
+- Core systems implemented
+- Mythology framework complete
+- Guide system operational
+- Integration testing in progress
+- Documentation updates ongoing
 
 ## Contributing
 
-1. Review the [Style Guide](docs/style_guide.md)
+1. Review the documentation in `docs/`
 2. Fork the repository
 3. Create a feature branch
 4. Submit a pull request

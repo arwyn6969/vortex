@@ -1,4 +1,3 @@
-// Cursor rules for Vortex project
 {
     "defaultLinter": "pylint",
     "formatOnSave": true,

@@ -1,60 +1,199 @@
-# Player Onboarding Mechanics
+# Game Mechanics Overview
 
-## Overview
+## Core Systems
 
-The player onboarding process in "Vortex of Enlightenment" is designed to personalize the game experience by assigning players to a starting pond based on their responses to a Voight-Kampff inspired questionnaire. This process not only sets the tone for the game but also integrates gamification elements to enhance engagement and information gathering.
+### Behavioral Profiling
 
-## Objectives
+#### Profile Dimensions
+- Strategic Thinking
+- Emotional Intelligence
+- Creative Expression
+- Moral Alignment
+- Pattern Recognition
+- Spiritual Resonance
+- Cultural Sensitivity
+- Symbolic Understanding
 
-- Gather detailed information about the player's personality and preferences.
-- Use AI to analyze responses and determine the most suitable starting pond.
-- Incorporate gamification elements to make the onboarding process engaging and rewarding.
+#### Profile Generation
+- Advanced Voight-Kampff questionnaire
+- Real-time behavioral analysis
+- Multi-dimensional scoring
+- Cultural affinity detection
+- Symbolic resonance mapping
 
-## Components
+#### Profile Adaptation
+- Dynamic response tracking
+- Challenge performance analysis
+- Guide interaction patterns
+- Cultural engagement metrics
+- Symbolic comprehension levels
 
-### 1. Questionnaire Design
-- **Question Types**: Include questions that assess empathy, decision-making, creativity, and moral alignment.
-- **Response Options**: Provide multiple-choice answers that reflect different personality traits.
-- **Dimension Impacts**: Each question should impact specific behavioral dimensions, such as empathy or strategic thinking.
-- **Gamification Elements**: Introduce rewards for completing the questionnaire, such as bonus tokens or unique starting items.
+### Pond System
 
-### 2. AI-Driven Analysis
-- **Profile Matrix**: Utilize the `ProfileMatrix` class to maintain and update user profiles based on questionnaire responses.
-- **Dimension Scoring**: Calculate scores for each dimension using weighted impacts from the questionnaire.
-- **Human/Bot Differentiation**: Implement logic to differentiate between human and bot users based on response patterns.
+#### Dynamic Content
+- Profile-based challenge scaling
+- Real-time difficulty adjustment
+- Cultural context adaptation
+- Symbolic depth calibration
+- Guide interaction customization
 
-### 3. Initial Pond Assignment
-- **Pond Mapping**: Map each pond to specific behavioral dimensions (e.g., Pond of Wisdom for strategic thinkers).
-- **Assignment Logic**: Use AI to match players to ponds based on their highest scoring dimensions.
-- **Dynamic Adjustments**: Allow for adjustments based on player feedback or additional data.
+#### Progression Mechanics
+- Virtue/Vice balance tracking
+- Token-based advancement
+- Stream unlocking criteria
+- Cross-cultural achievements
+- Symbolic mastery levels
 
-### 4. Gamification and Feedback
-- **Progress Tracking**: Implement a system to track player progress through the questionnaire and provide feedback.
-- **Rewards System**: Offer in-game rewards for completing the onboarding process, such as exclusive items or abilities.
-- **Feedback Loop**: Continuously improve the onboarding process based on player interactions and feedback.
+#### Challenge Types
+- Philosophical riddles
+- Ethical scenarios
+- Creative expressions
+- Pattern recognition
+- Cultural synthesis
+- Symbolic interpretation
 
-## Implementation Steps
+### Guide System
 
-### Step 1: Develop Questionnaire
-- Create a set of questions and options in `questions.py`.
-- Define dimension impacts for each question.
+#### Personality Framework
+- Cultural archetype integration
+- Dynamic teaching methods
+- Adaptive dialogue patterns
+- Challenge customization
+- Progress assessment
 
-### Step 2: Integrate AI Analysis
-- Implement response analysis in `analyzer.py` to update profiles.
-- Use the `ProfileMatrix` to calculate dimension scores and determine human probability.
+#### Cultural Variants
+- Egyptian Neteru aspects
+- Mayan calendar alignments
+- Dogon cosmological elements
+- Kabbalistic Sefirot attributes
+- Cross-cultural synthesis
 
-### Step 3: Assign Starting Pond
-- Develop logic in `game.py` to assign players to ponds based on their profile.
-- Ensure the assignment is communicated clearly to the player.
+### Mythological Integration
 
-### Step 4: Implement Gamification
-- Design a rewards system that incentivizes players to engage with the onboarding process.
-- Track player progress and provide feedback to enhance the experience.
+#### Core Frameworks
+- Sefirot-Ogdoad mapping
+- Dogon cosmological system
+- Mayan calendar mechanics
+- Cross-cultural correspondences
 
-## Future Enhancements
-- **Adaptive Questioning**: Introduce adaptive questioning based on initial responses to refine profiles.
-- **Advanced Personalization**: Explore deeper personalization options, such as adjusting game difficulty or narrative elements based on player profiles.
+#### Symbolic Mechanics
+- Sacred geometry patterns
+- Color symbolism
+- Numerical resonance
+- Elemental associations
+- Temporal cycles
 
-## Conclusion
+## Implementation Details
 
-By leveraging AI, thoughtful design, and gamification, the player onboarding process can provide a personalized and engaging start to the "Vortex of Enlightenment" game. This plan outlines the key components and steps needed to achieve this functionality, ensuring a seamless integration into the overall game experience. 
+### Profile Management
+```python
+class ProfileMatrix:
+    def __init__(self):
+        self.dimensions = {
+            'strategic': DimensionTracker(),
+            'emotional': DimensionTracker(),
+            'creative': DimensionTracker(),
+            'moral': DimensionTracker(),
+            'pattern': DimensionTracker(),
+            'spiritual': DimensionTracker(),
+            'cultural': DimensionTracker(),
+            'symbolic': DimensionTracker()
+        }
+        
+    def update_profile(self, interaction_data):
+        """Update profile based on latest interactions."""
+        for dim in self.dimensions.values():
+            dim.process_interaction(interaction_data)
+```
+
+### Content Adaptation
+```python
+class ContentManager:
+    def get_challenge(self, profile, pond_type):
+        """Get profile-appropriate challenge."""
+        difficulty = self.calculate_difficulty(profile)
+        cultural_context = self.get_cultural_context(profile)
+        return self.challenge_pool.get_matching(
+            difficulty=difficulty,
+            context=cultural_context,
+            pond_type=pond_type
+        )
+```
+
+### Guide Interaction
+```python
+class GuidePersonality:
+    def generate_response(self, player_input, context):
+        """Generate contextually appropriate response."""
+        cultural_frame = self.get_cultural_frame(context)
+        teaching_style = self.adapt_style(context.profile)
+        return self.dialogue_engine.generate(
+            input=player_input,
+            frame=cultural_frame,
+            style=teaching_style
+        )
+```
+
+## User Experience Flow
+
+### Initial Engagement
+1. Voight-Kampff questionnaire
+2. Cultural affinity assessment
+3. Starting pond assignment
+4. Guide personality matching
+
+### Progression Path
+1. Challenge completion
+2. Profile updates
+3. Content adaptation
+4. Guide interaction adjustment
+5. Stream unlocking
+6. Cross-cultural synthesis
+
+### Mastery Achievement
+1. Dimensional balance
+2. Cultural integration
+3. Symbolic understanding
+4. Guide relationship development
+5. System synthesis
+
+## Technical Implementation
+
+### Profile Updates
+```python
+def update_profile(interaction_data):
+    """Process interaction data for profile updates."""
+    dimensions_affected = analyze_interaction(interaction_data)
+    for dim, value in dimensions_affected.items():
+        profile.update_dimension(dim, value)
+        adapt_content_difficulty(dim)
+        update_guide_behavior(dim)
+```
+
+### Challenge Generation
+```python
+def generate_challenge(profile, pond):
+    """Generate appropriate challenge."""
+    difficulty = calculate_difficulty(profile)
+    context = get_cultural_context(profile)
+    challenge = challenge_pool.get_matching(
+        difficulty=difficulty,
+        context=context,
+        pond_type=pond
+    )
+    return customize_challenge(challenge, profile)
+```
+
+### Guide Adaptation
+```python
+def adapt_guide(profile, context):
+    """Adapt guide behavior to player."""
+    teaching_style = determine_style(profile)
+    cultural_frame = select_cultural_frame(context)
+    personality = adapt_personality(profile)
+    return GuideConfig(
+        style=teaching_style,
+        frame=cultural_frame,
+        personality=personality
+    )
+``` 
