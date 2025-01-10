@@ -21,6 +21,9 @@ class VortexGUI:
         self.window.title("Vortex of Enlightenment")
         self.window.geometry("1200x800")
         
+        # Initialize thread lock for GUI updates
+        self._gui_lock = threading.Lock()
+        
         # Configure grid layout
         self.window.grid_columnconfigure(0, weight=1)
         self.window.grid_rowconfigure(1, weight=1)
@@ -134,19 +137,64 @@ class VortexGUI:
             "Progress": "0%"
         })
     
-    def _update_stats(self, stats_dict: Dict[str, str]):
+    def _update_stats(self, stats: Dict[str, str]):
         """Update the stats display with new values."""
-        for key, value in stats_dict.items():
-            if key not in self.stats:
-                label = ctk.CTkLabel(
-                    self.stats_frame,
-                    text=f"{key}: {value}",
-                    font=("Helvetica", 12)
-                )
-                label.pack(side="left", padx=10)
-                self.stats[key] = label
-            else:
-                self.stats[key].configure(text=f"{key}: {value}")
+        if not stats:
+            return
+        
+        def _update():
+            with self._gui_lock:
+                for key, value in stats.items():
+                    if key not in self.stats:
+                        # Create new stat label
+                        label = ctk.CTkLabel(
+                            self.stats_frame,
+                            text=f"{key}: {value}",
+                            font=("Helvetica", 12)
+                        )
+                        label.pack(side="left", padx=5)
+                        self.stats[key] = label
+                    else:
+                        # Update existing stat
+                        self.stats[key].configure(text=f"{key}: {value}")
+                
+                # Show stats frame if not already visible
+                if not self.stats_frame.winfo_ismapped():
+                    self.stats_frame.grid(row=4, column=0, sticky="ew", padx=10, pady=5)
+        
+        # Schedule update in main thread
+        self.window.after(0, _update)
+    
+    def _load_image(self, image_path: str, max_size: tuple = (800, 600)) -> Optional[ImageTk.PhotoImage]:
+        """
+        Load and scale an image for display.
+        
+        Args:
+            image_path: Path to the image file
+            max_size: Maximum dimensions (width, height) for the image
+            
+        Returns:
+            PhotoImage object or None if loading fails
+        """
+        try:
+            # Load image using PIL
+            image = Image.open(image_path)
+            
+            # Calculate scaling factor to fit max_size while maintaining aspect ratio
+            width_ratio = max_size[0] / image.size[0]
+            height_ratio = max_size[1] / image.size[1]
+            scale_factor = min(width_ratio, height_ratio)
+            
+            if scale_factor < 1:
+                new_size = tuple(int(dim * scale_factor) for dim in image.size)
+                image = image.resize(new_size, Image.Resampling.LANCZOS)
+            
+            # Convert to PhotoImage for Tkinter
+            return ImageTk.PhotoImage(image)
+            
+        except Exception as e:
+            print(f"Error loading image {image_path}: {e}")
+            return None
     
     def _handle_send(self):
         """Handle sending a message from the chat interface."""
@@ -175,21 +223,16 @@ class VortexGUI:
         label.pack(expand=True)
     
     def display_message(self, message: str, message_type: str = "system"):
-        """Display a message in the main display area."""
-        self.display_text.configure(state="normal")
-        timestamp = datetime.now().strftime("%H:%M")
+        """Display a message in the text area."""
+        def _update():
+            with self._gui_lock:
+                self.display_text.configure(state="normal")
+                self.display_text.insert("end", f"\n{message}")
+                self.display_text.configure(state="disabled")
+                self.display_text.see("end")
         
-        # Format based on message type
-        if message_type == "user":
-            prefix = f"[{timestamp}] You: "
-        elif message_type == "system":
-            prefix = f"[{timestamp}] System: "
-        else:
-            prefix = f"[{timestamp}] "
-        
-        self.display_text.insert("end", prefix + message + "\n")
-        self.display_text.configure(state="disabled")
-        self.display_text.see("end")
+        # Schedule update in main thread
+        self.window.after(0, _update)
     
     def set_message_callback(self, callback: Callable[[str], None]):
         """Set the callback for handling messages."""
@@ -200,9 +243,16 @@ class VortexGUI:
         self.button_callback = callback
     
     def update_quick_responses(self, responses: List[str]):
-        """Update the quick response buttons with new text."""
-        for button, text in zip(self.quick_buttons, responses):
-            button.configure(text=text)
+        """Update the quick response buttons with new options."""
+        def _update():
+            with self._gui_lock:
+                # Update only available buttons
+                for i, button in enumerate(self.quick_buttons):
+                    if i < len(responses):
+                        button.configure(text=responses[i])
+        
+        # Schedule update in main thread
+        self.window.after(0, _update)
     
     def start(self):
         """Start the GUI main loop."""
