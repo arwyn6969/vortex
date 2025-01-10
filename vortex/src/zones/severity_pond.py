@@ -7,15 +7,16 @@ from ..guides.base_guide import Guide
 from ..core.user_profiling.profile_matrix import ProfileDimension
 from ..core.user_profiling.personalization import ContentItem
 from ..mythology.sefirot import SefirotAttribute
+from ..core.user_profiling.adaptive_learning import LearningPathNode
 
-class SeverityPond(Zone):
-    """The Pond of Severity - A place of discipline, judgment, and necessary boundaries."""
+class GainsGrotto(Zone):
+    """The Gains Grotto - A place of discipline, judgment, and necessary boundaries."""
     
     def __init__(self):
         # Initialize with Sekhmet as the guide (Egyptian goddess of divine judgment)
         from ..guides.sekhmet import SekhmetGuide
         guide = SekhmetGuide()
-        super().__init__("Pond of Severity", guide)
+        super().__init__("Gains Grotto", guide)
         
         self.description = (
             "A deep crimson pool whose waters pulse with intense energy. Obsidian "
@@ -50,12 +51,55 @@ class SeverityPond(Zone):
             "color": "Red",
             "sefirot": SefirotAttribute.GEVURAH,
             "animal": "Lion",
-            "mineral": "Ruby"
+            "mineral": "Ruby",
+            "crypto_aspects": {
+                "bitcoin_elements": [
+                    "Proof of Work (Divine Judgment)",
+                    "Consensus Rules (Sacred Boundaries)",
+                    "Mining Difficulty (Trial by Fire)",
+                    "21M Cap (Divine Limitation)"
+                ],
+                "blockchain_wisdom": [
+                    "Code is Law (Digital Judgment)",
+                    "Don't Trust, Verify (Divine Discernment)",
+                    "Network Effect (Collective Strength)",
+                    "Digital Scarcity (Sacred Limits)"
+                ]
+            }
         }
         
     def setup_challenges(self) -> None:
         """Initialize the pond's challenge system."""
         self.challenges = {
+            "bitcoin_trial": {
+                "title": "The Blockchain's Trial",
+                "description": (
+                    "Face the challenges of Bitcoin's consensus mechanism. Each decision "
+                    "tests your understanding of digital sovereignty and sacred boundaries."
+                ),
+                "trials": [
+                    {
+                        "name": "Proof of Work Meditation",
+                        "description": "Channel computational energy to secure the network",
+                        "consequence": "Balance energy expenditure with network security"
+                    },
+                    {
+                        "name": "Consensus Formation",
+                        "description": "Participate in network-wide agreement",
+                        "consequence": "Navigate between individual and collective truth"
+                    },
+                    {
+                        "name": "Block Validation",
+                        "description": "Verify transactions without trust",
+                        "consequence": "Maintain network integrity through vigilance"
+                    }
+                ],
+                "difficulty": 0.7,
+                "rewards": {
+                    ProfileDimension.JUDGMENT: 0.3,
+                    ProfileDimension.DISCIPLINE: 0.2
+                }
+            },
             "boundary_test": {
                 "title": "The Lines of Power",
                 "description": (

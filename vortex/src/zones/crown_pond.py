@@ -37,11 +37,25 @@ class CrownPond(Zone):
         
         # Symbolic associations
         self.symbols = {
-            "element": "Pure Spirit",
-            "color": "Pure White",
+            "element": "Pure Light (Divine Radiance)",
+            "color": "Infinite White (Beyond Spectrum)",
             "sefirot": SefirotAttribute.KETER,
-            "animal": "Eagle",
-            "mineral": "Diamond"
+            "animal": "Celestial Serpent (Cosmic DNA)",
+            "mineral": "Philosopher's Stone (Ultimate Unity)",
+            "entheogenic_aspects": {
+                "dmt_realms": [
+                    "Hyperspace Geometry (Divine Architecture)",
+                    "Machine Elves (Cosmic Teachers)",
+                    "Fractal Entities (Living Mathematics)",
+                    "Time Dilation (Eternal Now)"
+                ],
+                "mystical_states": [
+                    "Ego Dissolution (Divine Unity)",
+                    "Universal Love (Cosmic Heart)",
+                    "Infinite Recursion (Sacred Patterns)",
+                    "Direct Gnosis (Immediate Knowing)"
+                ]
+            }
         }
         
     def _setup_learning_nodes(self) -> None:
@@ -186,3 +200,38 @@ class CrownPond(Zone):
                 "You have become one with the Crown's pure light. Your presence "
                 "here now illuminates the path for others."
             ) 
+
+    def setup_challenges(self) -> None:
+        """Initialize the pond's challenge system."""
+        self.challenges = {
+            "hyperspace_navigation": {
+                "title": "The Crystalline Hyperspace",
+                "description": (
+                    "Navigate the infinite geometries of divine consciousness. "
+                    "Witness the architecture of reality itself."
+                ),
+                "techniques": [
+                    {
+                        "name": "Geometric Vision",
+                        "description": "Perceive the mathematical beauty of existence",
+                        "mastery": "See through the veil of form"
+                    },
+                    {
+                        "name": "Entity Contact",
+                        "description": "Commune with teachers beyond space-time",
+                        "mastery": "Learn from cosmic intelligence"
+                    },
+                    {
+                        "name": "Pattern Recognition",
+                        "description": "Decode the fractal nature of reality",
+                        "mastery": "Understand infinite recursion"
+                    }
+                ],
+                "difficulty": 1.0,
+                "rewards": {
+                    ProfileDimension.PATTERN_RECOGNITION: 0.4,
+                    ProfileDimension.SPIRITUAL_AWARENESS: 0.4
+                }
+            },
+            # ... existing challenges ...
+        } 

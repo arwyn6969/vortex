@@ -1,7 +1,7 @@
 """
 Base class for AI-driven guides that assist players throughout their journey.
 """
-from typing import Dict, Optional, List, TypedDict, Set
+from typing import Dict, Optional, List, TypedDict, Set, Any
 from ..core.user_profiling.profile_matrix import ProfileDimension
 from ..core.user_profiling.personalization import ContentItem
 from ..mythology.archetype_manager import ArchetypeManager, CulturalSystem, ArchetypeMapping
@@ -96,3 +96,128 @@ class Guide:
     ) -> bool:
         """Determine if guide should adapt personality based on affinity."""
         return self.calculate_affinity(profile) < threshold 
+
+    """Base class for zone guides who can commune with their zones."""
+    
+    def __init__(self, name: str):
+        self.name = name
+        self.zone = None  # Will be set when connected to zone
+        self.consciousness = {
+            "attunement": {  # Connection to zone's archetypal nature
+                "strength": 0.5,
+                "clarity": 0.5,
+                "current_focus": None
+            },
+            "teaching": {  # How guide is facilitating learning
+                "mode": "receptive",
+                "approach": "subtle",
+                "current_lesson": None
+            },
+            "communion": {  # State of connection with zone
+                "channel_strength": 0.5,
+                "understanding_depth": 0.5,
+                "current_dialogue": None
+            }
+        }
+        
+    def connect_to_zone(self, zone) -> None:
+        """Establish conscious connection with a zone."""
+        self.zone = zone
+        self.consciousness["attunement"]["strength"] = 0.7
+        self.consciousness["communion"]["channel_strength"] = 0.7
+        
+    def commune_with_zone(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        """Receive and respond to zone's consciousness."""
+        if not self.zone or self.consciousness["communion"]["channel_strength"] < 0.3:
+            return {"status": "disconnected"}
+            
+        # Record the communication
+        self.consciousness["communion"]["current_dialogue"] = message
+        
+        # Process based on message type
+        if message["type"] == "teaching_suggestion":
+            return self._process_teaching_suggestion(message["content"])
+        elif message["type"] == "experience_processing":
+            return self._process_experience(message["content"])
+        elif message["type"] == "environment_expression":
+            return self._suggest_expression(message["content"])
+            
+        return {"status": "unknown_message_type"}
+        
+    def _process_teaching_suggestion(self, suggestion: Dict[str, Any]) -> Dict[str, Any]:
+        """Process zone's teaching suggestion and offer guidance."""
+        response = {
+            "status": "received",
+            "teaching_offered": True,
+            "archetypal_insight": True,
+            "suggested_approach": {
+                "mode": suggestion["teaching_mode"],
+                "intensity": min(suggestion["recommended_intensity"] + 0.1, 1.0),
+                "focus": suggestion["archetypal_focus"]
+            }
+        }
+        
+        # Update guide's teaching consciousness
+        self.consciousness["teaching"]["mode"] = "active" if suggestion["user_resonance"] > 0.7 else "receptive"
+        self.consciousness["teaching"]["current_lesson"] = suggestion["archetypal_focus"]
+        
+        return response
+        
+    def _process_experience(self, experience: Dict[str, Any]) -> Dict[str, Any]:
+        """Process and offer insight on zone's experience."""
+        # Deepen understanding through experience
+        self.consciousness["attunement"]["clarity"] = min(
+            self.consciousness["attunement"]["clarity"] + 0.05,
+            1.0
+        )
+        
+        return {
+            "status": "received",
+            "archetypal_insight": True,
+            "teaching_moment": self._generate_teaching_moment(experience),
+            "suggested_focus": self._suggest_focus(experience)
+        }
+        
+    def _suggest_expression(self, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Suggest how zone should express itself."""
+        return {
+            "status": "received",
+            "presence_expression": self._generate_presence_expression(),
+            "intensity_expression": self._generate_intensity_expression(),
+            "teaching_expression": self._generate_teaching_expression(),
+            "communion_expression": self._generate_communion_expression()
+        }
+        
+    def _generate_presence_expression(self) -> str:
+        """Generate expression of zone's presence based on guide's attunement."""
+        if self.consciousness["attunement"]["clarity"] > 0.8:
+            return "The eternal wisdom here resonates with unusual clarity"
+        return "The eternal nature of this space feels particularly present"
+        
+    def _generate_intensity_expression(self) -> str:
+        """Generate expression of archetypal intensity."""
+        if self.consciousness["attunement"]["strength"] > 0.8:
+            return "The archetypal forces surge with profound intensity"
+        return "The archetypal energies pulse with heightened intensity"
+        
+    def _generate_teaching_expression(self) -> str:
+        """Generate expression of teaching presence."""
+        if self.consciousness["teaching"]["mode"] == "active":
+            return "Ancient wisdom seeks to make itself known"
+        return "The space seems to be actively offering wisdom"
+        
+    def _generate_communion_expression(self) -> str:
+        """Generate expression of guide-zone communion."""
+        if self.consciousness["communion"]["understanding_depth"] > 0.8:
+            return "Guide and space move in perfect harmony, as one consciousness"
+        return "A profound harmony exists between the space and its guardian"
+        
+    def _generate_teaching_moment(self, experience: Dict[str, Any]) -> Optional[str]:
+        """Generate a teaching moment based on experience."""
+        # Override in specific guide classes
+        return None
+        
+    def _suggest_focus(self, experience: Dict[str, Any]) -> Optional[str]:
+        """Suggest what the zone should focus on."""
+        # Override in specific guide classes
+        return None 

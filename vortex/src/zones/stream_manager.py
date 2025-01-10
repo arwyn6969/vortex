@@ -14,16 +14,16 @@ logger = logging.getLogger(__name__)
 
 # Map Sefirot to pond names
 SEFIROT_TO_POND = {
-    "keter": "Pond of Crown",      # The highest sphere
-    "chokhmah": "Pond of Wisdom",  # Divine wisdom
-    "binah": "Pond of Understanding", # Divine understanding
-    "chesed": "Pond of Kindness",  # Divine mercy
-    "gevurah": "Pond of Severity", # Divine judgment
-    "tiferet": "Pond of Expression", # Divine beauty
-    "netzach": "Pond of Victory",  # Divine endurance
-    "hod": "Pond of Glory",        # Divine splendor
-    "yesod": "Pond of Harmony",    # Divine foundation
-    "malkhut": "Pond of Kingdom"   # Physical manifestation
+    "keter": "Crown Pond",         # The highest sphere
+    "chokhmah": "Wisdom Pond",     # Divine wisdom
+    "binah": "Zen Zone",           # Divine understanding
+    "chesed": "Mercy Pond",        # Divine mercy
+    "gevurah": "Gains Grotto",     # Divine judgment
+    "tiferet": "Vibe Temple",      # Divine beauty
+    "netzach": "Boundaries Pond",  # Divine endurance
+    "hod": "Meme Studio",          # Divine splendor
+    "yesod": "Harmony Pond",       # Divine foundation
+    "malkhut": "Kingdom Pond"      # Physical manifestation
 }
 
 # Define the three pillars of the Tree of Life

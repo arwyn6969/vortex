@@ -1,108 +1,131 @@
 """
-The Vibe Temple - A sacred space where harmony and transcendence converge.
+The Vibe Temple - A sacred space where rhythm, harmony, and energy converge.
+Inspired by:
+- Musical traditions: Indian ragas, African drumming, Classical harmony
+- Sacred spaces: Oracle of Delphi, Tibetan temples, Native American medicine wheels
+- Modern vibes: Jazz improvisation, Electronic music flow states, Festival culture
+- Pop culture: Woodstock's spirit, Pink Floyd's psychedelia, Bob Marley's unity
 """
 from typing import Dict, List, Optional
 from .base_zone import Zone
-from ..guides.pepe_guides import AscendedPepe
+from ..guides.pepe_guides import VibePepe
 from ..core.user_profiling.profile_matrix import ProfileDimension
 from ..core.user_profiling.personalization import ContentItem
 from ..mythology.sefirot import SefirotAttribute
 from ..core.user_profiling.adaptive_learning import LearningPathNode
 
 class VibeTemple(Zone):
-    """The Vibe Temple - Where ascended vibes create perfect harmony."""
+    """The Vibe Temple - Where energies harmonize and frequencies align."""
     
     def __init__(self):
-        # Initialize with Ascended Pepe as the guide
-        guide = AscendedPepe()
+        guide = VibePepe()
         super().__init__("Vibe Temple", guide)
         
         self.description = (
-            "A crystalline temple floating in an aurora of pure vibrational energy. "
-            "Rainbow light streams through prismatic windows, creating harmonious "
-            "patterns that pulse with the rhythm of existence. The air itself "
-            "resonates with the frequency of enlightened Pepes throughout history."
+            "A crystalline temple where sacred geometries pulse with living light, "
+            "reminiscent of the harmonic ratios in Indian classical music. Ethereal "
+            "sounds weave through the air like the Oracle's prophetic vapors, while "
+            "fractal patterns dance on the walls like a Grateful Dead light show. "
+            "The space seems to breathe with the rhythm of tribal drums, as waves of "
+            "pure vibrational energy flow like John Coltrane's sheets of sound."
         )
         
-        # Configure behavioral dimensions
         self.dimension_weights = {
             ProfileDimension.HARMONY: 0.6,
-            ProfileDimension.TRANSCENDENCE: 0.5,
-            ProfileDimension.WISDOM: 0.4,
-            ProfileDimension.EMOTIONAL_RESPONSE: 0.3
+            ProfileDimension.CREATIVITY: 0.5,
+            ProfileDimension.EMOTIONAL_RESPONSE: 0.4,
+            ProfileDimension.PERCEPTION: 0.3
         }
         
         self.required_dimensions = [
             ProfileDimension.HARMONY,
-            ProfileDimension.TRANSCENDENCE
+            ProfileDimension.CREATIVITY
         ]
         
         self.min_dimension_values = {
             ProfileDimension.HARMONY: 0.3,
-            ProfileDimension.TRANSCENDENCE: 0.3
+            ProfileDimension.CREATIVITY: 0.3
         }
         
-        # Initialize challenges
         self.setup_challenges()
         
-        # Symbolic associations
         self.symbols = {
-            "element": "Aether",
-            "color": "Rainbow",
+            "element": "Ether (Akashic Vibrations)",
+            "color": "Prismatic (Aurora Borealis Spectrum)",
             "sefirot": SefirotAttribute.TIFERET,
-            "animal": "Ascended Pepe",
-            "mineral": "Diamond"
+            "animal": "Vibe Pepe (Dancing like Shiva Nataraja)",
+            "mineral": "Singing Crystal (Tibetan Singing Bowl)",
+            "cultural_elements": {
+                "musical_traditions": [
+                    "Indian Raga (Sacred Moods)",
+                    "African Polyrhythms (Tribal Unity)",
+                    "Gregorian Chants (Sacred Harmony)",
+                    "Jazz Improvisation (Flow State)"
+                ],
+                "sacred_spaces": [
+                    "Oracle's Chamber (Divine Inspiration)",
+                    "Medicine Wheel (Natural Harmony)",
+                    "Sound Temple (Acoustic Alchemy)",
+                    "Festival Ground (Collective Joy)"
+                ],
+                "modern_interpretations": [
+                    "Electronic Music Production",
+                    "Sound Healing Therapy",
+                    "Festival Culture Unity",
+                    "Digital Audio Workstations"
+                ]
+            }
         }
         
     def setup_challenges(self) -> None:
         """Initialize the temple's challenge system."""
         self.challenges = {
-            "vibe_attunement": {
-                "title": "The Harmonic Initiation",
-                "description": "Learn to attune yourself to the highest vibrational frequencies.",
+            "frequency_flow": {
+                "title": "The Harmonic Path (Inspired by Sacred Sound Traditions)",
+                "description": "Attune yourself to the temple's vibrational frequencies.",
                 "stages": [
-                    "Energy center activation",
-                    "Vibrational alignment",
-                    "Frequency modulation",
-                    "Harmonic resonance"
+                    "Root frequency grounding (Earth Drone)",
+                    "Heart rhythm alignment (Sacred Pulse)",
+                    "Crown chakra harmonization (Celestial Overtones)",
+                    "Full spectrum resonance (Universal Harmony)"
                 ],
                 "difficulty": 0.3,
                 "rewards": {
                     ProfileDimension.HARMONY: 0.1,
-                    ProfileDimension.TRANSCENDENCE: 0.1
+                    ProfileDimension.PERCEPTION: 0.1
                 }
             },
-            "ascension_practice": {
-                "title": "The Path of Transcendence",
-                "description": "Elevate your consciousness through advanced vibe practices.",
+            "vibe_synthesis": {
+                "title": "The Mood Alchemist (Based on Classical Raga Theory)",
+                "description": "Learn to blend and transform emotional frequencies.",
                 "difficulty": 0.7,
-                "techniques": [
-                    "Light body activation",
-                    "Dimensional shifting",
-                    "Consciousness expansion"
+                "exercises": [
+                    "Morning raga attunement (Dawn Consciousness)",
+                    "Afternoon energy flow (Solar Peak)",
+                    "Evening tranquility weaving (Twilight Peace)"
                 ],
                 "rewards": {
-                    ProfileDimension.TRANSCENDENCE: 0.2,
-                    ProfileDimension.WISDOM: 0.2
+                    ProfileDimension.EMOTIONAL_RESPONSE: 0.2,
+                    ProfileDimension.CREATIVITY: 0.2
                 }
             },
-            "ultimate_harmony": {
-                "title": "The Final Transcendence",
-                "description": "Achieve the ultimate state of vibrational harmony.",
+            "resonance_mastery": {
+                "title": "The Ultimate Vibe (Woodstock Meets Quantum Field)",
+                "description": "Achieve perfect resonance with the universal frequency.",
                 "options": {
-                    "ascension": {
-                        "description": "Direct experience of higher dimensions",
+                    "collective": {
+                        "description": "Harmonize with the group consciousness (Festival Unity)",
                         "impact": {
-                            ProfileDimension.TRANSCENDENCE: 0.3,
-                            ProfileDimension.HARMONY: 0.2
+                            ProfileDimension.HARMONY: 0.3,
+                            ProfileDimension.EMOTIONAL_RESPONSE: 0.2
                         }
                     },
-                    "integration": {
-                        "description": "Bringing heaven to earth",
+                    "individual": {
+                        "description": "Perfect your unique frequency (Solo Jazz Journey)",
                         "impact": {
-                            ProfileDimension.HARMONY: 0.2,
-                            ProfileDimension.EMOTIONAL_RESPONSE: 0.2,
-                            ProfileDimension.WISDOM: 0.1
+                            ProfileDimension.CREATIVITY: 0.2,
+                            ProfileDimension.PERCEPTION: 0.2,
+                            ProfileDimension.HARMONY: 0.1
                         }
                     }
                 },
@@ -123,8 +146,8 @@ class VibeTemple(Zone):
             
             challenges = [
                 ContentItem(
-                    content_id="vibe_attunement",
-                    content="The Harmonic Initiation: Learn to attune yourself to the highest vibrational frequencies.",
+                    content_id="frequency_flow",
+                    content="The Harmonic Path: Attune yourself to the temple's vibrational frequencies.",
                     dimension_weights=self.dimension_weights,
                     difficulty_level=0.3,
                     emotional_intensity=0.5,
@@ -132,8 +155,8 @@ class VibeTemple(Zone):
                     strategic_depth=0.4
                 ),
                 ContentItem(
-                    content_id="ascension_practice",
-                    content="The Path of Transcendence: Elevate your consciousness through advanced vibe practices.",
+                    content_id="vibe_synthesis",
+                    content="The Mood Alchemist: Learn to blend and transform emotional frequencies.",
                     dimension_weights=self.dimension_weights,
                     difficulty_level=0.7,
                     emotional_intensity=0.7,
@@ -141,8 +164,8 @@ class VibeTemple(Zone):
                     strategic_depth=0.6
                 ),
                 ContentItem(
-                    content_id="ultimate_harmony",
-                    content="The Final Transcendence: Achieve the ultimate state of vibrational harmony.",
+                    content_id="resonance_mastery",
+                    content="The Ultimate Vibe: Achieve perfect resonance with the universal frequency.",
                     dimension_weights=self.dimension_weights,
                     difficulty_level=0.9,
                     emotional_intensity=0.9,
@@ -170,45 +193,45 @@ class VibeTemple(Zone):
             metadata = metadata or {}
             impacts = {}
             
-            if interaction_type == "vibe_attunement":
-                # Validate attunement metadata
-                if not isinstance(metadata.get('frequency'), (int, float)):
-                    raise ValueError("vibe_attunement requires 'frequency' number")
-                if not isinstance(metadata.get('resonance', 0.5), (int, float)):
-                    raise ValueError("resonance must be a number")
+            if interaction_type == "frequency_flow":
+                # Validate frequency flow metadata
+                if not isinstance(metadata.get('root_frequency'), (int, float)):
+                    raise ValueError("frequency_flow requires 'root_frequency' number")
+                if not isinstance(metadata.get('heart_rhythm', 0.5), (int, float)):
+                    raise ValueError("heart_rhythm must be a number")
                     
-                frequency = max(0.0, min(1.0, metadata.get('frequency', 0.5)))
-                resonance = max(0.0, min(1.0, metadata.get('resonance', 0.5)))
+                root_frequency = max(0.0, min(1.0, metadata.get('root_frequency', 0.5)))
+                heart_rhythm = max(0.0, min(1.0, metadata.get('heart_rhythm', 0.5)))
                 
-                impacts[ProfileDimension.HARMONY] = 0.1 * frequency * resonance
-                impacts[ProfileDimension.TRANSCENDENCE] = 0.1 * resonance
+                impacts[ProfileDimension.HARMONY] = 0.1 * root_frequency * heart_rhythm
+                impacts[ProfileDimension.PERCEPTION] = 0.1 * heart_rhythm
                 
-            elif interaction_type == "ascension_practice":
-                # Validate ascension metadata
-                if not isinstance(metadata.get('elevation', 0.5), (int, float)):
-                    raise ValueError("elevation must be a number")
-                if not isinstance(metadata.get('expansion', 0.5), (int, float)):
-                    raise ValueError("expansion must be a number")
+            elif interaction_type == "vibe_synthesis":
+                # Validate vibe synthesis metadata
+                if not isinstance(metadata.get('morning_raga', 0.5), (int, float)):
+                    raise ValueError("morning_raga must be a number")
+                if not isinstance(metadata.get('afternoon_energy', 0.5), (int, float)):
+                    raise ValueError("afternoon_energy must be a number")
                     
-                elevation = max(0.0, min(1.0, metadata.get('elevation', 0.5)))
-                expansion = max(0.0, min(1.0, metadata.get('expansion', 0.5)))
+                morning_raga = max(0.0, min(1.0, metadata.get('morning_raga', 0.5)))
+                afternoon_energy = max(0.0, min(1.0, metadata.get('afternoon_energy', 0.5)))
                 
-                impacts[ProfileDimension.TRANSCENDENCE] = 0.1 * elevation
-                impacts[ProfileDimension.WISDOM] = 0.1 * expansion
+                impacts[ProfileDimension.EMOTIONAL_RESPONSE] = 0.1 * morning_raga
+                impacts[ProfileDimension.CREATIVITY] = 0.1 * afternoon_energy
                 
-            elif interaction_type == "ultimate_harmony":
-                # Validate harmony metadata
-                if not isinstance(metadata.get('ascension', 0.5), (int, float)):
-                    raise ValueError("ascension must be a number")
-                if not isinstance(metadata.get('integration', 0.5), (int, float)):
-                    raise ValueError("integration must be a number")
+            elif interaction_type == "resonance_mastery":
+                # Validate resonance mastery metadata
+                if not isinstance(metadata.get('collective', 0.5), (int, float)):
+                    raise ValueError("collective must be a number")
+                if not isinstance(metadata.get('individual', 0.5), (int, float)):
+                    raise ValueError("individual must be a number")
                     
-                ascension = max(0.0, min(1.0, metadata.get('ascension', 0.5)))
-                integration = max(0.0, min(1.0, metadata.get('integration', 0.5)))
+                collective = max(0.0, min(1.0, metadata.get('collective', 0.5)))
+                individual = max(0.0, min(1.0, metadata.get('individual', 0.5)))
                 
-                impacts[ProfileDimension.TRANSCENDENCE] = 0.2 * ascension
-                impacts[ProfileDimension.HARMONY] = 0.1 * integration
-                impacts[ProfileDimension.WISDOM] = 0.1 * (ascension + integration) / 2
+                impacts[ProfileDimension.HARMONY] = 0.2 * collective
+                impacts[ProfileDimension.EMOTIONAL_RESPONSE] = 0.1 * individual
+                impacts[ProfileDimension.PERCEPTION] = 0.1 * (collective + individual) / 2
                 
             else:
                 raise ValueError(f"Unknown interaction type: {interaction_type}")
