@@ -239,4 +239,117 @@ def test_taproot_address_validation():
     
     # Test invalid addresses
     for address in invalid_addresses:
-        assert not verify_taproot_address(address), f"Should not validate invalid address: {address}" 
+        assert not verify_taproot_address(address), f"Should not validate invalid address: {address}"
+
+def test_message_signing():
+    """Test Bitcoin message signing and verification."""
+    wallet = BitcoinWallet(debug_mode=True)
+    
+    # Test with WIF private key
+    private_key = VALID_KEYS["wif_compressed"]
+    test_message = "Hello, Bitcoin!"
+    
+    # Sign message
+    signature, error = wallet.sign_message(test_message, private_key)
+    assert error is None, f"Error signing message: {error}"
+    assert signature is not None, "Signature should not be None"
+    
+    # Get address for verification
+    info, _ = wallet.process_wallet_input(private_key)
+    address = info.address
+    
+    # Verify signature
+    is_valid, error = wallet.verify_message(address, test_message, signature)
+    assert error is None, f"Error verifying message: {error}"
+    assert is_valid, "Signature verification failed"
+    
+    # Test with wrong message
+    is_valid, error = wallet.verify_message(address, "Wrong message", signature)
+    assert not is_valid, "Should not verify with wrong message"
+    
+    # Test with wrong address
+    wrong_address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+    is_valid, error = wallet.verify_message(wrong_address, test_message, signature)
+    assert not is_valid, "Should not verify with wrong address"
+    
+    # Test with invalid signature
+    is_valid, error = wallet.verify_message(address, test_message, "invalid_signature")
+    assert not is_valid, "Should not verify with invalid signature"
+    
+    # Test with invalid private key
+    signature, error = wallet.sign_message(test_message, "invalid_key")
+    assert signature is None, "Should not sign with invalid key"
+    assert error is not None, "Should return error for invalid key"
+
+def test_wallet_input_with_signed_message():
+    """Test wallet input processing with signed message verification."""
+    wallet = BitcoinWallet(debug_mode=True)
+    
+    # First create a wallet with private key to get a valid signature
+    private_key = VALID_KEYS["wif_compressed"]
+    test_message = "I own this address"
+    
+    # Get the address
+    info, _ = wallet.process_wallet_input(private_key)
+    address = info.address
+    
+    # Sign the message
+    signature, error = wallet.sign_message(test_message, private_key)
+    assert error is None, "Failed to sign message"
+    
+    # Test valid signed message verification
+    signed_message = {
+        'address': address,
+        'message': test_message,
+        'signature': signature
+    }
+    
+    info, msg = wallet.process_wallet_input(signed_message=signed_message)
+    assert info is not None, "Should return wallet info"
+    assert info.address == address, "Should return correct address"
+    assert info.private_key is None, "Should not have private key"
+    assert "verified via signed message" in msg.lower(), "Should indicate verification method"
+    
+    # Test with invalid signature
+    invalid_signed_message = {
+        'address': address,
+        'message': test_message,
+        'signature': "invalid_signature"
+    }
+    
+    info, msg = wallet.process_wallet_input(signed_message=invalid_signed_message)
+    assert "invalid signature" in msg.lower(), "Should indicate invalid signature"
+    assert info.address != address, "Should create new wallet on invalid signature"
+    
+    # Test with wrong message
+    wrong_message = {
+        'address': address,
+        'message': "Wrong message",
+        'signature': signature
+    }
+    
+    info, msg = wallet.process_wallet_input(signed_message=wrong_message)
+    assert "invalid signature" in msg.lower(), "Should indicate invalid signature"
+    assert info.address != address, "Should create new wallet on wrong message"
+    
+    # Test with wrong address
+    wrong_address = {
+        'address': "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+        'message': test_message,
+        'signature': signature
+    }
+    
+    info, msg = wallet.process_wallet_input(signed_message=wrong_address)
+    assert "invalid signature" in msg.lower(), "Should indicate invalid signature"
+    assert info.address != address, "Should create new wallet on wrong address"
+    
+    # Test with missing fields
+    incomplete_message = {
+        'address': address,
+        'message': test_message
+        # Missing signature
+    }
+    
+    info, msg = wallet.process_wallet_input(signed_message=incomplete_message)
+    assert "error" in msg.lower(), "Should indicate error with incomplete message"
+    assert info.address != address, "Should create new wallet on incomplete message" 

@@ -103,6 +103,9 @@ Each pond represents a unique aspect of wisdom and growth:
 - Stackable bonuses up to 4.05x
 - Real-time balance checking and verification
 - Enhanced rewards for token holders
+- Message signing for secure ownership verification
+- Support for multiple Bitcoin address formats
+- Command-line tools for signing and verification
 
 ## 📚 Documentation
 
@@ -110,6 +113,7 @@ Each pond represents a unique aspect of wisdom and growth:
 - [Getting Started Guide](docs/guides/getting_started.md)
 - [User Manual](docs/guides/user_manual.md)
 - [Technical Architecture](docs/technical/architecture.md)
+- [Message Signing Guide](docs/technical/message_signing.md)
 
 ### Reference
 - [Pond System](docs/technical/ponds.md)

@@ -10,6 +10,7 @@ import bech32
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import logging
+import base64
 
 logger = logging.getLogger(__name__)
 
@@ -212,3 +213,107 @@ def wif_to_private_key(wif: str) -> Tuple[bytes, bool, bool]:
     except Exception as e:
         logger.error(f"Error decoding WIF: {str(e)}")
         raise ValueError("Invalid WIF format") 
+
+def sign_message(private_key: bytes, message: str) -> str:
+    """
+    Sign a message using Bitcoin's message signing format.
+    Returns base64-encoded signature.
+    """
+    if not COINCURVE_AVAILABLE:
+        raise ImportError("coincurve required for message signing")
+        
+    # Format message according to Bitcoin's standard
+    magic_prefix = b"\x18Bitcoin Signed Message:\n"
+    message_bytes = message.encode('utf-8')
+    msg = magic_prefix + len(message_bytes).to_bytes(1, 'big') + message_bytes
+    
+    # Double SHA256 the message
+    msg_hash = hashlib.sha256(hashlib.sha256(msg).digest()).digest()
+    
+    # Sign using coincurve (which handles RFC6979 deterministic k)
+    privkey = coincurve.PrivateKey(private_key)
+    signature = privkey.sign_recoverable(msg_hash, hasher=None)  # We already hashed the message
+    
+    # Clear private key from memory
+    privkey._secret = None
+    del privkey
+    
+    # Encode in base64
+    return base64.b64encode(signature).decode('ascii')
+
+def verify_message(address: str, message: str, signature: str, max_message_length: int = 10000) -> bool:
+    """
+    Verify a signed message.
+    Returns True if the signature is valid for the given address and message.
+    """
+    if not COINCURVE_AVAILABLE:
+        raise ImportError("coincurve required for message verification")
+        
+    try:
+        # Validate message length
+        if len(message) > max_message_length:
+            raise ValueError(f"Message too long (max {max_message_length} characters)")
+            
+        # Check for common XSS/injection patterns
+        if any(pattern in message.lower() for pattern in ['<script>', 'javascript:', 'data:', 'vbscript:']):
+            raise ValueError("Message contains potentially malicious content")
+            
+        # Decode signature
+        try:
+            sig_bytes = base64.b64decode(signature)
+        except Exception:
+            raise ValueError("Invalid signature format")
+        
+        # Format message
+        magic_prefix = b"\x18Bitcoin Signed Message:\n"
+        message_bytes = message.encode('utf-8')
+        msg = magic_prefix + len(message_bytes).to_bytes(1, 'big') + message_bytes
+        
+        # Double SHA256 the message
+        msg_hash = hashlib.sha256(hashlib.sha256(msg).digest()).digest()
+        
+        # Recover public key from signature
+        try:
+            pubkey = coincurve.PublicKey.from_signature_and_message(
+                sig_bytes,
+                msg_hash,
+                hasher=None  # We already hashed the message
+            )
+        except Exception:
+            raise ValueError("Invalid signature or message")
+        
+        # Generate address from public key
+        pubkey_bytes = pubkey.format(compressed=True)
+        recovered_address = generate_native_segwit_address(pubkey_bytes)
+        
+        return recovered_address == address
+        
+    except Exception as e:
+        logger.error(f"Error verifying message: {str(e)}")
+        return False
+
+def is_message_safe(message: str) -> Tuple[bool, Optional[str]]:
+    """
+    Check if a message is safe to process.
+    Returns (is_safe, error_message).
+    """
+    try:
+        # Check length
+        if len(message) > 10000:
+            return False, "Message too long"
+            
+        # Check for potentially malicious content
+        if any(pattern in message.lower() for pattern in [
+            '<script>', 'javascript:', 'data:', 'vbscript:',
+            'onload=', 'onerror=', 'onclick=', 'alert(', 'eval('
+        ]):
+            return False, "Message contains potentially malicious content"
+            
+        # Check character set
+        if not all(ord(c) < 128 for c in message):
+            return False, "Message contains non-ASCII characters"
+            
+        return True, None
+        
+    except Exception as e:
+        return False, f"Error checking message safety: {str(e)}" 

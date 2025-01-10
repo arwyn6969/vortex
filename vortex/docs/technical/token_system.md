@@ -24,6 +24,35 @@ The token system integrates multiple Bitcoin-based token standards to provide a 
 - Detailed portfolio analysis
 - Category-based token classification
 
+## Message Signing
+
+### Overview
+The system supports Bitcoin message signing for secure ownership verification:
+- Sign messages using private keys (WIF/hex format)
+- Verify signatures against Bitcoin addresses
+- Support for multiple address formats
+- Command-line tools for signing and verification
+
+### Supported Features
+- Standard Bitcoin message format
+- Base64-encoded signatures
+- Compressed and uncompressed keys
+- Deterministic signatures (RFC6979)
+- Public key recovery
+- Comprehensive error handling
+
+### Integration Points
+- Profile validation alternative
+- Session-based ownership verification
+- Dynamic validation challenges
+- Security system integration
+
+### Command-Line Tools
+- `sign_bitcoin_message.py` for message signing
+- `verify_bitcoin_address.py` for signature verification
+- Interactive and non-interactive modes
+- Detailed error reporting
+
 ## Token Categories
 
 ### Category System

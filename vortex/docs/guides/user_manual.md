@@ -265,6 +265,35 @@ set_focus wisdom
 | `achievements` | List achievements | `achievements` |
 | `stats` | Show statistics | `stats` |
 
+### Bitcoin Message Signing
+The system supports Bitcoin message signing for secure ownership verification without exposing private keys.
+
+#### Sign a Message
+```bash
+# Sign a message with your private key
+python3 sign_bitcoin_message.py <private_key> "Your message here"
+
+# Example output:
+Address: bc1q...
+Signature: H4sIA...
+```
+
+#### Verify a Signature
+```bash
+# Verify a signed message
+python3 verify_bitcoin_address.py <address> "Your message here" <signature>
+
+# Example output:
+✅ Address verified successfully!
+```
+
+#### Security Tips
+- Never share your private keys
+- Keep your mnemonic phrase secure
+- Use message signing instead of sharing private keys
+- Verify signatures before trusting them
+- Check address formats carefully
+
 ### Challenge Commands
 | Command | Description | Example |
 |---------|-------------|---------|

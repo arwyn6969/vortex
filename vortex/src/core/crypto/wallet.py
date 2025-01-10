@@ -16,7 +16,9 @@ from .keys import (
     wif_to_private_key,
     private_key_to_wif,
     check_dependencies,
-    COINCURVE_AVAILABLE
+    COINCURVE_AVAILABLE,
+    sign_message,
+    verify_message
 )
 from .taproot import generate_taproot_address, verify_taproot_address, derive_taproot_keys
 
@@ -77,6 +79,14 @@ class BitcoinWallet:
     # Bitcoin-specific constants
     SATOSHIS_PER_BTC = 100000000
     MAX_PRIVATE_KEY = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+    
+    # Message templates for common verification scenarios
+    MESSAGE_TEMPLATES = {
+        'profile': "I own the Bitcoin address {address} at {timestamp}",
+        'session': "Verifying session ownership of {address} at {timestamp}",
+        'challenge': "Completing challenge {challenge_id} from address {address} at {timestamp}",
+        'token': "Verifying ownership of token {token_id} at address {address}"
+    }
     
     def __init__(self, debug_mode: bool = False):
         """Initialize the wallet handler with optional debug mode."""
@@ -257,8 +267,18 @@ class BitcoinWallet:
             raise
     
     @classmethod
-    def process_wallet_input(cls, private_key: Optional[str] = None) -> Tuple[WalletInfo, str]:
-        """Process wallet input and return wallet info with status message."""
+    def process_wallet_input(cls, private_key: Optional[str] = None, signed_message: Optional[Dict] = None) -> Tuple[WalletInfo, str]:
+        """
+        Process wallet input and return wallet info with status message.
+        
+        Args:
+            private_key: Optional private key in WIF or hex format
+            signed_message: Optional dict containing {
+                'address': str,
+                'message': str,
+                'signature': str
+            }
+        """
         wallet = cls()
         if wallet.deps_error:
             return cls.create_new_wallet()[0], f"Error: {wallet.deps_error}"
@@ -314,8 +334,44 @@ class BitcoinWallet:
             except Exception as e:
                 logger.error(f"Error processing private key: {str(e)}")
                 return cls.create_new_wallet()[0], f"Error processing private key: {str(e)}. Creating new wallet..."
+                
+        elif signed_message:
+            logger.info("Processing signed message verification...")
+            try:
+                address = signed_message['address']
+                message = signed_message['message']
+                signature = signed_message['signature']
+                
+                # Verify signature
+                is_valid, error = wallet.verify_message(address, message, signature)
+                if not is_valid:
+                    error_msg = error or "Invalid signature"
+                    logger.warning(f"Invalid signature: {error_msg}")
+                    return cls.create_new_wallet()[0], f"Invalid signature: {error_msg}. Creating new wallet..."
+                
+                # Get balance and history
+                balance, balance_error, txn_history = cls.get_balance(address)
+                
+                # Detect address type
+                addr_type, addr_error = cls.detect_address_type(address)
+                if addr_error:
+                    logger.error(f"Error detecting address type: {addr_error}")
+                    addr_type = AddressType.SEGWIT_NATIVE  # Default to SegWit
+                
+                return WalletInfo(
+                    address=address,
+                    address_type=addr_type,
+                    private_key=None,  # No private key for signature verification
+                    balance=balance if not balance_error else 0.0,
+                    last_balance_check=datetime.now(),
+                    transaction_history=txn_history
+                ), f"Address verified via signed message. Current balance: {balance if not balance_error else 0.0} BTC"
+                
+            except Exception as e:
+                logger.error(f"Error processing signed message: {str(e)}")
+                return cls.create_new_wallet()[0], f"Error processing signed message: {str(e)}. Creating new wallet..."
         else:
-            logger.info("No private key provided, creating new wallet...")
+            logger.info("No wallet credentials provided, creating new wallet...")
             wallet, recovery_info = cls.create_new_wallet()
             return wallet, "New wallet created. Keep your recovery information safe!"
             
@@ -333,3 +389,185 @@ class BitcoinWallet:
             "last_balance_check": str(wallet.last_balance_check) if wallet.last_balance_check else "Never",
             "transaction_count": len(wallet.transaction_history) if wallet.transaction_history else 0
         } 
+
+    def sign_message(self, message: str, private_key: str) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Sign a message using a private key.
+        Returns (signature, error_message).
+        """
+        try:
+            # Validate private key first
+            is_valid, error_msg, key_format = self.validate_private_key(private_key)
+            if not is_valid:
+                return None, f"Invalid private key: {error_msg}"
+
+            # Convert to raw private key
+            if key_format in [KeyFormat.WIF_COMPRESSED, KeyFormat.WIF_UNCOMPRESSED]:
+                raw_private_key, _, _ = wif_to_private_key(private_key)
+            else:
+                raw_private_key = bytes.fromhex(private_key)
+
+            # Sign message
+            signature = sign_message(raw_private_key, message)
+            return signature, None
+
+        except Exception as e:
+            error_msg = f"Error signing message: {str(e)}"
+            logger.error(error_msg)
+            return None, error_msg
+
+    def verify_message(self, address: str, message: str, signature: str) -> Tuple[bool, Optional[str]]:
+        """
+        Verify a signed message.
+        Returns (is_valid, error_message).
+        """
+        try:
+            # Validate address format first
+            addr_type, error = self.detect_address_type(address)
+            if error:
+                return False, f"Invalid address: {error}"
+
+            # Verify signature
+            is_valid = verify_message(address, message, signature)
+            return is_valid, None
+
+        except Exception as e:
+            error_msg = f"Error verifying message: {str(e)}"
+            logger.error(error_msg)
+            return False, error_msg
+
+    def verify_messages_batch(self, verifications: List[Dict[str, str]]) -> List[Tuple[bool, Optional[str]]]:
+        """
+        Verify multiple signed messages in batch.
+        
+        Args:
+            verifications: List of dicts, each containing:
+                {
+                    'address': str,
+                    'message': str,
+                    'signature': str
+                }
+                
+        Returns:
+            List of (is_valid, error_message) tuples
+        """
+        results = []
+        for v in verifications:
+            try:
+                address = v.get('address')
+                message = v.get('message')
+                signature = v.get('signature')
+                
+                if not all([address, message, signature]):
+                    results.append((False, "Missing required fields"))
+                    continue
+                    
+                is_valid, error = self.verify_message(address, message, signature)
+                results.append((is_valid, error))
+                
+            except Exception as e:
+                results.append((False, f"Error processing verification: {str(e)}"))
+                
+        return results
+
+    async def verify_token_ownership(self, address: str, token_id: str, signature: str) -> Tuple[bool, Optional[str]]:
+        """
+        Verify token ownership through message signing.
+        
+        Args:
+            address: Bitcoin address claiming ownership
+            token_id: Token ID to verify
+            signature: Signature of the verification message
+            
+        Returns:
+            (is_valid, error_message)
+        """
+        try:
+            # Generate token verification message
+            message, error = self.generate_verification_message('token', 
+                address=address, token_id=token_id)
+            if error:
+                return False, error
+                
+            # Verify signature
+            is_valid, error = self.verify_message(address, message, signature)
+            if not is_valid:
+                return False, error
+                
+            # Check if address owns the token
+            from vortex.tools.check_bitcoin_tokens import check_address
+            token_data = await check_address(address, show_all=True)
+            
+            # Verify token ownership
+            if token_id in token_data.get('owned_src20_ticks', set()):
+                return True, None
+            if token_id in token_data.get('owned_stamps', set()):
+                return True, None
+                
+            return False, "Address does not own the specified token"
+            
+        except Exception as e:
+            error_msg = f"Error verifying token ownership: {str(e)}"
+            logger.error(error_msg)
+            return False, error_msg
+
+    async def verify_token_ownership_batch(self, verifications: List[Dict[str, str]]) -> List[Tuple[bool, Optional[str]]]:
+        """
+        Verify multiple token ownerships in batch.
+        
+        Args:
+            verifications: List of dicts, each containing:
+                {
+                    'address': str,
+                    'token_id': str,
+                    'signature': str
+                }
+                
+        Returns:
+            List of (is_valid, error_message) tuples
+        """
+        results = []
+        for v in verifications:
+            try:
+                address = v.get('address')
+                token_id = v.get('token_id')
+                signature = v.get('signature')
+                
+                if not all([address, token_id, signature]):
+                    results.append((False, "Missing required fields"))
+                    continue
+                    
+                is_valid, error = await self.verify_token_ownership(address, token_id, signature)
+                results.append((is_valid, error))
+                
+            except Exception as e:
+                results.append((False, f"Error processing verification: {str(e)}"))
+                
+        return results
+
+    def generate_verification_message(self, template_type: str, **kwargs) -> Tuple[str, Optional[str]]:
+        """
+        Generate a standardized verification message using templates.
+        
+        Args:
+            template_type: Type of message template to use
+            **kwargs: Template variables to fill
+            
+        Returns:
+            (message, error)
+        """
+        try:
+            if template_type not in self.MESSAGE_TEMPLATES:
+                return None, f"Unknown template type: {template_type}"
+                
+            # Add timestamp if not provided
+            if 'timestamp' not in kwargs:
+                kwargs['timestamp'] = datetime.now().isoformat()
+                
+            message = self.MESSAGE_TEMPLATES[template_type].format(**kwargs)
+            return message, None
+            
+        except KeyError as e:
+            return None, f"Missing required template variable: {str(e)}"
+        except Exception as e:
+            return None, f"Error generating message: {str(e)}" 
