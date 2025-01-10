@@ -49,10 +49,17 @@ class TokenCategoryScores:
     boshi_count: int = 0
     dank_count: int = 0
     fake_count: int = 0
+    based_count: int = 0
+    floon_count: int = 0
+    flock_count: int = 0
+    kevin_count: int = 0
+    brick_count: int = 0
 
     def get_category_description(self) -> str:
         """Get a description of the holder based on their highest category count."""
-        max_count = max(self.pepe_count, self.boshi_count, self.dank_count, self.fake_count)
+        max_count = max(self.pepe_count, self.boshi_count, self.dank_count, self.fake_count,
+                       self.based_count, self.floon_count, self.flock_count, self.kevin_count,
+                       self.brick_count)
         if max_count == 0:
             return "No special token categories found"
             
@@ -65,6 +72,16 @@ class TokenCategoryScores:
             categories.append("DANK")
         if self.fake_count == max_count:
             categories.append("FAKE")
+        if self.based_count == max_count:
+            categories.append("BASED")
+        if self.floon_count == max_count:
+            categories.append("FLOON")
+        if self.flock_count == max_count:
+            categories.append("FLOCK")
+        if self.kevin_count == max_count:
+            categories.append("KEVIN")
+        if self.brick_count == max_count:
+            categories.append("BRICK")
         
         # Fun status levels based on token count
         if max_count >= 1000:
@@ -155,6 +172,16 @@ def calculate_category_scores(counterparty_tokens: List[BitcoinTokenBalance]) ->
             scores.dank_count += 1
         if "FAKE" in token_name:
             scores.fake_count += 1
+        if "BASED" in token_name:
+            scores.based_count += 1
+        if "FLOON" in token_name:
+            scores.floon_count += 1
+        if "FLOCK" in token_name:
+            scores.flock_count += 1
+        if "KEVIN" in token_name:
+            scores.kevin_count += 1
+        if "BRICK" in token_name:
+            scores.brick_count += 1
     
     return scores
 
@@ -740,9 +767,16 @@ async def check_address(address: str, show_all: bool = False):
     boshi_tokens = [t for t in counterparty_tokens if "BOSHI" in t.token_id.upper()]
     dank_tokens = [t for t in counterparty_tokens if "DANK" in t.token_id.upper()]
     fake_tokens = [t for t in counterparty_tokens if "FAKE" in t.token_id.upper()]
+    based_tokens = [t for t in counterparty_tokens if "BASED" in t.token_id.upper()]
+    floon_tokens = [t for t in counterparty_tokens if "FLOON" in t.token_id.upper()]
+    flock_tokens = [t for t in counterparty_tokens if "FLOCK" in t.token_id.upper()]
+    kevin_tokens = [t for t in counterparty_tokens if "KEVIN" in t.token_id.upper()]
+    brick_tokens = [t for t in counterparty_tokens if "BRICK" in t.token_id.upper()]
     other_counterparty = [t for t in counterparty_tokens 
                          if not any(keyword in t.token_id.upper() 
-                                  for keyword in ["PEPE", "BOSHI", "DANK", "FAKE"])]
+                                  for keyword in ["PEPE", "BOSHI", "DANK", "FAKE", 
+                                                "BASED", "FLOON", "FLOCK", "KEVIN",
+                                                "BRICK"])]
     
     # Display sections...
     if special_src20 or (show_all and other_src20):
@@ -778,7 +812,9 @@ async def check_address(address: str, show_all: bool = False):
                 print(f"  {token.token_id}: {token.balance:,.2f}{creator_text}")
     
     # Show Counterparty tokens by category
-    if any([pepe_tokens, boshi_tokens, dank_tokens, fake_tokens]) or (show_all and other_counterparty):
+    if any([pepe_tokens, boshi_tokens, dank_tokens, fake_tokens, 
+            based_tokens, floon_tokens, flock_tokens, kevin_tokens,
+            brick_tokens]) or (show_all and other_counterparty):
         print("\n=== Counterparty Tokens ===")
         
         if pepe_tokens:
@@ -805,6 +841,36 @@ async def check_address(address: str, show_all: bool = False):
                 desc_text = f" - {token.description}" if token.description else ""
                 print(f"★ {token.token_id}: {token.balance:,.8f}{desc_text}")
         
+        if based_tokens:
+            print("\nBASED Tokens:")
+            for token in based_tokens:
+                desc_text = f" - {token.description}" if token.description else ""
+                print(f"★ {token.token_id}: {token.balance:,.8f}{desc_text}")
+
+        if floon_tokens:
+            print("\nFLOON Tokens:")
+            for token in floon_tokens:
+                desc_text = f" - {token.description}" if token.description else ""
+                print(f"★ {token.token_id}: {token.balance:,.8f}{desc_text}")
+
+        if flock_tokens:
+            print("\nFLOCK Tokens:")
+            for token in flock_tokens:
+                desc_text = f" - {token.description}" if token.description else ""
+                print(f"★ {token.token_id}: {token.balance:,.8f}{desc_text}")
+
+        if kevin_tokens:
+            print("\nKEVIN Tokens:")
+            for token in kevin_tokens:
+                desc_text = f" - {token.description}" if token.description else ""
+                print(f"★ {token.token_id}: {token.balance:,.8f}{desc_text}")
+        
+        if brick_tokens:
+            print("\nBRICK Tokens:")
+            for token in brick_tokens:
+                desc_text = f" - {token.description}" if token.description else ""
+                print(f"★ {token.token_id}: {token.balance:,.8f}{desc_text}")
+        
         if show_all and other_counterparty:
             print("\nOther Tokens:")
             for token in other_counterparty:
@@ -823,6 +889,16 @@ async def check_address(address: str, show_all: bool = False):
         print(f"DANK Score: {category_scores.dank_count} different tokens")
     if category_scores.fake_count > 0:
         print(f"FAKE Score: {category_scores.fake_count} different tokens")
+    if category_scores.based_count > 0:
+        print(f"BASED Score: {category_scores.based_count} different tokens")
+    if category_scores.floon_count > 0:
+        print(f"FLOON Score: {category_scores.floon_count} different tokens")
+    if category_scores.flock_count > 0:
+        print(f"FLOCK Score: {category_scores.flock_count} different tokens")
+    if category_scores.kevin_count > 0:
+        print(f"KEVIN Score: {category_scores.kevin_count} different tokens")
+    if category_scores.brick_count > 0:
+        print(f"BRICK Score: {category_scores.brick_count} different tokens")
     
     print(f"\nHolder Status: {category_scores.get_category_description()}")
     
