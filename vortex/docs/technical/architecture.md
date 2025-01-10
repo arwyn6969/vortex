@@ -1,8 +1,8 @@
-# Technical Architecture
+# Technical Architecture Implementation
 
-## System Overview
+> For a high-level overview of the system architecture and mystical integration, see [Core Architecture](../core/architecture.md)
 
-The Vortex of Enlightenment is built on a modular, event-driven architecture that combines behavioral psychology with mythological wisdom traditions. This document outlines the technical implementation and system design.
+This document focuses on the technical implementation details of the Vortex of Enlightenment system.
 
 ```ascii
 +----------------+     +----------------+     +----------------+

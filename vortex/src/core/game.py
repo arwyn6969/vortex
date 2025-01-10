@@ -4,12 +4,16 @@ Game core functionality.
 from typing import Optional, Dict
 from pathlib import Path
 from datetime import datetime, timedelta
+from uuid import UUID
+
 from .player import Player
 from .ui.terminal import TerminalUI
 from .user_profiling.questionnaire import VoightKampffQuestionnaire
 from .user_profiling.profile_matrix import ProfileMatrix, ProfileDimension
 from .user_profiling.behavioral_analysis import BehavioralAnalysis
 from .achievements import AchievementManager
+from .finance import TokenService
+from .db.session import get_db
 
 class Game:
     # Auto-save interval in minutes
@@ -23,9 +27,21 @@ class Game:
         self.behavioral_analysis = BehavioralAnalysis(self.profile_matrix)
         self.questionnaire = VoightKampffQuestionnaire()
         self.achievement_manager = AchievementManager(self.ui)
+        self.token_service = TokenService(get_db(), self.achievement_manager)
         self.last_save_time = datetime.now()
         self.last_achievement_check = datetime.now()
         
+        # Set up keystroke tracking
+        self.ui.set_keystroke_callback(self._handle_keystrokes)
+        
+    def _handle_keystrokes(self, keystroke_count: int):
+        """Handle keystroke tracking and token awards."""
+        if self.player and hasattr(self.player, 'id'):
+            self.token_service.record_keystrokes(
+                UUID(self.player.id), 
+                keystroke_count
+            )
+    
     def start(self):
         """Initialize and start the game."""
         try:
@@ -219,6 +235,8 @@ class Game:
             self.quit_game()
         elif command == "achievements":
             self.show_achievements()
+        elif command == "tokens":
+            self.show_token_info()
         elif command == "save":
             self.save_game()
         elif self.current_zone:
@@ -342,3 +360,27 @@ class Game:
         """Clean up and exit the game."""
         self.ui.display_text("\nThank you for exploring the Vortex. Until we meet again...")
         exit(0) 
+    
+    def show_token_info(self):
+        """Display token information if available."""
+        if not self.player or not hasattr(self.player, 'id'):
+            return
+            
+        balance = self.token_service.get_balance(UUID(self.player.id))
+        if balance is None:
+            self.ui.display_text("\nNo token information available yet.")
+            return
+            
+        self.ui.display_text(f"\nCurrent Token Balance: {balance}")
+        
+        # Show recent transactions
+        transactions = self.token_service.get_transaction_history(
+            UUID(self.player.id),
+            limit=5
+        )
+        if transactions:
+            self.ui.display_text("\nRecent Transactions:")
+            for tx in transactions:
+                self.ui.display_text(
+                    f"- {tx.description}: {tx.amount} tokens"
+                ) 

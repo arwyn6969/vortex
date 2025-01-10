@@ -3,11 +3,10 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum, auto
-from typing import Any, Dict, List, Optional, Union, Set, Tuple
+from typing import Any, Dict, List, Optional, Union, Set
 from uuid import UUID, uuid4
 
 from ..permissions import PermissionManager, Permission
-from .templates import AssetTemplates, ValidationError
 
 class AssetType(Enum):
     """Valid types of assets in the system."""
@@ -41,16 +40,6 @@ class AssetMetadata:
     approved: bool = False
     approved_by: Optional[UUID] = None
     approval_date: Optional[datetime] = None
-    collaborators: Set[UUID] = None
-    forks_from: Optional[UUID] = None
-    fork_version: Optional[int] = None
-    ratings: Dict[UUID, float] = None
-    comments: List[Dict[str, Any]] = None
-
-    def __post_init__(self):
-        self.collaborators = self.collaborators or set()
-        self.ratings = self.ratings or {}
-        self.comments = self.comments or []
 
 class AssetManager:
     """Manages all game assets including scenes, characters, and items."""
@@ -63,8 +52,6 @@ class AssetManager:
         }
         self._permission_manager = permission_manager
         self._version_history: Dict[UUID, List[Dict[str, Any]]] = {}
-        self._templates = AssetTemplates()
-        self._forks: Dict[UUID, Set[UUID]] = {}  # original -> set of forks
     
     def create_asset(
         self,
@@ -89,13 +76,6 @@ class AssetManager:
         if not self._permission_manager.has_permission(creator_id, required_permission):
             return None
         
-        # Validate content against template
-        try:
-            self._templates.validate_asset(asset_type.name, content)
-            content = self._templates.apply_defaults(asset_type.name, content)
-        except ValidationError as e:
-            raise ValueError(f"Content validation failed: {str(e)}")
-        
         asset_id = uuid4()
         now = datetime.utcnow()
         
@@ -110,8 +90,7 @@ class AssetManager:
             properties=properties or {},
             is_deleted=False,
             version=1,
-            approved=not require_approval,  # Auto-approve if not required
-            collaborators={creator_id}  # Creator is automatically a collaborator
+            approved=not require_approval  # Auto-approve if not required
         )
         
         # Create content
@@ -131,254 +110,10 @@ class AssetManager:
             "version": 1,
             "content": content,
             "metadata": metadata,
-            "timestamp": now,
-            "editor_id": creator_id
+            "timestamp": now
         }]
         
         return asset_id
-    
-    def fork_asset(
-        self,
-        asset_id: UUID,
-        forker_id: UUID,
-        new_properties: Optional[Dict[str, Any]] = None
-    ) -> Optional[UUID]:
-        """Create a fork of an existing asset."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return None
-            
-        original = self._assets[asset_id]
-        content = self._asset_contents[asset_id]
-        
-        # Check permissions
-        required_permission = getattr(Permission, f"CREATE_{original.asset_type.name}")
-        if not self._permission_manager.has_permission(forker_id, required_permission):
-            return None
-        
-        # Create fork with original content
-        fork_id = self.create_asset(
-            asset_type=original.asset_type,
-            content=content.data,
-            content_type=content.content_type,
-            creator_id=forker_id,
-            properties={**original.properties, **(new_properties or {})},
-            tags=original.tags.copy()
-        )
-        
-        if fork_id:
-            # Update fork metadata
-            fork = self._assets[fork_id]
-            fork.forks_from = asset_id
-            fork.fork_version = original.version
-            
-            # Track fork relationship
-            if asset_id not in self._forks:
-                self._forks[asset_id] = set()
-            self._forks[asset_id].add(fork_id)
-        
-        return fork_id
-    
-    def add_collaborator(
-        self,
-        asset_id: UUID,
-        collaborator_id: UUID,
-        adder_id: UUID
-    ) -> bool:
-        """Add a collaborator to an asset."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return False
-            
-        metadata = self._assets[asset_id]
-        
-        # Check if adder has permission
-        if (
-            adder_id != metadata.creator_id
-            and adder_id not in metadata.collaborators
-            and not self._permission_manager.has_permission(adder_id, Permission.ADMIN)
-        ):
-            return False
-        
-        metadata.collaborators.add(collaborator_id)
-        return True
-    
-    def remove_collaborator(
-        self,
-        asset_id: UUID,
-        collaborator_id: UUID,
-        remover_id: UUID
-    ) -> bool:
-        """Remove a collaborator from an asset."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return False
-            
-        metadata = self._assets[asset_id]
-        
-        # Check if remover has permission
-        if (
-            remover_id != metadata.creator_id
-            and remover_id not in metadata.collaborators
-            and not self._permission_manager.has_permission(remover_id, Permission.ADMIN)
-        ):
-            return False
-        
-        # Can't remove the creator
-        if collaborator_id == metadata.creator_id:
-            return False
-        
-        metadata.collaborators.discard(collaborator_id)
-        return True
-    
-    def rate_asset(
-        self,
-        asset_id: UUID,
-        rater_id: UUID,
-        rating: float
-    ) -> bool:
-        """Rate an asset (1-5 scale)."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return False
-            
-        if not 1 <= rating <= 5:
-            raise ValueError("Rating must be between 1 and 5")
-            
-        metadata = self._assets[asset_id]
-        metadata.ratings[rater_id] = rating
-        return True
-    
-    def add_comment(
-        self,
-        asset_id: UUID,
-        commenter_id: UUID,
-        content: str,
-        parent_id: Optional[UUID] = None
-    ) -> Optional[UUID]:
-        """Add a comment to an asset."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return None
-            
-        metadata = self._assets[asset_id]
-        comment_id = uuid4()
-        
-        comment = {
-            "id": comment_id,
-            "content": content,
-            "commenter_id": commenter_id,
-            "timestamp": datetime.utcnow(),
-            "parent_id": parent_id,
-            "edited": False
-        }
-        
-        metadata.comments.append(comment)
-        return comment_id
-    
-    def edit_comment(
-        self,
-        asset_id: UUID,
-        comment_id: UUID,
-        editor_id: UUID,
-        new_content: str
-    ) -> bool:
-        """Edit a comment."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return False
-            
-        metadata = self._assets[asset_id]
-        
-        for comment in metadata.comments:
-            if comment["id"] == comment_id:
-                if comment["commenter_id"] != editor_id:
-                    return False
-                    
-                comment["content"] = new_content
-                comment["edited"] = True
-                return True
-                
-        return False
-    
-    def get_asset_rating(self, asset_id: UUID) -> Optional[float]:
-        """Get average rating for an asset."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return None
-            
-        metadata = self._assets[asset_id]
-        if not metadata.ratings:
-            return None
-            
-        return sum(metadata.ratings.values()) / len(metadata.ratings)
-    
-    def get_asset_comments(
-        self,
-        asset_id: UUID,
-        parent_id: Optional[UUID] = None
-    ) -> List[Dict[str, Any]]:
-        """Get comments for an asset, optionally filtered by parent_id."""
-        if asset_id not in self._assets or self._assets[asset_id].is_deleted:
-            return []
-            
-        metadata = self._assets[asset_id]
-        return [
-            c for c in metadata.comments
-            if c["parent_id"] == parent_id
-        ]
-    
-    def get_asset_forks(self, asset_id: UUID) -> Set[UUID]:
-        """Get all forks of an asset."""
-        return self._forks.get(asset_id, set())
-    
-    def get_fork_tree(self, asset_id: UUID) -> Dict[str, Any]:
-        """Get the complete fork tree of an asset."""
-        if asset_id not in self._assets:
-            return {}
-            
-        def build_tree(current_id: UUID) -> Dict[str, Any]:
-            metadata = self._assets[current_id]
-            tree = {
-                "id": current_id,
-                "creator": metadata.creator_id,
-                "version": metadata.version,
-                "forks": []
-            }
-            
-            for fork_id in self._forks.get(current_id, set()):
-                if not self._assets[fork_id].is_deleted:
-                    tree["forks"].append(build_tree(fork_id))
-                    
-            return tree
-            
-        return build_tree(asset_id)
-    
-    def merge_fork(
-        self,
-        fork_id: UUID,
-        merger_id: UUID
-    ) -> bool:
-        """Merge a fork back into its original asset."""
-        if fork_id not in self._assets or self._assets[fork_id].is_deleted:
-            return False
-            
-        fork = self._assets[fork_id]
-        if not fork.forks_from:
-            return False
-            
-        original_id = fork.forks_from
-        if original_id not in self._assets or self._assets[original_id].is_deleted:
-            return False
-            
-        original = self._assets[original_id]
-        
-        # Check permissions
-        if (
-            merger_id not in original.collaborators
-            and not self._permission_manager.has_permission(merger_id, Permission.ADMIN)
-        ):
-            return False
-        
-        # Create new version of original with fork's content
-        return self.update_asset(
-            asset_id=original_id,
-            editor_id=merger_id,
-            content=self._asset_contents[fork_id].data
-        )
     
     def update_asset(
         self,

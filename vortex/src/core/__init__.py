@@ -1,10 +1,3 @@
-"""
-Core module for Vortex of Enlightenment game.
-""" 
+"""Core package containing the main game components."""
 
-from .redis_service import RedisService
-
-# Create singleton instance of Redis service
-redis_service = RedisService()
-
-__all__ = ["redis_service"] 
+__version__ = "0.1.0" 

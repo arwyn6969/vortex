@@ -3,13 +3,37 @@ Terminal-based user interface for the game.
 """
 import os
 import sys
-from typing import Optional
+from typing import Optional, Callable
+from datetime import datetime
 
 class TerminalUI:
     """Handles terminal-based user interaction."""
     
     def __init__(self):
         self.last_command: Optional[str] = None
+        self.keystroke_callback: Optional[Callable[[int], None]] = None
+        self._keystroke_buffer = 0
+        self._last_keystroke_time = datetime.now()
+        self._keystroke_batch_size = 10  # Send keystrokes in batches
+    
+    def set_keystroke_callback(self, callback: Callable[[int], None]):
+        """Set callback for keystroke tracking."""
+        self.keystroke_callback = callback
+    
+    def _handle_keystrokes(self, text: str):
+        """Handle keystroke tracking."""
+        if not self.keystroke_callback:
+            return
+            
+        # Count keystrokes (excluding backspaces)
+        keystroke_count = len(text)
+        self._keystroke_buffer += keystroke_count
+        
+        # If we've reached the batch size, send the keystrokes
+        if self._keystroke_buffer >= self._keystroke_batch_size:
+            self.keystroke_callback(self._keystroke_buffer)
+            self._keystroke_buffer = 0
+            self._last_keystroke_time = datetime.now()
     
     def clear_screen(self):
         """Clear the terminal screen."""
@@ -39,7 +63,9 @@ wisdom reflect the essence of your being.
     def prompt(self, message: str) -> str:
         """Prompt the user for input."""
         try:
-            return input(f"{message} ")
+            response = input(f"{message} ")
+            self._handle_keystrokes(response)
+            return response
         except (KeyboardInterrupt, EOFError):
             self.display_text("\nFarewell, seeker...")
             sys.exit(0)
@@ -48,6 +74,7 @@ wisdom reflect the essence of your being.
         """Get a command from the user."""
         try:
             command = input("\nWhat would you like to do? ").strip().lower()
+            self._handle_keystrokes(command)
             self.last_command = command
             return command
         except (KeyboardInterrupt, EOFError):

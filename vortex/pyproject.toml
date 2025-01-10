@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vortex"
+version = "0.1.0"
+description = "Vortex Crypto Testing"
+requires-python = ">=3.8"
+dependencies = [
+    "pytest>=7.0.0",
+    "coincurve>=18.0.0",
+    "base58>=2.1.0",
+    "mnemonic>=0.20",
+    "cryptography>=3.4.7",
+] 
