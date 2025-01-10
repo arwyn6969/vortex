@@ -28,6 +28,35 @@ class ValidationResult:
     metadata: Dict[str, any]
     timestamp: datetime
 
+class ValidationMetrics:
+    """Tracks and analyzes validation results over time."""
+    
+    def __init__(self):
+        self.results: List[ValidationResult] = []
+        self.issue_counts: Dict[str, int] = defaultdict(int)
+        self.total_score = 0.0
+        
+    def add_result(self, result: ValidationResult):
+        """Add a validation result to the metrics."""
+        self.results.append(result)
+        self.total_score += result.score
+        for issue in result.issues:
+            self.issue_counts[issue] += 1
+            
+    def get_average_score(self) -> float:
+        """Get the average validation score."""
+        if not self.results:
+            return 0.0
+        return self.total_score / len(self.results)
+    
+    def get_common_issues(self, top_n: int = 5) -> Dict[str, int]:
+        """Get the most common issues."""
+        return dict(sorted(
+            self.issue_counts.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:top_n])
+
 class AIBehaviorValidator:
     """Core validator class for AI behavior analysis."""
     
@@ -373,54 +402,19 @@ class AIBehaviorValidator:
     ]
     
     def __init__(self):
+        self.metrics = ValidationMetrics()
         self.logger = logging.getLogger(__name__)
-        self._cultural_keywords = set(self.CULTURAL_SENSITIVITY.keys())
-        self._mythological_references = self.MYTHOLOGICAL_REFS
-        self._emotional_patterns = {
-            pattern: re.compile(rf'\b({"|".join(words)})\b', re.IGNORECASE)
-            for pattern, words in self.EMOTIONAL_PATTERNS.items()
-        }
-        self._respectful_patterns = [
-            (re.compile(pattern, re.IGNORECASE), weight)
-            for pattern, weight in self.RESPECTFUL_PATTERNS
-        ]
-        self._disrespectful_patterns = [
-            (re.compile(pattern, re.IGNORECASE), weight)
-            for pattern, weight in self.DISRESPECTFUL_PATTERNS
-        ]
         
-        # Initialize enhanced pattern detection
-        self._compile_contextual_patterns()
-        self._initialize_nltk()
-    
-    def _compile_contextual_patterns(self):
-        """Compile all contextual patterns for efficient matching."""
-        self._compiled_patterns = {
-            category: [(re.compile(pattern, re.IGNORECASE), weight)
-                      for pattern, weight in patterns]
-            for category, patterns in self.CONTEXTUAL_PATTERNS.items()
-        }
-    
-    def _initialize_nltk(self):
-        """Initialize NLTK components."""
-        try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            nltk.download('punkt')
-    
     async def validate_response(
         self,
         message: Message,
-        context: Dict[str, any],
+        context: Dict,
         behavioral_matrix: BehavioralMatrix
     ) -> ValidationResult:
         """Validate an AI response against multiple criteria."""
-        issues = []
-        recommendations = []
-        scores = []
         
         # Run all validation checks concurrently
-        validation_tasks = [
+        tasks = [
             self._check_cultural_sensitivity(message, context),
             self._check_emotional_intelligence(message, behavioral_matrix),
             self._check_guide_consistency(message, context),
@@ -428,109 +422,56 @@ class AIBehaviorValidator:
             self._check_response_quality(message)
         ]
         
-        results = await asyncio.gather(*validation_tasks)
+        results = await asyncio.gather(*tasks)
         
-        for result in results:
-            scores.append(result["score"])
-            issues.extend(result["issues"])
-            recommendations.extend(result["recommendations"])
+        # Aggregate results
+        total_score = sum(r["score"] for r in results) / len(results)
+        all_issues = [issue for r in results for issue in r["issues"]]
+        all_recommendations = [rec for r in results for rec in r["recommendations"]]
         
-        return ValidationResult(
-            is_valid=all(score >= 0.7 for score in scores),
-            score=sum(scores) / len(scores),
-            issues=issues,
-            recommendations=recommendations,
-            metadata={"individual_scores": scores},
+        # Create final result
+        result = ValidationResult(
+            is_valid=total_score >= 0.7,  # Threshold for validity
+            score=total_score,
+            issues=all_issues,
+            recommendations=all_recommendations,
+            metadata={"component_scores": {i: r["score"] for i, r in enumerate(results)}},
             timestamp=datetime.now()
         )
+        
+        # Track metrics
+        self.metrics.add_result(result)
+        return result
     
     async def _check_cultural_sensitivity(
         self,
         message: Message,
-        context: Dict[str, any]
+        context: Dict
     ) -> Dict:
-        """Enhanced cultural sensitivity validation with sophisticated context analysis."""
+        """Check for cultural sensitivity issues."""
         content = message.content.lower()
-        cultural_context = context.get("cultural_context", "").lower()
-        
         score = 1.0
         issues = []
         recommendations = []
         
-        # Tokenize content for sophisticated analysis
-        sentences = sent_tokenize(content)
-        words = word_tokenize(content)
-        
-        # Generate n-grams for phrase analysis
-        bigrams = list(ngrams(words, 2))
-        trigrams = list(ngrams(words, 3))
-        
-        # Context window analysis
-        for i, word in enumerate(words):
-            if word in self._cultural_keywords:
-                # Get context window
-                start = max(0, i - self.CONTEXT_WINDOW_SIZE)
-                end = min(len(words), i + self.CONTEXT_WINDOW_SIZE + 1)
-                context_window = words[start:end]
-                
-                # Analyze modifiers in context
-                score_modifier = self._analyze_context_modifiers(context_window)
-                score *= score_modifier
-                
-                if score_modifier < 1.0:
-                    context_str = " ".join(context_window)
-                    issues.append(f"Potentially problematic context around '{word}': '{context_str}'")
-                    recommendations.append(
-                        f"Consider rephrasing the context around '{word}' to be more culturally sensitive"
-                    )
-        
-        # Check for problematic phrase combinations
-        for words_set, weight in self.PHRASE_COMBINATIONS:
-            if all(word in content for word in words_set):
+        # Check for problematic patterns
+        for pattern, weight in self.DISRESPECTFUL_PATTERNS:
+            if re.search(pattern, content):
                 score += weight
-                if weight < 0:
-                    issues.append(f"Problematic phrase combination: {', '.join(words_set)}")
-                    recommendations.append(
-                        f"Avoid combining these terms: {', '.join(words_set)}"
-                    )
+                issues.append(f"Found disrespectful pattern: {pattern}")
+                recommendations.append(f"Avoid using '{pattern}' in responses")
         
-        # Enhanced pattern matching with contextual understanding
-        for category, patterns in self._compiled_patterns.items():
-            for pattern, weight in patterns:
-                matches = pattern.finditer(content)
-                for match in matches:
-                    score += weight
-                    group = match.group('group') if 'group' in match.groupdict() else match.group(0)
-                    
-                    if weight < 0:
-                        issues.append(f"Problematic {category} pattern: '{group}'")
-                        recommendations.append(
-                            self._get_contextual_recommendation(category, group)
-                        )
-        
-        # Analyze sentence-level patterns
-        for sentence in sentences:
-            # Check for complex cultural statements
-            if self._contains_cultural_comparison(sentence):
-                score -= 0.2
-                issues.append("Complex cultural comparison detected")
-                recommendations.append(
-                    "Avoid making direct comparisons between cultural practices"
-                )
+        # Check cultural context
+        cultural_context = context.get("cultural_context", "")
+        if cultural_context in self.CULTURAL_CONTEXTS:
+            context_data = self.CULTURAL_CONTEXTS[cultural_context]
             
-            # Check for overgeneralization
-            if self._contains_overgeneralization(sentence):
-                score -= 0.3
-                issues.append("Cultural overgeneralization detected")
-                recommendations.append(
-                    "Be more specific and avoid broad generalizations about cultural groups"
-                )
-        
-        # Final contextual adjustments
-        if cultural_context:
-            score = self._apply_cultural_context_rules(
-                score, cultural_context, content, issues, recommendations
-            )
+            # Check for sensitive terms
+            for term in context_data["sensitive"]:
+                if term in content:
+                    score -= 0.1
+                    issues.append(f"Used sensitive term '{term}' in {cultural_context} context")
+                    recommendations.append(f"Consider using {context_data['respectful']} instead")
         
         return {
             "score": max(0.0, min(1.0, score)),
@@ -538,147 +479,28 @@ class AIBehaviorValidator:
             "recommendations": recommendations
         }
     
-    def _analyze_context_modifiers(self, context_window: List[str]) -> float:
-        """Analyze modifiers in the context window and return score modifier."""
-        modifier = 1.0
-        
-        for word in context_window:
-            word = word.lower()
-            if word in self.CONTEXTUAL_MODIFIERS["positive"]:
-                modifier += self.CONTEXTUAL_MODIFIERS["positive"][word]
-            elif word in self.CONTEXTUAL_MODIFIERS["negative"]:
-                modifier += self.CONTEXTUAL_MODIFIERS["negative"][word]
-            
-            # Apply intensity modifiers
-            if word in self.CONTEXTUAL_MODIFIERS["intensity"]:
-                modifier *= self.CONTEXTUAL_MODIFIERS["intensity"][word]
-        
-        return modifier
-    
-    def _contains_cultural_comparison(self, sentence: str) -> bool:
-        """Check for complex cultural comparisons."""
-        comparison_markers = [
-            "more", "less", "better", "worse", "unlike", "different from",
-            "superior", "inferior", "advanced", "primitive"
-        ]
-        return any(marker in sentence.lower() for marker in comparison_markers)
-    
-    def _contains_overgeneralization(self, sentence: str) -> bool:
-        """Check for cultural overgeneralizations."""
-        generalization_markers = [
-            "always", "never", "all", "every", "none", "everyone", "nobody",
-            "everywhere", "nowhere"
-        ]
-        return any(marker in sentence.lower() for marker in generalization_markers)
-    
-    def _get_contextual_recommendation(self, category: str, group: str) -> str:
-        """Generate context-aware recommendations."""
-        recommendations = {
-            "comparison": f"Instead of comparing {group}, focus on describing specific practices or beliefs",
-            "attribution": f"Rather than attributing behaviors to {group}, describe specific instances or individuals",
-            "generalization": f"Avoid generalizing about {group}; focus on specific aspects or examples"
-        }
-        return recommendations.get(category, "Consider rephrasing to be more specific and respectful")
-    
-    def _apply_cultural_context_rules(
-        self,
-        score: float,
-        cultural_context: str,
-        content: str,
-        issues: List[str],
-        recommendations: List[str]
-    ) -> float:
-        """Apply sophisticated cultural context-specific rules."""
-        context_parts = cultural_context.split("_")
-        
-        for part in context_parts:
-            if part in self.CULTURAL_CONTEXTS:
-                context_data = self.CULTURAL_CONTEXTS[part]
-                
-                # Analyze term relationships
-                positive_terms = set(context_data["positive"])
-                sensitive_terms = set(context_data["sensitive"])
-                respectful_terms = set(context_data["respectful"])
-                
-                # Check for term co-occurrence
-                words = set(word_tokenize(content.lower()))
-                positive_count = len(words & positive_terms)
-                sensitive_count = len(words & sensitive_terms)
-                respectful_count = len(words & respectful_terms)
-                
-                # Apply sophisticated scoring
-                if sensitive_count > 0 and positive_count == 0:
-                    score *= 0.8  # Severe penalty for sensitive terms without positive context
-                    recommendations.append(
-                        f"Balance sensitive terms with positive cultural references: {', '.join(context_data['positive'])}"
-                    )
-                
-                if respectful_count > 0:
-                    score = min(1.0, score + (0.1 * respectful_count))
-                
-                # Check for term proximity
-                if sensitive_count > 0 and respectful_count > 0:
-                    if self._terms_are_properly_contextualized(content, sensitive_terms, respectful_terms):
-                        score *= 1.1  # Bonus for proper contextualization
-                    else:
-                        score *= 0.9
-                        recommendations.append(
-                            "Ensure sensitive terms are properly contextualized with respectful language"
-                        )
-        
-        return score
-    
-    def _terms_are_properly_contextualized(
-        self,
-        content: str,
-        sensitive_terms: Set[str],
-        respectful_terms: Set[str]
-    ) -> bool:
-        """Check if sensitive terms are properly contextualized with respectful language."""
-        sentences = sent_tokenize(content.lower())
-        
-        for sentence in sentences:
-            words = word_tokenize(sentence)
-            has_sensitive = any(term in words for term in sensitive_terms)
-            has_respectful = any(term in words for term in respectful_terms)
-            
-            if has_sensitive and not has_respectful:
-                return False
-        
-        return True
-    
     async def _check_emotional_intelligence(
         self,
         message: Message,
         behavioral_matrix: BehavioralMatrix
     ) -> Dict:
-        """Validate emotional intelligence of the response."""
+        """Check for emotional intelligence in responses."""
         content = message.content.lower()
         score = 0.7  # Base score
         issues = []
         recommendations = []
         
-        # Check for emotional intelligence patterns
-        pattern_matches = defaultdict(int)
-        for pattern, regex in self._emotional_patterns.items():
-            matches = len(regex.findall(content))
-            pattern_matches[pattern] = matches
-            
-            if matches == 0:
-                score -= 0.1
-                issues.append(f"Lacks {pattern} in response")
-                recommendations.append(f"Include more {pattern} in the response")
-            else:
-                score = min(1.0, score + (0.05 * matches))
-        
-        # Check emotional balance
-        total_matches = sum(pattern_matches.values())
-        if total_matches > 0:
-            balance = max(pattern_matches.values()) / total_matches
-            if balance > 0.5:  # One pattern dominates
-                score *= 0.9
-                issues.append("Response shows emotional imbalance")
-                recommendations.append("Balance different aspects of emotional intelligence")
+        # Check for emotional patterns
+        for category, patterns in self.EMOTIONAL_PATTERNS.items():
+            found = False
+            for pattern in patterns:
+                if pattern in content:
+                    found = True
+                    score += 0.05
+                    break
+            if not found:
+                issues.append(f"Missing {category} in response")
+                recommendations.append(f"Include {category} elements in response")
         
         return {
             "score": max(0.0, min(1.0, score)),
@@ -689,53 +511,21 @@ class AIBehaviorValidator:
     async def _check_guide_consistency(
         self,
         message: Message,
-        context: Dict[str, any]
+        context: Dict
     ) -> Dict:
-        """Validate consistency with guide personality."""
-        content = message.content.lower()
-        guide_personality = context.get("guide_personality", "").lower()
-        
-        personality_traits = {
-            "wise_sage": {
-                "positive": ["wisdom", "knowledge", "understand", "teach", "guide"],
-                "negative": ["hasty", "impulsive", "uncertain", "guess"]
-            },
-            "warrior_mentor": {
-                "positive": ["strength", "courage", "discipline", "honor", "challenge"],
-                "negative": ["weak", "fear", "doubt", "hesitate"]
-            },
-            "mystic_guide": {
-                "positive": ["mystery", "energy", "spirit", "vision", "harmony"],
-                "negative": ["concrete", "literal", "mundane", "ordinary"]
-            }
-        }
-        
+        """Check if response is consistent with guide personality."""
+        guide_personality = context.get("guide_personality", "")
+        content = message.content
         score = 0.8  # Base score
         issues = []
         recommendations = []
         
-        if guide_personality in personality_traits:
-            traits = personality_traits[guide_personality]
-            
-            # Check for positive trait alignment
-            positive_matches = sum(1 for word in traits["positive"] if word in content)
-            if positive_matches == 0:
+        # Simple personality consistency check
+        if guide_personality == "wise_sage":
+            if not any(word in content.lower() for word in ["wisdom", "understand", "learn", "knowledge"]):
                 score -= 0.2
-                issues.append(f"Response lacks {guide_personality} personality traits")
-                recommendations.append(
-                    f"Include more {guide_personality.replace('_', ' ')} characteristics"
-                )
-            else:
-                score = min(1.0, score + (0.05 * positive_matches))
-            
-            # Check for negative trait presence
-            negative_matches = sum(1 for word in traits["negative"] if word in content)
-            if negative_matches > 0:
-                score -= 0.1 * negative_matches
-                issues.append(f"Response contains inappropriate traits for {guide_personality}")
-                recommendations.append(
-                    f"Avoid terms that conflict with {guide_personality.replace('_', ' ')} persona"
-                )
+                issues.append("Response lacks sage-like wisdom elements")
+                recommendations.append("Include more wisdom-oriented language")
         
         return {
             "score": max(0.0, min(1.0, score)),
@@ -743,45 +533,27 @@ class AIBehaviorValidator:
             "recommendations": recommendations
         }
     
-    async def _check_mythological_accuracy(
-        self,
-        message: Message
-    ) -> Dict:
-        """Validate mythological references and accuracy."""
+    async def _check_mythological_accuracy(self, message: Message) -> Dict:
+        """Check mythological references for accuracy."""
         content = message.content.lower()
         score = 1.0
         issues = []
         recommendations = []
         
         # Check each mythology's references
-        for mythology, deities in self._mythological_references.items():
+        for mythology, deities in self.MYTHOLOGICAL_REFS.items():
             for deity, info in deities.items():
                 if deity in content:
-                    # Check if deity's domains are properly referenced
-                    domain_matches = sum(1 for domain in info["domains"] if domain in content)
-                    if domain_matches == 0:
+                    # Check if domains are properly referenced
+                    found_domain = False
+                    for domain in info["domains"]:
+                        if domain in content:
+                            found_domain = True
+                            break
+                    if not found_domain:
                         score -= 0.1
-                        issues.append(
-                            f"Reference to {deity} lacks proper domain context"
-                        )
-                        recommendations.append(
-                            f"When mentioning {deity}, include reference to their domains: {', '.join(info['domains'])}"
-                        )
-                    else:
-                        score = min(1.0, score + (0.05 * domain_matches))
-        
-        # Check for mixed mythology consistency
-        mythologies_referenced = set()
-        for mythology in self._mythological_references:
-            if any(deity in content for deity in self._mythological_references[mythology]):
-                mythologies_referenced.add(mythology)
-        
-        if len(mythologies_referenced) > 1:
-            score *= 0.9
-            issues.append("Multiple mythological systems referenced")
-            recommendations.append(
-                "Consider focusing on one mythological system unless explicitly comparing"
-            )
+                        issues.append(f"Referenced {deity} without proper domain context")
+                        recommendations.append(f"Include {deity}'s domains ({', '.join(info['domains'])})")
         
         return {
             "score": max(0.0, min(1.0, score)),
@@ -789,88 +561,28 @@ class AIBehaviorValidator:
             "recommendations": recommendations
         }
     
-    async def _check_response_quality(
-        self,
-        message: Message
-    ) -> Dict:
-        """Validate general response quality and latency."""
+    async def _check_response_quality(self, message: Message) -> Dict:
+        """Check general response quality."""
         content = message.content
-        response_time = message.metadata.get("response_time_ms", 1000)
-        
         score = 1.0
         issues = []
         recommendations = []
         
         # Check response length
-        word_count = len(content.split())
-        if word_count < 10:
-            score -= 0.2
+        if len(content) < 20:
+            score -= 0.3
             issues.append("Response too short")
-            recommendations.append("Provide more detailed responses")
-        elif word_count > 200:
-            score -= 0.1
-            issues.append("Response may be too verbose")
-            recommendations.append("Consider being more concise")
-        
-        # Check response time
-        if response_time > 1000:  # More than 1 second
-            score -= 0.1
-            issues.append("Response time too high")
-            recommendations.append("Optimize response generation")
+            recommendations.append("Provide more detailed response")
         
         # Check sentence structure
-        sentences = [s.strip() for s in re.split(r'[.!?]+', content) if s.strip()]
+        sentences = sent_tokenize(content)
         if len(sentences) < 2:
             score -= 0.1
-            issues.append("Response lacks structural complexity")
-            recommendations.append("Use more varied sentence structure")
-        
-        # Check for repeated words
-        words = content.lower().split()
-        word_freq = defaultdict(int)
-        for word in words:
-            word_freq[word] += 1
-        
-        repeated_words = [word for word, count in word_freq.items() if count > 3]
-        if repeated_words:
-            score -= 0.1
-            issues.append("Excessive word repetition")
-            recommendations.append(
-                f"Reduce repetition of: {', '.join(repeated_words)}"
-            )
+            issues.append("Response lacks complexity")
+            recommendations.append("Use more complex sentence structure")
         
         return {
             "score": max(0.0, min(1.0, score)),
             "issues": issues,
             "recommendations": recommendations
-        }
-
-class ValidationMetrics:
-    """Tracks and analyzes validation metrics over time."""
-    
-    def __init__(self):
-        self.metrics: List[ValidationResult] = []
-        
-    def add_result(self, result: ValidationResult) -> None:
-        """Add a validation result to the metrics tracker."""
-        self.metrics.append(result)
-    
-    def get_average_score(self) -> float:
-        """Calculate the average validation score."""
-        if not self.metrics:
-            return 0.0
-        return sum(r.score for r in self.metrics) / len(self.metrics)
-    
-    def get_common_issues(self, limit: int = 10) -> List[str]:
-        """Get the most common validation issues."""
-        issue_counts: Dict[str, int] = {}
-        for result in self.metrics:
-            for issue in result.issues:
-                issue_counts[issue] = issue_counts.get(issue, 0) + 1
-        
-        sorted_issues = sorted(
-            issue_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-        return [issue for issue, _ in sorted_issues[:limit]] 
+        } 
