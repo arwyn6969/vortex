@@ -2,12 +2,13 @@
 Base class for game zones (ponds).
 """
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 from ..guides.base_guide import Guide
 from .stream_manager import StreamManager
 from ..core.user_profiling.profile_matrix import ProfileDimension
 from ..core.user_profiling.personalization import ContentItem
 from ..core.user_profiling.adaptive_learning import AdaptiveLearningPath, LearningPathNode
+from ..core.items import ItemRegistry
 
 class Zone(ABC):
     _stream_manager = StreamManager()  # Shared instance for all zones
@@ -23,6 +24,8 @@ class Zone(ABC):
         self.current_state: Dict[str, Any] = {}
         self.active_players: List[Any] = []
         self.learning_path: Optional[AdaptiveLearningPath] = None
+        self._item_registry = ItemRegistry()
+        self._items_in_zone: Set[str] = set()
         
     def initialize_learning_path(
         self,
@@ -168,6 +171,23 @@ class Zone(ABC):
             )
             player.ui.display_text(response)
             return True
+
+        # Item-related actions
+        if action.startswith("pickup ") or action.startswith("take "):
+            item_id = action.split(" ", 1)[1].strip()
+            return self._handle_pickup(item_id, player)
+            
+        if action.startswith("drop "):
+            item_id = action.split(" ", 1)[1].strip()
+            return self._handle_drop(item_id, player)
+            
+        if action.startswith("examine ") or action.startswith("look at "):
+            item_id = action.split(" ", 1)[1].strip()
+            return self._handle_examine(item_id, player)
+            
+        if action.startswith("use "):
+            item_id = action.split(" ", 1)[1].strip()
+            return self._handle_use(item_id, player)
             
         # Movement actions
         if action.startswith("move "):
@@ -266,9 +286,19 @@ class Zone(ABC):
     def get_available_actions(self) -> List[str]:
         """Get list of available actions in this zone."""
         actions = ["look", "inventory", "talk", "help"]
+        
+        # Add item-related actions
+        for item_id in self._items_in_zone:
+            item_props = self._item_registry.get_item_properties(item_id)
+            if item_props and item_props.can_be_picked_up:
+                actions.append(f"pickup {item_id}")
+            if item_props and item_props.can_be_examined:
+                actions.append(f"examine {item_id}")
+                
         # Add connected zones as possible movement actions
         for zone in self.get_connected_zones():
             actions.append(f"move {zone}")
+            
         return actions
     
     def get_symbolic_info(self) -> Optional[Dict]:
@@ -386,3 +416,90 @@ class Zone(ABC):
             bool: True if challenge started successfully
         """
         pass 
+    
+    def add_item(self, item_id: str) -> bool:
+        """Add an item to this zone."""
+        if not self._item_registry.item_exists(item_id):
+            return False
+        self._items_in_zone.add(item_id)
+        return True
+    
+    def remove_item(self, item_id: str) -> bool:
+        """Remove an item from this zone."""
+        if item_id in self._items_in_zone:
+            self._items_in_zone.remove(item_id)
+            return True
+        return False
+    
+    def get_items_in_zone(self) -> Set[str]:
+        """Get all items currently in this zone."""
+        return self._items_in_zone.copy()
+    
+    def _handle_pickup(self, item_id: str, player) -> bool:
+        """Handle picking up an item."""
+        if item_id not in self._items_in_zone:
+            player.ui.display_text(f"There is no {item_id} here to pick up.")
+            return False
+            
+        item_props = self._item_registry.get_item_properties(item_id)
+        if not item_props or not item_props.can_be_picked_up:
+            player.ui.display_text(f"You cannot pick up the {item_id}.")
+            return False
+            
+        player.add_to_inventory(item_id)
+        self.remove_item(item_id)
+        player.ui.display_text(f"You pick up the {item_id}.")
+        return True
+    
+    def _handle_drop(self, item_id: str, player) -> bool:
+        """Handle dropping an item."""
+        if not player.has_item(item_id):
+            player.ui.display_text(f"You don't have a {item_id} to drop.")
+            return False
+            
+        item_props = self._item_registry.get_item_properties(item_id)
+        if not item_props or not item_props.can_be_dropped:
+            player.ui.display_text(f"You cannot drop the {item_id}.")
+            return False
+            
+        if player.remove_from_inventory(item_id):
+            self.add_item(item_id)
+            player.ui.display_text(f"You drop the {item_id}.")
+            return True
+        return False
+    
+    def _handle_examine(self, item_id: str, player) -> bool:
+        """Handle examining an item."""
+        # Check if item is in inventory or in zone
+        if not (player.has_item(item_id) or item_id in self._items_in_zone):
+            player.ui.display_text(f"You don't see a {item_id} to examine.")
+            return False
+            
+        item_props = self._item_registry.get_item_properties(item_id)
+        if not item_props or not item_props.can_be_examined:
+            player.ui.display_text(f"You cannot examine the {item_id}.")
+            return False
+            
+        message = item_props.examine_message or item_props.description
+        player.ui.display_text(message)
+        return True
+    
+    def _handle_use(self, item_id: str, player) -> bool:
+        """Handle using an item."""
+        if not player.has_item(item_id):
+            player.ui.display_text(f"You don't have a {item_id} to use.")
+            return False
+            
+        item_props = self._item_registry.get_item_properties(item_id)
+        if not item_props or not item_props.can_be_used:
+            player.ui.display_text(f"You cannot use the {item_id}.")
+            return False
+            
+        message = item_props.use_message or f"You use the {item_id}."
+        player.ui.display_text(message)
+        
+        # If item is consumable, remove it after use
+        if item_props.can_be_used and isinstance(item_props.use_message, str):
+            player.remove_from_inventory(item_id)
+            
+        return True 
