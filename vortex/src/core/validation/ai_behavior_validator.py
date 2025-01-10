@@ -16,7 +16,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.util import ngrams
 
 from ..communication.message_system import Message
-from ..profile.behavioral_matrix import BehavioralMatrix
+from ..user_profiling.profile_matrix import BehavioralMatrix
 
 @dataclass
 class ValidationResult:
