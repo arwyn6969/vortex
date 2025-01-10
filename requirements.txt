@@ -15,4 +15,5 @@ torch>=2.1.2  # Deep learning framework
 torchvision>=0.16.2  # Computer vision utilities
 pinatapy-vourhey>=0.1.6  # Pinata IPFS client
 python-multipart>=0.0.6  # For handling file uploads
-tqdm>=4.66.1  # Progress bars 
+tqdm>=4.66.1  # Progress bars
+customtkinter>=5.2.1  # Modern GUI framework 
