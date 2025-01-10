@@ -13,6 +13,7 @@ A mystical terminal-based journey through interconnected realms of wisdom, combi
 - **Sacred Geometry**: Hexagonal arrangement of ponds with golden ratio proportions
 - **Intelligent Guides**: Adaptive personality system providing contextual wisdom
 - **Terminal-Based Interface**: Clean, focused, and immersive text experience
+- **Bitcoin Token Integration**: Special multipliers from STAMPS and SRC-20 tokens enhance your journey
 
 ## 🚀 Quick Start
 
@@ -95,6 +96,13 @@ Each pond represents a unique aspect of wisdom and growth:
 - Inter-pond energy streams
 - Resonance patterns
 - Challenge availability based on system harmony
+
+### Bitcoin Token System
+- Integration with STAMPS and SRC-20 tokens
+- Special multipliers from token ownership
+- Stackable bonuses up to 4.05x
+- Real-time balance checking and verification
+- Enhanced rewards for token holders
 
 ## 📚 Documentation
 

@@ -13,6 +13,8 @@ from .user_profiling.profile_matrix import ProfileMatrix, ProfileDimension
 from .user_profiling.behavioral_analysis import BehavioralAnalysis
 from .achievements import AchievementManager
 from .finance import TokenService
+from .finance.bitcoin_tokens import BitcoinTokenType
+from .finance.token_config import SPECIAL_SRC20_MULTIPLIERS, SPECIAL_STAMPS_MULTIPLIERS
 from .db.session import get_db
 
 class Game:
@@ -361,7 +363,7 @@ class Game:
         self.ui.display_text("\nThank you for exploring the Vortex. Until we meet again...")
         exit(0) 
     
-    def show_token_info(self):
+    async def show_token_info(self):
         """Display token information if available."""
         if not self.player or not hasattr(self.player, 'id'):
             return
@@ -373,6 +375,55 @@ class Game:
             
         self.ui.display_text(f"\nCurrent Token Balance: {balance}")
         
+        # Show Bitcoin token balances and multipliers
+        bitcoin_tokens = await self.token_service.get_bitcoin_token_balances(
+            UUID(self.player.id),
+            force_refresh=True
+        )
+        
+        if bitcoin_tokens:
+            self.ui.display_text("\nBitcoin Token Balances:")
+            
+            # Group tokens by type
+            src20_tokens = []
+            stamps = []
+            for token in bitcoin_tokens:
+                if token.balance > 0:
+                    if token.token_type == BitcoinTokenType.SRC20:
+                        src20_tokens.append(token)
+                    else:  # STAMPS
+                        stamps.append(token)
+            
+            # Show SRC-20 tokens
+            if src20_tokens:
+                self.ui.display_text("\nSRC-20 Tokens:")
+                for token in src20_tokens:
+                    multiplier = SPECIAL_SRC20_MULTIPLIERS.get(token.token_id)
+                    multiplier_text = f" (+{multiplier}x multiplier)" if multiplier else ""
+                    self.ui.display_text(
+                        f"- {token.token_id}: {token.balance}{multiplier_text}"
+                    )
+            
+            # Show STAMPS
+            if stamps:
+                self.ui.display_text("\nSTAMPS:")
+                for token in stamps:
+                    multiplier = SPECIAL_STAMPS_MULTIPLIERS.get(token.token_id)
+                    multiplier_text = f" (+{multiplier}x multiplier)" if multiplier else ""
+                    self.ui.display_text(
+                        f"- {token.token_id}: {token.balance}{multiplier_text}"
+                    )
+            
+            # Show total special token multiplier
+            special_multiplier = await self.token_service._get_special_token_multiplier(
+                UUID(self.player.id)
+            )
+            if special_multiplier > 1:
+                self.ui.display_text(
+                    f"\nTotal Token Multiplier: {special_multiplier}x "
+                    "(from owned STAMPS and SRC-20 tokens)"
+                )
+        
         # Show recent transactions
         transactions = self.token_service.get_transaction_history(
             UUID(self.player.id),
@@ -383,4 +434,25 @@ class Game:
             for tx in transactions:
                 self.ui.display_text(
                     f"- {tx.description}: {tx.amount} tokens"
-                ) 
+                )
+    
+    async def set_bitcoin_address(self, address: str):
+        """Set the user's Bitcoin address for STAMPS/SRC20 tracking.
+        
+        Args:
+            address: Bitcoin address to associate with the user
+        """
+        if not self.player or not hasattr(self.player, 'id'):
+            return
+            
+        # Get user's token balance record
+        balance = self.token_service.get_balance_record(UUID(self.player.id))
+        if balance:
+            balance.bitcoin_address = address
+            self.token_service.db.commit()
+            self.ui.display_text(f"\nBitcoin address set: {address}")
+            
+            # Fetch initial balances
+            await self.show_token_info()
+        else:
+            self.ui.display_text("\nError: Could not set Bitcoin address.") 

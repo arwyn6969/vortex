@@ -11,6 +11,47 @@ The token system is a hidden game mechanic that rewards players for their intera
 - **Rate Limiting**: Maximum 300 keystrokes per minute to prevent abuse
 - **Multipliers**: Stack multiplicatively for bonus token earnings
 
+### Bitcoin Token Integration
+The game integrates with Bitcoin-based tokens (STAMPS and SRC-20) to provide special multipliers:
+
+#### SRC-20 Token Multipliers
+Each of these tokens provides a +0.42x multiplier:
+- BALD
+- VIVIA
+- KEVIN
+- DEVIN
+- WOOL
+- LOG
+- MANDY
+- SPICE
+
+#### STAMPS Multipliers
+Special STAMPS that provide multipliers:
+- A5433937813514022010: +0.69x multiplier
+
+#### Creator Bonus Multiplier
+- Each unique token (STAMP or SRC-20) created by address `1AwS3wRFNCoymKs69BXjAA4VfgWvuKvx4j` provides an additional +0.0042069x multiplier
+- This bonus applies per unique token ID owned
+- Example: Owning 3 different tokens from this creator adds +0.0126207x to your total multiplier
+
+#### Multiplier Stacking
+- All multipliers stack additively
+- Base multiplier starts at 1.0x
+- Example: Owning WOOL (+0.42x) and MANDY (+0.42x) results in a 1.84x total multiplier
+- Creator bonus multipliers are added on top of other multipliers
+- Maximum potential multiplier varies based on the number of creator tokens owned
+
+#### Checking Token Balances
+Use the `check_tokens_simple.py` tool to view:
+- Current token balances
+- Active multipliers
+- Available upgrades
+- Effective token rate
+
+```bash
+python check_tokens_simple.py <bitcoin_address> [--all]
+```
+
 ### Transaction Types
 - `KEYSTROKE`: Earned from keyboard input
 - `CHALLENGE`: Earned from completing challenges

@@ -40,6 +40,7 @@ class TerminalUI:
 - **State Manager**: Maintains system state
 - **Profile Tracker**: Monitors user progress
 - **Integration Engine**: Combines different systems
+- **Token Manager**: Handles token interactions and multipliers
 
 ```python
 class CoreEngine:
@@ -48,6 +49,7 @@ class CoreEngine:
         self.state_manager = StateManager()
         self.profile_tracker = ProfileTracker()
         self.integration_engine = IntegrationEngine()
+        self.token_manager = TokenManager()
 ```
 
 ### 3. Profile System
@@ -150,12 +152,22 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     profile = relationship("Profile", back_populates="user")
     progress = relationship("Progress", back_populates="user")
+    token_balances = relationship("TokenBalance", back_populates="user")
 
 class Profile(Base):
     __tablename__ = 'profiles'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     matrix = Column(JSON)
+
+class TokenBalance(Base):
+    __tablename__ = 'token_balances'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
+    token_type = Column(Enum('SRC20', 'STAMPS', 'COUNTERPARTY'))
+    token_id = Column(String)
+    balance = Column(Numeric)
+    metadata = Column(JSON)
 ```
 
 ## Event System
@@ -166,6 +178,7 @@ class Profile(Base):
 - Challenge Events
 - Profile Updates
 - System Events
+- Token Events
 
 ```python
 class EventBus:
@@ -175,6 +188,11 @@ class EventBus:
     async def publish(self, event: Event) -> None:
         for subscriber in self.subscribers[event.type]:
             await subscriber.handle(event)
+
+class TokenEvent(Event):
+    def __init__(self, event_type: str, data: Dict):
+        super().__init__('token', event_type)
+        self.data = data
 ```
 
 ## Security
@@ -248,6 +266,46 @@ pytest tests/
 - Memory usage
 - Response times
 - Storage efficiency
+
+## Token System
+
+### Token Manager
+- **Balance Tracker**: Monitors token holdings
+- **Multiplier Calculator**: Computes reward multipliers
+- **Portfolio Analyzer**: Analyzes token collections
+- **Category Scorer**: Tracks token categories
+
+```python
+class TokenManager:
+    def __init__(self):
+        self.balance_tracker = BalanceTracker()
+        self.multiplier_calculator = MultiplierCalculator()
+        self.portfolio_analyzer = PortfolioAnalyzer()
+        self.category_scorer = CategoryScorer()
+        
+    async def update_balances(self, address: str) -> None:
+        """Update token balances from multiple sources."""
+        pass
+        
+    async def calculate_multipliers(self) -> Decimal:
+        """Calculate current reward multipliers."""
+        pass
+```
+
+### Token Integration
+- **Pond Connection**: Links tokens to pond resonance
+- **Profile Impact**: Token effects on profile
+- **Challenge Modification**: Token-based challenge adjustments
+- **Reward Scaling**: Multiplier application
+
+```python
+class TokenIntegration:
+    def __init__(self):
+        self.pond_connector = PondConnector()
+        self.profile_modifier = ProfileModifier()
+        self.challenge_adjuster = ChallengeAdjuster()
+        self.reward_scaler = RewardScaler()
+```
 
 ---
 

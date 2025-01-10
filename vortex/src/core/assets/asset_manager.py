@@ -16,6 +16,8 @@ class AssetType(Enum):
     LOOT = auto()
     STAMP = auto()
     NFT = auto()
+    SRC20 = auto()  # Bitcoin SRC-20 tokens
+    STAMPS = auto()  # Bitcoin Stamps
 
 @dataclass
 class AssetContent:
