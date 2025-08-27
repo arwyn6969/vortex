@@ -1,0 +1,3 @@
+"""
+core.db package initialization.
+""" 

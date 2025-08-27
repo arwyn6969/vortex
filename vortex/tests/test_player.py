@@ -1,5 +1,5 @@
 import pytest
-from src.core.player import Player
+from vortex.src.core.player import Player
 
 def test_player_creation():
     player = Player("TestUser")

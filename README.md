@@ -22,50 +22,168 @@ VORTEX is a mystical journey through interconnected spiritual realms, combining 
   - Sacred geometry patterns
   - Symbolic interpretation challenges
 
+- **LLM-Powered Dialogue**:
+  - Deepseek R1 integration for dynamic guide interactions
+  - Personalized responses based on player profile
+  - Contextually aware conversations
+  - Cultural and mythological consistency
+
+## Installation
+
+### Prerequisites
+
+- Python 3.8 or higher
+- pip package manager
+- Redis (optional, for advanced caching)
+- SQLite (default database) or PostgreSQL (for production)
+
+### Basic Installation
+
+1. Clone the repository
+```bash
+git clone https://github.com/username/vortex.git
+cd vortex
+```
+
+2. Create and activate a virtual environment
+```bash
+# On Linux/macOS
+python -m venv .venv
+source .venv/bin/activate
+
+# On Windows
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+4. Run the game
+```bash
+python run_game.py
+```
+
+### Development Installation
+
+For development work, install additional development dependencies:
+
+```bash
+pip install -r requirements-dev.txt
+pip install -e .  # Install in editable mode
+```
+
+Set up pre-commit hooks:
+```bash
+pre-commit install
+```
+
+### Environment Configuration
+
+VORTEX can be configured using environment variables:
+
+```bash
+# Core app configuration
+export VORTEX_APP__DEBUG=true
+export VORTEX_APP__LOG_LEVEL=DEBUG
+
+# Database configuration
+export VORTEX_DATABASE__URL="sqlite:///vortex_dev.db"
+
+# LLM configuration
+export VORTEX_LLM__API_KEY="your-api-key"
+```
+
+Alternatively, create a `.env` file in the project root:
+
+```
+VORTEX_APP__DEBUG=true
+VORTEX_APP__LOG_LEVEL=DEBUG
+VORTEX_DATABASE__URL=sqlite:///vortex_dev.db
+```
+
 ## Project Structure
 
 ```
 vortex/
-├── src/
-│   └── core/
-│       ├── adaptive_game/
-│       ├── mythology/
-│       ├── persistence/
-│       ├── profiling/
-│       └── challenges/
-├── docs/
-│   ├── core/
-│   ├── guides/
-│   ├── reference/
-│   └── technical/
-└── tests/
+├── src/                  # Main source code
+│   ├── core/             # Core game functionality
+│   ├── guides/           # Mythological guide system
+│   ├── zones/            # Location and pond system
+│   ├── mythology/        # Mythological systems integration
+│   └── db/               # Database models and connections
+├── docs/                 # Documentation
+│   ├── architecture.md   # System architecture
+│   ├── api/              # API documentation
+│   ├── guides/           # User guides
+│   └── reference/        # Reference materials
+├── tests/                # Test suite
+├── examples/             # Example scripts and usage
+└── scripts/              # Utility scripts
 ```
 
 ## Documentation
 
-Comprehensive documentation is available in the `vortex/docs` directory:
-- `core/`: Technical and architectural documentation
-- `guides/`: User manuals and tutorials
-- `reference/`: API references and troubleshooting
-- `technical/`: Technical specifications
+Comprehensive documentation is available in the `docs` directory:
 
-## Getting Started
+- [Architecture Overview](docs/architecture.md) - System design and component interactions
+- [Developer Guide](docs/guides/developer_guide.md) - Guide for developers
+- [User Guide](docs/guides/user_guide.md) - Guide for players
+- [Configuration Reference](docs/reference/configuration.md) - Configuration options
 
-1. Clone the repository
-2. Install dependencies:
+## Development
+
+### Running Tests
+
+Run the test suite:
+
 ```bash
-pip install -r requirements.txt
+# Run all tests
+pytest
+
+# Run with coverage report
+pytest --cov=vortex --cov-report=term-missing
+
+# Run specific test
+pytest vortex/tests/core/test_game.py
 ```
-3. Follow the setup guide in `docs/guides/getting_started.md`
+
+### Code Quality
+
+Run linting checks:
+
+```bash
+flake8 vortex
+pylint vortex
+mypy vortex
+```
+
+Generate documentation:
+
+```bash
+cd docs
+make html
+```
 
 ## Contributing
 
-Please read `docs/CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests.
+Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
-## Changelog
-
-See `docs/CHANGELOG.md` for a list of changes and version history.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-[License details to be added]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- The Egyptian, Dogon, and Mayan mythological systems
+- The Sefirot and Tree of Life concepts
+- Sacred geometry principles
+- Deepseek AI for LLM capabilities

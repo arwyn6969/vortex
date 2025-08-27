@@ -1,10 +1,12 @@
 """
 Tests for the celestial alignment system.
 """
+import unittest
 import pytest
-from ..src.mythology.celestial_alignments import AlignmentManager, AlignmentType, CelestialAlignment
-from ..src.mythology.archetype_manager import ArchetypeManager
-from ..src.mythology.alignment_data import populate_alignment_data
+from datetime import datetime
+from vortex.src.mythology.celestial_alignments import AlignmentManager, AlignmentType, CelestialAlignment
+from vortex.src.mythology.archetype_manager import ArchetypeManager
+from vortex.src.mythology.alignment_data import populate_alignment_data
 
 @pytest.fixture
 def archetype_manager():

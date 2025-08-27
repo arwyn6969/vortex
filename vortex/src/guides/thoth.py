@@ -30,29 +30,7 @@ class ThothGuide(Guide):
             "practical": 0.6
         }
     
-    def get_welcome_message(self, profile: Dict[ProfileDimension, float]) -> str:
-        """Generate personalized welcome message."""
-        # Adapt message based on user's profile dimensions
-        consciousness_depth = profile.get(ProfileDimension.CONSCIOUSNESS_DEPTH, 0.5)
-        metaphorical_thinking = profile.get(ProfileDimension.METAPHORICAL_THINKING, 0.5)
-        
-        if consciousness_depth > 0.7 and metaphorical_thinking > 0.7:
-            return (
-                "Welcome, seeker of divine wisdom. I am Thoth, keeper of the sacred "
-                "knowledge and measurer of cosmic cycles. Together we shall explore "
-                "the deeper mysteries of existence."
-            )
-        elif consciousness_depth > 0.5 or metaphorical_thinking > 0.5:
-            return (
-                "Greetings, I am Thoth, guardian of wisdom and knowledge. "
-                "Let us explore the balance between the practical and mystical realms."
-            )
-        else:
-            return (
-                "Welcome. I am Thoth, and I shall guide you through the foundations "
-                "of wisdom and knowledge. We will begin with what is concrete and "
-                "gradually explore the mysteries."
-            )
+    # Removed hardcoded welcome message - now uses LLM-powered welcome from base class
     
     def generate_response(
         self,
@@ -70,13 +48,14 @@ class ThothGuide(Guide):
         
         # Adapt teaching style based on profile
         strategic = profile.get(ProfileDimension.STRATEGIC_THINKING, 0.5)
-        spiritual = profile.get(ProfileDimension.SPIRITUAL_RESONANCE, 0.5)
+        wisdom = profile.get(ProfileDimension.WISDOM, 0.5)
+        consciousness = profile.get(ProfileDimension.CONSCIOUSNESS_DEPTH, 0.5)
         
         if strategic > 0.7:
             self.teaching_style["analytical"] = min(1.0, self.teaching_style["analytical"] + 0.1)
             self.teaching_style["practical"] = min(1.0, self.teaching_style["practical"] + 0.1)
         
-        if spiritual > 0.7:
+        if wisdom > 0.7:
             self.teaching_style["mystical"] = min(1.0, self.teaching_style["mystical"] + 0.1)
             self.teaching_style["philosophical"] = min(1.0, self.teaching_style["philosophical"] + 0.1)
         

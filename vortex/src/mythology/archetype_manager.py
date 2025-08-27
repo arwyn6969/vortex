@@ -16,6 +16,9 @@ class CulturalSystem(Enum):
     NORSE = "norse"
     CELTIC = "celtic"
     HOPI = "hopi"
+    AZTEC = "aztec"
+    PERSIAN = "persian"
+    YORUBA = "yoruba"
 
 @dataclass
 class ArchetypeMapping:
@@ -35,196 +38,117 @@ class ArchetypeManager:
     
     def __init__(self):
         self.archetype_mappings: Dict[str, ArchetypeMapping] = {}
+        self.elemental_mappings: Dict[CulturalSystem, Dict[str, List[str]]] = {}
+        self.cosmic_level_mappings: Dict[CulturalSystem, Dict[str, List[str]]] = {}
         self._initialize_core_mappings()
     
     def _initialize_core_mappings(self) -> None:
         """Initialize core archetype mappings across cultures."""
-        # Wisdom Teacher / Wise Old Man archetype
-        self.archetype_mappings["wisdom_teacher"] = ArchetypeMapping(
-            name="Wisdom Teacher",
-            description="The sage who guides through knowledge and wisdom",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Thoth",
-                CulturalSystem.MAYAN: "Itzamna",
-                CulturalSystem.DOGON: "Nommo",
-                CulturalSystem.KABBALISTIC: "Hochmah",
-                CulturalSystem.JUNGIAN: "Wise Old Man",
-                CulturalSystem.TAROT: "The Hierophant",
-                CulturalSystem.NORSE: "Odin",
-                CulturalSystem.CELTIC: "Taliesin",
-                CulturalSystem.HOPI: "Masauwu"
+        self.archetype_mappings.update({
+            # Creator/Divine Source
+            "creator": {
+                CulturalSystem.EGYPTIAN: ["ra", "ptah"],
+                CulturalSystem.CELTIC: ["dagda", "danu"],
+                CulturalSystem.AZTEC: ["ometeotl", "tezcatlipoca"],
+                CulturalSystem.PERSIAN: ["ahura_mazda"],
+                CulturalSystem.YORUBA: ["olodumare", "olorun"]
             },
-            attributes={"wisdom", "knowledge", "teaching", "guidance"},
-            resonant_dimensions={"wisdom", "self_reflection", "consciousness_depth"},
-            celestial_correspondences={"Winter Solstice", "Sirius"},
-            jungian_aspect="Wise Old Man",
-            hero_stage="Supernatural Aid",
-            tarot_cards={"The Hierophant", "The Hermit"}
-        )
-        
-        # Harmony Keeper / Anima archetype
-        self.archetype_mappings["harmony_keeper"] = ArchetypeMapping(
-            name="Harmony Keeper",
-            description="The maintainer of balance and cosmic order",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Maat",
-                CulturalSystem.MAYAN: "Hunab Ku",
-                CulturalSystem.DOGON: "Amma",
-                CulturalSystem.KABBALISTIC: "Tiferet",
-                CulturalSystem.JUNGIAN: "Anima",
-                CulturalSystem.TAROT: "Justice",
-                CulturalSystem.NORSE: "Forseti",
-                CulturalSystem.CELTIC: "Brigid",
-                CulturalSystem.HOPI: "Spider Woman"
+            # Wisdom/Knowledge
+            "sage": {
+                CulturalSystem.EGYPTIAN: ["thoth", "isis"],
+                CulturalSystem.CELTIC: ["ogma", "cerridwen"],
+                CulturalSystem.AZTEC: ["quetzalcoatl"],
+                CulturalSystem.PERSIAN: ["mithra", "anahita"],
+                CulturalSystem.YORUBA: ["orunmila", "eshu"]
             },
-            attributes={"balance", "harmony", "order", "justice"},
-            resonant_dimensions={"empathy", "moral_alignment", "contextual_fluidity"},
-            celestial_correspondences={"Equinox", "Cardinal Directions"},
-            jungian_aspect="Anima",
-            hero_stage="Meeting with the Goddess",
-            tarot_cards={"Justice", "Temperance"}
-        )
-        
-        # Great Mother archetype
-        self.archetype_mappings["great_mother"] = ArchetypeMapping(
-            name="Great Mother",
-            description="The nurturing force of unconditional love and protection",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Isis",
-                CulturalSystem.MAYAN: "Ix Chel",
-                CulturalSystem.DOGON: "Yasigi",
-                CulturalSystem.KABBALISTIC: "Binah",
-                CulturalSystem.JUNGIAN: "Great Mother",
-                CulturalSystem.TAROT: "The Empress",
-                CulturalSystem.NORSE: "Frigg",
-                CulturalSystem.CELTIC: "Danu",
-                CulturalSystem.HOPI: "Kokyanwuhti"
+            # Warrior/Protector
+            "warrior": {
+                CulturalSystem.EGYPTIAN: ["horus", "sekhmet"],
+                CulturalSystem.CELTIC: ["scathach", "cu_chulainn"],
+                CulturalSystem.AZTEC: ["huitzilopochtli"],
+                CulturalSystem.PERSIAN: ["verethragna"],
+                CulturalSystem.YORUBA: ["ogun", "shango"]
             },
-            attributes={
-                "nurturing",
-                "protection",
-                "healing",
-                "abundance",
-                "creation",
-                "wisdom"
+            # Mother/Nurturer
+            "mother": {
+                CulturalSystem.EGYPTIAN: ["isis", "hathor"],
+                CulturalSystem.CELTIC: ["brigid", "danu"],
+                CulturalSystem.AZTEC: ["coatlicue", "chalchiuhtlicue"],
+                CulturalSystem.PERSIAN: ["anahita", "spenta_armaiti"],
+                CulturalSystem.YORUBA: ["yemoja", "oshun"]
             },
-            resonant_dimensions={
-                "empathy",
-                "emotional_response",
-                "wisdom"
+            # Trickster/Messenger
+            "trickster": {
+                CulturalSystem.EGYPTIAN: ["set"],
+                CulturalSystem.CELTIC: ["gwydion", "lugh"],
+                CulturalSystem.AZTEC: ["tezcatlipoca"],
+                CulturalSystem.PERSIAN: ["angra_mainyu"],
+                CulturalSystem.YORUBA: ["eshu"]
+            }
+        })
+
+        # Update elemental correspondences
+        self.elemental_mappings.update({
+            CulturalSystem.EGYPTIAN: {
+                "fire": ["ra", "sekhmet"],
+                "water": ["osiris", "isis"],
+                "air": ["shu", "thoth"],
+                "earth": ["geb", "ptah"]
             },
-            celestial_correspondences={"Pleiades", "Full Moon"},
-            jungian_aspect="Great Mother",
-            hero_stage="Meeting with the Goddess",
-            tarot_cards={"The Empress", "The High Priestess"}
-        )
-        
-        # Mystic Seer archetype
-        self.archetype_mappings["mystic_seer"] = ArchetypeMapping(
-            name="Mystic Seer",
-            description="The visionary who perceives hidden patterns and connections",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Wadjet",
-                CulturalSystem.MAYAN: "Chilam Balam",
-                CulturalSystem.DOGON: "Lebe",
-                CulturalSystem.KABBALISTIC: "Binah",
-                CulturalSystem.JUNGIAN: "Crone",
-                CulturalSystem.TAROT: "High Priestess",
-                CulturalSystem.NORSE: "Völva",
-                CulturalSystem.CELTIC: "Morrígan",
-                CulturalSystem.HOPI: "Grandmother Spider"
+            CulturalSystem.CELTIC: {
+                "fire": ["brigid", "lugh"],
+                "water": ["manannan", "boann"],
+                "air": ["taranis", "morrigan"],
+                "earth": ["dagda", "cernunnos"]
             },
-            attributes={"vision", "intuition", "prophecy", "pattern-recognition"},
-            resonant_dimensions={"quantum_intuition", "synchronicity_awareness", "dream_logic"},
-            celestial_correspondences={"Sirius", "Deneb", "Winter Solstice"},
-            jungian_aspect="Wise Old Woman",
-            hero_stage="Supernatural Aid",
-            tarot_cards={"The High Priestess", "The Moon"}
-        )
-        
-        # Trickster Transformer archetype
-        self.archetype_mappings["trickster_transformer"] = ArchetypeMapping(
-            name="Trickster Transformer",
-            description="The catalyst of change through chaos and disruption",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Set",
-                CulturalSystem.MAYAN: "Huracan",
-                CulturalSystem.DOGON: "Pale Fox",
-                CulturalSystem.KABBALISTIC: "Hod",
-                CulturalSystem.JUNGIAN: "Trickster",
-                CulturalSystem.TAROT: "The Magician",
-                CulturalSystem.NORSE: "Loki",
-                CulturalSystem.CELTIC: "Puck",
-                CulturalSystem.HOPI: "Coyote"
+            CulturalSystem.AZTEC: {
+                "fire": ["xiuhtecuhtli"],
+                "water": ["tlaloc", "chalchiuhtlicue"],
+                "air": ["ehecatl", "quetzalcoatl"],
+                "earth": ["coatlicue", "tlaltecuhtli"]
             },
-            attributes={"transformation", "chaos", "creativity", "disruption"},
-            resonant_dimensions={"adaptability", "creativity", "quantum_intuition"},
-            jungian_aspect="Trickster",
-            hero_stage="Tests and Trials",
-            tarot_cards={"The Magician", "The Tower", "The Wheel of Fortune"}
-        )
-        
-        # Divine Warrior archetype
-        self.archetype_mappings["divine_warrior"] = ArchetypeMapping(
-            name="Divine Warrior",
-            description="The protector and champion of sacred principles",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Sekhmet",
-                CulturalSystem.MAYAN: "Tohil",
-                CulturalSystem.NORSE: "Thor",
-                CulturalSystem.CELTIC: "Scathach",
-                CulturalSystem.HOPI: "War Twins",
-                CulturalSystem.JUNGIAN: "Warrior",
-                CulturalSystem.TAROT: "Strength"
+            CulturalSystem.PERSIAN: {
+                "fire": ["atar", "mithra"],
+                "water": ["anahita", "tishtrya"],
+                "air": ["vayu", "rashnu"],
+                "earth": ["spenta_armaiti", "zam"]
             },
-            attributes={
-                "protection",
-                "courage",
-                "strength",
-                "justice",
-                "honor",
-                "discipline"
+            CulturalSystem.YORUBA: {
+                "fire": ["shango", "ogun"],
+                "water": ["yemoja", "oshun"],
+                "air": ["oya", "olorun"],
+                "earth": ["onile", "oko"]
+            }
+        })
+
+        # Update cosmic level associations
+        self.cosmic_level_mappings.update({
+            CulturalSystem.EGYPTIAN: {
+                "celestial": ["ra", "horus"],
+                "terrestrial": ["osiris", "isis"],
+                "underworld": ["anubis", "nephthys"]
             },
-            resonant_dimensions={
-                "persistence",
-                "decision_making",
-                "moral_alignment"
+            CulturalSystem.CELTIC: {
+                "celestial": ["lugh", "brigid"],
+                "terrestrial": ["dagda", "cernunnos"],
+                "underworld": ["morrigan", "donn"]
             },
-            jungian_aspect="Warrior",
-            hero_stage="Road of Trials",
-            tarot_cards={"Strength", "Justice", "The Chariot"}
-        )
-        
-        # Earth Keeper archetype
-        self.archetype_mappings["earth_keeper"] = ArchetypeMapping(
-            name="Earth Keeper",
-            description="The guardian of natural wisdom and ecological harmony",
-            cultural_variants={
-                CulturalSystem.EGYPTIAN: "Geb",
-                CulturalSystem.MAYAN: "Cab",
-                CulturalSystem.NORSE: "Freyr",
-                CulturalSystem.CELTIC: "Cernunnos",
-                CulturalSystem.HOPI: "Maasaw",
-                CulturalSystem.JUNGIAN: "Nature Spirit",
-                CulturalSystem.TAROT: "The World"
+            CulturalSystem.AZTEC: {
+                "celestial": ["huitzilopochtli", "tonatiuh"],
+                "terrestrial": ["tlaloc", "xipe_totec"],
+                "underworld": ["mictlantecuhtli", "mictecacihuatl"]
             },
-            attributes={
-                "stewardship",
-                "harmony",
-                "cycles",
-                "growth",
-                "sustainability",
-                "connection"
+            CulturalSystem.PERSIAN: {
+                "celestial": ["ahura_mazda", "mithra"],
+                "terrestrial": ["anahita", "verethragna"],
+                "underworld": ["angra_mainyu", "nasu"]
             },
-            resonant_dimensions={
-                "contextual_fluidity",
-                "pattern_recognition",
-                "sensory_integration"
-            },
-            jungian_aspect="Nature Spirit",
-            hero_stage="Return with the Elixir",
-            tarot_cards={"The World", "The Empress", "The Hermit"}
-        )
+            CulturalSystem.YORUBA: {
+                "celestial": ["olodumare", "shango"],
+                "terrestrial": ["oshun", "ogun"],
+                "underworld": ["eshu", "obaluaye"]
+            }
+        })
 
     def get_archetype(self, name: str) -> Optional[ArchetypeMapping]:
         """Get archetype mapping by name."""

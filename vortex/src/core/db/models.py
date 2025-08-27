@@ -59,7 +59,7 @@ class Message(Base):
     message_type = Column(String, nullable=False)
     status = Column(String, nullable=False, default='PENDING')
     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
-    metadata = Column(JSON, nullable=False, default=dict)
+    metadata_ = Column('metadata', JSON, nullable=False, default=dict)
     
     # Recipients and read status
     recipient_ids = Column(JSON, nullable=False)  # List of UUIDs
@@ -75,7 +75,7 @@ class Agent(Base):
     level = Column(Integer, nullable=False, default=1)
     experience = Column(Integer, nullable=False, default=0)
     status = Column(String, nullable=False, default='IDLE')
-    metadata = Column(JSON, nullable=False, default=dict)
+    metadata_ = Column('metadata', JSON, nullable=False, default=dict)
     skill_levels = Column(JSON, nullable=False, default=dict)
     
     # Relationships
@@ -93,7 +93,7 @@ class Task(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
-    metadata = Column(JSON, nullable=False, default=dict)
+    metadata_ = Column('metadata', JSON, nullable=False, default=dict)
     result = Column(Text, nullable=True)
     
     # Relationships

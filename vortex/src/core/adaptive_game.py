@@ -1,4 +1,5 @@
 from typing import Dict, Optional
+import time
 
 from .ui.terminal import TerminalUI
 from .user_profiling.profile_matrix import ProfileMatrix, ProfileDimension
@@ -25,7 +26,8 @@ class AdaptiveGame:
             self.ui.display_text(
                 "\nWelcome to the Vortex of Enlightenment. "
                 "I will present you with a series of scenarios, "
-                "adapting to your responses to better understand your path."
+                "adapting to your responses to better understand your path. "
+                "Please answer thoughtfully and honestly - there are no right or wrong answers."
             )
             
             question_count = 0
@@ -35,91 +37,47 @@ class AdaptiveGame:
                 if not question:
                     break
                     
-                # Display question and options
+                # Display question with context
+                if question.context:
+                    self.ui.display_text(f"\n{question.context}")
                 self.ui.display_text(f"\n{question.text}")
-                for i, option in enumerate(question.options):
-                    self.ui.display_text(f"{i + 1}. {option}")
-                    
-                # Get valid response
-                max_retries = 3
-                retry_count = 0
-                while retry_count < max_retries:
-                    try:
-                        response = self.ui.prompt("\nChoose your response (1-4): ")
-                        option_index = int(response) - 1
-                        if 0 <= option_index < len(question.options):
-                            break
-                        self.ui.display_text(
-                            f"Please enter a number between 1 and {len(question.options)}."
-                        )
-                    except ValueError:
-                        self.ui.display_text("Please enter a valid number.")
-                    retry_count += 1
-                    
-                if retry_count >= max_retries:
-                    self.ui.display_text(
-                        "Maximum retry attempts reached. Moving to next question."
-                    )
+                
+                # Get response
+                try:
+                    response = self.ui.prompt("\nYour response: ")
+                    if not response.strip():
+                        self.ui.display_text("Please provide a response.")
+                        response = self.ui.prompt("\nYour response: ")
+                except Exception as e:
+                    self.ui.display_text(f"Error getting response: {str(e)}")
                     continue
-                    
-                # Process response and get updates
-                updates = self.adaptive_questionnaire.process_response(
-                    user_id,
-                    question,
-                    option_index
-                )
                 
-                # Check for interesting patterns and ask follow-up
-                followup = self.adaptive_questionnaire.generate_followup_question(
-                    user_id,
-                    question,
-                    option_index
-                )
-                
-                if followup:
-                    self.ui.display_text(
-                        "\nYour response reveals an interesting perspective. "
-                        "Please consider this follow-up:"
+                # Process response and update profile
+                try:
+                    updates = self.adaptive_questionnaire.process_response(
+                        user_id,
+                        question,
+                        response
                     )
-                    self.ui.display_text(f"\n{followup.text}")
-                    for i, option in enumerate(followup.options):
-                        self.ui.display_text(f"{i + 1}. {option}")
-                        
-                    # Get follow-up response
-                    retry_count = 0
-                    while retry_count < max_retries:
-                        try:
-                            response = self.ui.prompt("\nChoose your response (1-4): ")
-                            option_index = int(response) - 1
-                            if 0 <= option_index < len(followup.options):
-                                break
-                            self.ui.display_text(
-                                f"Please enter a number between 1 and {len(followup.options)}."
-                            )
-                        except ValueError:
-                            self.ui.display_text("Please enter a valid number.")
-                        retry_count += 1
-                        
-                    if retry_count < max_retries:
-                        # Process follow-up response
-                        followup_updates = self.adaptive_questionnaire.process_response(
-                            user_id,
-                            followup,
-                            option_index
-                        )
-                        updates.update(followup_updates)
-                        
+                except Exception as e:
+                    self.ui.display_text(f"Error processing response: {str(e)}")
+                    continue
+                
                 question_count += 1
+                
+                # Add a thoughtful pause between questions
+                self.ui.display_text("\n...")
+                time.sleep(2)
                 
                 # Display insights (optional)
                 self._display_dimension_updates(updates)
-                
+            
             # Get final profile
             profile = self.profile_matrix.get_profile(user_id)
             if profile:
                 self.ui.display_text("\nQuestionnaire complete. Thank you for your insights.")
                 return profile.dimensions
-                
+            
             return None
             
         except Exception as e:

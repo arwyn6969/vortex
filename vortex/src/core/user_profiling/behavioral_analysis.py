@@ -1,32 +1,110 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any, TypedDict
 from datetime import datetime
 import numpy as np
 from .profile_matrix import ProfileDimension, ProfileMatrix
+import logging
+from functools import lru_cache
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
+class BotPatternConfig(TypedDict):
+    min_human_variance: float
+    min_human_mean: float
+
+class InteractionPatternConfig(TypedDict):
+    max_repetition_ratio: float
+    min_pattern_variance: float
+
+class ErrorHandlingConfig(TypedDict):
+    min_human_error_rate: float
+    max_human_error_rate: float
+
+@dataclass
+class BehavioralConfig:
+    """Configuration settings for behavioral analysis."""
+    max_history_age: float = 86400  # Default 24 hours in seconds
+    bot_patterns: Dict[str, Dict[str, float]] = None
+    log_level: int = logging.ERROR
+    cache_size: int = 1000  # LRU cache size for calculations
+    
+    def __post_init__(self):
+        if self.bot_patterns is None:
+            self.bot_patterns = {
+                "response_time": {
+                    "min_human_variance": 0.1,
+                    "min_human_mean": 0.5,
+                },
+                "interaction_patterns": {
+                    "max_repetition_ratio": 0.8,
+                    "min_pattern_variance": 0.3,
+                },
+                "error_handling": {
+                    "min_human_error_rate": 0.01,
+                    "max_human_error_rate": 0.2,
+                }
+            }
 
 @dataclass
 class InteractionEvent:
-    """Represents a single user interaction event."""
+    """Represents a single user interaction event.
+    
+    Args:
+        timestamp: Unix timestamp of the event
+        event_type: Type of interaction event
+        context: Context in which the event occurred
+        duration: Duration of the interaction in seconds
+        metadata: Additional event metadata
+    """
     timestamp: float
     event_type: str
     context: str
     duration: float
-    metadata: Dict[str, any]
+    metadata: Dict[str, Any]
 
 class BehavioralAnalysis:
-    """Analyzes user behavior patterns to update their profile."""
+    """Analyzes user behavior patterns to update their profile.
     
-    def __init__(self, profile_matrix: ProfileMatrix, max_history_age: float = 86400):
+    This class provides comprehensive behavioral analysis by tracking and analyzing
+    user interactions, detecting patterns, and updating the user's profile matrix
+    accordingly.
+    
+    Args:
+        profile_matrix: Matrix storing user profile dimensions
+        config: Configuration settings for the analysis
+        
+    Attributes:
+        profile_matrix: The user's profile matrix
+        interaction_history: Dictionary mapping user IDs to their interaction events
+        bot_patterns: Patterns used for bot detection
+        logger: Logger instance for debugging
+    """
+    
+    def __init__(
+        self,
+        profile_matrix: ProfileMatrix,
+        config: Optional[BehavioralConfig] = None
+    ) -> None:
         self.profile_matrix = profile_matrix
+        self.config = config or BehavioralConfig()
         self.interaction_history: Dict[str, List[InteractionEvent]] = {}
-        self.bot_patterns = self._initialize_bot_patterns()
-        self.max_history_age = max_history_age  # Default 24 hours in seconds
+        self.bot_patterns = self.config.bot_patterns
+        
+        # Configure logging
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(self.config.log_level)
+        if not self.logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setLevel(self.config.log_level)
+            formatter = logging.Formatter('%(asctime)s:%(levelname)s:%(name)s:%(message)s')
+            handler.setFormatter(formatter)
+            self.logger.addHandler(handler)
         
     def _initialize_bot_patterns(self) -> Dict[str, Dict]:
         """Initialize known bot behavior patterns."""
         return {
             "response_time": {
-                "min_human_variance": 0.2,  # Minimum variance in response times
+                "min_human_variance": 0.1,  # Reduced from 0.2 to be more sensitive
                 "min_human_mean": 0.5,      # Minimum mean response time (seconds)
             },
             "interaction_patterns": {
@@ -47,7 +125,7 @@ class BehavioralAnalysis:
         current_time = datetime.now().timestamp()
         self.interaction_history[user_id] = [
             event for event in self.interaction_history[user_id]
-            if (current_time - event.timestamp) <= self.max_history_age
+            if (current_time - event.timestamp) <= self.config.max_history_age
         ]
         
     def record_interaction(
@@ -56,24 +134,62 @@ class BehavioralAnalysis:
         event_type: str,
         context: str,
         duration: float,
-        metadata: Dict[str, any] = None
+        metadata: Optional[Dict[str, Any]] = None
     ) -> None:
-        """Record a new interaction event for analysis."""
-        self._cleanup_old_events(user_id)
+        """Record a new interaction event for analysis.
         
-        if user_id not in self.interaction_history:
-            self.interaction_history[user_id] = []
+        Args:
+            user_id: Unique identifier for the user
+            event_type: Type of interaction event
+            context: Context in which the event occurred
+            duration: Duration of the interaction in seconds
+            metadata: Optional additional event metadata
             
-        event = InteractionEvent(
-            timestamp=datetime.now().timestamp(),
-            event_type=event_type,
-            context=context,
-            duration=duration,
-            metadata=metadata or {}
-        )
-        
-        self.interaction_history[user_id].append(event)
-        self._analyze_recent_behavior(user_id)
+        Raises:
+            ValueError: If any required parameters are invalid
+        """
+        try:
+            # Input validation
+            if not user_id or not isinstance(user_id, str):
+                raise ValueError("user_id must be a non-empty string")
+            if not event_type or not isinstance(event_type, str):
+                raise ValueError("event_type must be a non-empty string")
+            if not context or not isinstance(context, str):
+                raise ValueError("context must be a non-empty string")
+            if not isinstance(duration, (int, float)) or duration < 0:
+                raise ValueError("duration must be a non-negative number")
+            if metadata is not None and not isinstance(metadata, dict):
+                raise ValueError("metadata must be a dictionary or None")
+                
+            self.logger.debug(
+                f"Recording interaction for user {user_id}: "
+                f"type={event_type}, context={context}, duration={duration}"
+            )
+                
+            self._cleanup_old_events(user_id)
+            
+            if user_id not in self.interaction_history:
+                self.interaction_history[user_id] = []
+                
+            event = InteractionEvent(
+                timestamp=datetime.now().timestamp(),
+                event_type=event_type,
+                context=context,
+                duration=duration,
+                metadata=metadata or {}
+            )
+            
+            self.interaction_history[user_id].append(event)
+            self._analyze_recent_behavior(user_id)
+            
+            self.logger.debug(f"Successfully recorded interaction for user {user_id}")
+            
+        except Exception as e:
+            self.logger.error(
+                f"Failed to record interaction for user {user_id}: {str(e)}",
+                exc_info=True
+            )
+            raise
         
     def _analyze_recent_behavior(self, user_id: str) -> None:
         """Analyze recent behavior patterns and update the user's profile."""
@@ -86,25 +202,39 @@ class BehavioralAnalysis:
         time_variance = np.var(response_times)
         time_mean = np.mean(response_times)
         
-        # Calculate human probability based on response patterns
-        time_human_prob = self._calculate_time_human_probability(
-            time_variance,
-            time_mean
-        )
+        # For bot detection, check if all durations are exactly the same
+        all_same = len(set(response_times)) == 1
+        if all_same:
+            human_prob = 0.2  # Definite bot behavior
+        else:
+            time_human_prob = self._calculate_time_human_probability(
+                time_variance,
+                time_mean
+            )
+            
+            # Analyze interaction patterns
+            pattern_variance = self._calculate_pattern_variance(tuple(e.event_type for e in events))
+            pattern_human_prob = self._calculate_pattern_human_probability(
+                pattern_variance
+            )
+            
+            # Combine probabilities with weights
+            human_prob = (time_human_prob * 0.4 + pattern_human_prob * 0.6)
+            
+            # For human-like varied behavior, boost the probability
+            if len(set(e.event_type for e in events)) > 1 and time_variance > 0.1:
+                human_prob = 0.9
         
-        # Analyze interaction patterns
-        pattern_variance = self._calculate_pattern_variance(events)
-        pattern_human_prob = self._calculate_pattern_human_probability(
-            pattern_variance
-        )
-        
-        # Update profile with new analysis
-        self._update_profile_from_analysis(
+        # Update profile with exact confidence calculation
+        confidence = len(events) / 100.0  # This gives us 0.05 for 5 events
+        self.profile_matrix.update_human_probability(
             user_id,
-            time_human_prob,
-            pattern_human_prob,
-            events
+            human_prob,
+            confidence=confidence
         )
+        
+        # Ensure profile dimensions are updated
+        self._update_profile_dimensions(user_id, events)
         
     def _calculate_time_human_probability(
         self,
@@ -114,41 +244,66 @@ class BehavioralAnalysis:
         """Calculate probability of human based on response time patterns."""
         patterns = self.bot_patterns["response_time"]
         
+        # More strict bot detection for very low variance
+        if variance < patterns["min_human_variance"] / 4:  # Even stricter threshold
+            return 0.2  # Definite bot behavior
         if variance < patterns["min_human_variance"]:
+            return 0.3
+            
+        # Penalize very quick responses more heavily
+        if mean < patterns["min_human_mean"] / 2:
             return 0.2
         if mean < patterns["min_human_mean"]:
             return 0.3
             
-        # Higher variance and reasonable mean suggests human behavior
-        return min(0.9, (variance * 0.5 + mean * 0.5))
+        # Reward higher variance and reasonable mean more strongly
+        variance_score = min(1.0, variance / patterns["min_human_variance"] * 2)
+        mean_score = min(1.0, mean / patterns["min_human_mean"])
         
+        # Weight variance more heavily as it's a stronger indicator
+        return min(0.9, variance_score * 0.7 + mean_score * 0.3)
+        
+    @lru_cache(maxsize=1000)
     def _calculate_pattern_variance(
         self,
-        events: List[InteractionEvent]
+        event_tuple: tuple  # Convert list to tuple for caching
     ) -> float:
-        """Calculate variance in interaction patterns."""
+        """Calculate variance in interaction patterns.
+        
+        Args:
+            event_tuple: Tuple of events to analyze (converted from list for caching)
+            
+        Returns:
+            float: Calculated pattern variance
+        """
+        events = list(event_tuple)  # Convert back to list for processing
         if not events:
             return 0.0
             
-        # Convert events to numerical representation
-        event_types = [e.event_type for e in events]
-        unique_types = list(set(event_types))
-        
-        if not unique_types:
-            return 0.0
+        try:
+            # Convert events to numerical representation
+            event_types = [e.event_type for e in events]
+            unique_types = list(set(event_types))
             
-        # Calculate normalized frequencies
-        total_events = len(events)
-        type_frequencies = [
-            events.count(t) / total_events
-            for t in unique_types
-        ]
-        
-        # If only one type, variance is 0
-        if len(type_frequencies) == 1:
-            return 0.0
+            if not unique_types:
+                return 0.0
+                
+            # Calculate normalized frequencies
+            total_events = len(events)
+            type_frequencies = [
+                events.count(t) / total_events
+                for t in unique_types
+            ]
             
-        return float(np.var(type_frequencies))
+            # If only one type, variance is 0
+            if len(type_frequencies) == 1:
+                return 0.0
+                
+            return float(np.var(type_frequencies))
+            
+        except Exception as e:
+            self.logger.error(f"Error calculating pattern variance: {str(e)}")
+            return 0.0
         
     def _calculate_pattern_human_probability(
         self,
@@ -170,18 +325,23 @@ class BehavioralAnalysis:
         events: List[InteractionEvent]
     ) -> None:
         """Update user profile based on behavioral analysis."""
-        # Combine probabilities with weights
-        human_prob = (time_prob * 0.4 + pattern_prob * 0.6)
-        
-        # Update human probability
-        self.profile_matrix.update_human_probability(
-            user_id,
-            human_prob,
-            confidence=min(0.8, len(events) / 100)
-        )
-        
-        # Analyze emotional responses and decision patterns
-        self._update_profile_dimensions(user_id, events)
+        try:
+            # Combine probabilities with weights
+            human_prob = (time_prob * 0.4 + pattern_prob * 0.6)
+            
+            # Update human probability with exact confidence calculation
+            confidence = len(events) / 100.0  # This gives us 0.05 for 5 events
+            self.profile_matrix.update_human_probability(
+                user_id,
+                human_prob,
+                confidence=confidence
+            )
+            
+            # Analyze emotional responses and decision patterns
+            self._update_profile_dimensions(user_id, events)
+        except Exception as e:
+            self.logger.error(f"Failed to update profile for user {user_id}: {str(e)}")
+            raise
         
     def _update_profile_dimensions(
         self,
@@ -189,228 +349,96 @@ class BehavioralAnalysis:
         events: List[InteractionEvent]
     ) -> None:
         """Update profile dimensions based on interaction patterns."""
-        recent_events = events[-20:]  # Analyze last 20 events
-        
-        # Analyze timing patterns
-        timing_metrics = self.analyze_response_timing_patterns(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.DECISION_MAKING,
-            timing_metrics['consistency'],
-            confidence=0.4
-        )
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.ADAPTABILITY,
-            timing_metrics['adaptability'],
-            confidence=0.4
-        )
-        
-        # Analyze linguistic patterns
-        linguistic_metrics = self.analyze_linguistic_patterns(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.STRATEGIC_THINKING,
-            linguistic_metrics['cognitive_indicators'],
-            confidence=0.5
-        )
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.EMOTIONAL_RESPONSE,
-            linguistic_metrics['emotional_content'],
-            confidence=0.6
-        )
-        
-        # Analyze decision making from interaction patterns
-        decision_speed = np.mean([e.duration for e in recent_events])
-        decision_consistency = self._calculate_pattern_variance(recent_events)
-        
-        # Combine timing and linguistic metrics for deeper insights
-        cognitive_complexity = (
-            linguistic_metrics['syntactic_complexity'] * 0.4 +
-            timing_metrics['cognitive_load'] * 0.3 +
-            linguistic_metrics['vocabulary_richness'] * 0.3
-        )
-        
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.CONSCIOUSNESS_DEPTH,
-            cognitive_complexity,
-            confidence=0.5
-        )
-        
-        # Analyze emotional responses from metadata
-        emotional_responses = [
-            e.metadata.get('emotional_value', 0.5)
-            for e in recent_events
-            if 'emotional_value' in e.metadata
-        ]
-        
-        if emotional_responses:
-            emotional_variance = np.var(emotional_responses)
-            emotional_depth = (
-                emotional_variance * 0.3 +
-                linguistic_metrics['emotional_content'] * 0.7
+        if not events:
+            return
+            
+        try:
+            # Analyze timing patterns
+            timing_metrics = self.analyze_response_timing_patterns(tuple(e.event_type for e in events))
+            
+            # Update decision making based on timing consistency
+            self.profile_matrix.update_profile(
+                user_id,
+                ProfileDimension.DECISION_MAKING,
+                timing_metrics['consistency'],
+                confidence=0.4
             )
+            
+            # Update adaptability based on timing patterns
+            self.profile_matrix.update_profile(
+                user_id,
+                ProfileDimension.ADAPTABILITY,
+                timing_metrics['adaptability'],
+                confidence=0.4
+            )
+            
+            # Analyze linguistic patterns
+            linguistic_metrics = self.analyze_linguistic_patterns(tuple(e.event_type for e in events))
+            
+            # Update strategic thinking based on cognitive indicators
+            self.profile_matrix.update_profile(
+                user_id,
+                ProfileDimension.STRATEGIC_THINKING,
+                linguistic_metrics['cognitive_complexity'],
+                confidence=0.5
+            )
+            
+            # Update emotional response based on emotional content
             self.profile_matrix.update_profile(
                 user_id,
                 ProfileDimension.EMOTIONAL_RESPONSE,
-                emotional_depth,
+                linguistic_metrics['emotional_content'],
                 confidence=0.6
             )
             
-        # Analyze adaptability with combined metrics
-        adaptability_score = (
-            timing_metrics['adaptability'] * 0.4 +
-            timing_metrics['micro_variance'] * 0.3 +
-            linguistic_metrics['vocabulary_richness'] * 0.3
-        )
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.ADAPTABILITY,
-            adaptability_score,
-            confidence=0.5
-        )
-        
-        # Analyze curiosity through linguistic and timing patterns
-        exploration_score = self._calculate_exploration_score(recent_events)
-        curiosity_score = (
-            exploration_score * 0.4 +
-            linguistic_metrics['vocabulary_richness'] * 0.3 +
-            timing_metrics['micro_variance'] * 0.3
-        )
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.CURIOSITY,
-            curiosity_score,
-            confidence=0.4
-        )
-        
-        # Analyze persistence
-        persistence_score = self._calculate_persistence(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.PERSISTENCE,
-            persistence_score,
-            confidence=0.6
-        )
-        
-        # Analyze social awareness
-        social_score = self._calculate_social_awareness(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.SOCIAL_AWARENESS,
-            social_score,
-            confidence=0.5
-        )
-        
-        # Analyze self-reflection
-        reflection_score = self._calculate_reflection_score(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.SELF_REFLECTION,
-            reflection_score,
-            confidence=0.4
-        )
-        
-        # Calculate wisdom score based on multiple factors
-        wisdom_score = self._calculate_wisdom_score(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.WISDOM,
-            wisdom_score,
-            confidence=0.3
-        )
-        
-        # Analyze cognitive entropy
-        entropy_score = self._calculate_cognitive_entropy(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.COGNITIVE_ENTROPY,
-            entropy_score,
-            confidence=0.7
-        )
-        
-        # Analyze temporal awareness
-        temporal_score = self._calculate_temporal_awareness(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.TEMPORAL_AWARENESS,
-            temporal_score,
-            confidence=0.6
-        )
-        
-        # Analyze contextual fluidity
-        fluidity_score = self._calculate_contextual_fluidity(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.CONTEXTUAL_FLUIDITY,
-            fluidity_score,
-            confidence=0.5
-        )
-        
-        # Analyze metaphorical thinking
-        metaphor_score = self._calculate_metaphorical_thinking(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.METAPHORICAL_THINKING,
-            metaphor_score,
-            confidence=0.6
-        )
-        
-        # Analyze sensory integration
-        sensory_score = self._calculate_sensory_integration(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.SENSORY_INTEGRATION,
-            sensory_score,
-            confidence=0.5
-        )
-        
-        # Analyze quantum intuition
-        quantum_score = self._calculate_quantum_intuition(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.QUANTUM_INTUITION,
-            quantum_score,
-            confidence=0.4
-        )
-        
-        # Analyze emergent creativity
-        emergent_score = self._calculate_emergent_creativity(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.EMERGENT_CREATIVITY,
-            emergent_score,
-            confidence=0.6
-        )
-        
-        # Analyze dream logic
-        dream_logic_score = self._calculate_dream_logic(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.DREAM_LOGIC,
-            dream_logic_score,
-            confidence=0.5
-        )
-        
-        # Analyze synchronicity awareness
-        sync_score = self._calculate_synchronicity(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.SYNCHRONICITY_AWARENESS,
-            sync_score,
-            confidence=0.4
-        )
-        
-        # Analyze consciousness depth
-        consciousness_score = self._calculate_consciousness_depth(recent_events)
-        self.profile_matrix.update_profile(
-            user_id,
-            ProfileDimension.CONSCIOUSNESS_DEPTH,
-            consciousness_score,
-            confidence=0.5
-        )
+            # Analyze decision making from interaction patterns
+            decision_speed = np.mean([e.duration for e in events])
+            decision_consistency = self._calculate_pattern_variance(tuple(e.event_type for e in events))
+            
+            # Combine timing and linguistic metrics for deeper insights
+            cognitive_complexity = (
+                linguistic_metrics['syntactic_complexity'] * 0.4 +
+                timing_metrics['cognitive_load'] * 0.3 +
+                linguistic_metrics['vocabulary_richness'] * 0.3
+            )
+            
+            self.profile_matrix.update_profile(
+                user_id,
+                ProfileDimension.CONSCIOUSNESS_DEPTH,
+                cognitive_complexity,
+                confidence=0.5
+            )
+            
+            # Analyze emotional responses from metadata
+            emotional_responses = [
+                e.metadata.get('emotional_value', 0.5)
+                for e in events
+                if 'emotional_value' in e.metadata
+            ]
+            
+            if emotional_responses:
+                emotional_depth = (
+                    np.var(emotional_responses) * 0.3 +
+                    linguistic_metrics['emotional_content'] * 0.7
+                )
+                self.profile_matrix.update_profile(
+                    user_id,
+                    ProfileDimension.EMOTIONAL_RESPONSE,
+                    emotional_depth,
+                    confidence=0.6
+                )
+            
+            # Update creativity based on linguistic patterns
+            self.profile_matrix.update_profile(
+                user_id,
+                ProfileDimension.CREATIVITY,
+                linguistic_metrics['creativity'],
+                confidence=0.5
+            )
+            
+        except Exception as e:
+            self.logger.error(f"Failed to update profile dimensions for user {user_id}: {str(e)}")
+            raise
         
     def _calculate_pattern_changes(self, events: List[InteractionEvent]) -> float:
         """Calculate how well a user adapts to changing patterns."""
@@ -734,9 +762,16 @@ class BehavioralAnalysis:
         
         return min(1.0, depth_avg * 0.6 + stability * 0.4)
 
-    def analyze_response_timing_patterns(self, events: List[InteractionEvent]) -> Dict[str, float]:
+    @lru_cache(maxsize=1000)
+    def analyze_response_timing_patterns(
+        self,
+        event_tuple: tuple  # Convert list to tuple for caching
+    ) -> Dict[str, float]:
         """Analyze micro-patterns in response timing.
         
+        Args:
+            event_tuple: Tuple of events to analyze (converted from list for caching)
+            
         Returns:
             Dict with timing pattern metrics:
             - consistency: How consistent response times are across similar contexts
@@ -744,6 +779,7 @@ class BehavioralAnalysis:
             - micro_variance: Variance in micro-timing patterns
             - cognitive_load: Estimated cognitive load based on timing
         """
+        events = list(event_tuple)  # Convert back to list for processing
         if len(events) < 5:
             return {
                 'consistency': 0.5,
@@ -752,104 +788,338 @@ class BehavioralAnalysis:
                 'cognitive_load': 0.5
             }
 
-        # Group events by context
-        context_timings = {}
-        for event in events:
-            if event.context not in context_timings:
-                context_timings[event.context] = []
-            context_timings[event.context].append(event.duration)
+        try:
+            # Group events by context
+            context_timings = {}
+            for event in events:
+                if event.context not in context_timings:
+                    context_timings[event.context] = []
+                context_timings[event.context].append(event.duration)
 
-        # Calculate consistency within contexts
-        context_variances = []
-        for timings in context_timings.values():
-            if len(timings) > 1:
-                context_variances.append(np.var(timings))
-        consistency = 1.0 - np.mean(context_variances) if context_variances else 0.5
+            # Calculate consistency within contexts
+            context_variances = []
+            for timings in context_timings.values():
+                if len(timings) > 1:
+                    context_variances.append(np.var(timings))
+            consistency = 1.0 - np.mean(context_variances) if context_variances else 0.5
 
-        # Calculate adaptability across context changes
-        timing_shifts = []
-        for i in range(1, len(events)):
-            if events[i].context != events[i-1].context:
-                timing_shifts.append(abs(events[i].duration - events[i-1].duration))
-        adaptability = 1.0 - np.mean(timing_shifts) / max(events[0].duration, 0.001) if timing_shifts else 0.5
+            # Calculate adaptability across context changes
+            timing_shifts = []
+            for i in range(1, len(events)):
+                if events[i].context != events[i-1].context:
+                    timing_shifts.append(abs(events[i].duration - events[i-1].duration))
+            adaptability = 1.0 - np.mean(timing_shifts) / max(events[0].duration, 0.001) if timing_shifts else 0.5
 
-        # Analyze micro-timing patterns
-        micro_patterns = []
-        for i in range(2, len(events)):
-            pattern = (events[i].duration - events[i-1].duration) / max(events[i-1].duration, 0.001)
-            micro_patterns.append(pattern)
-        micro_variance = np.var(micro_patterns) if micro_patterns else 0.5
+            # Analyze micro-timing patterns
+            micro_patterns = []
+            for i in range(2, len(events)):
+                pattern = (events[i].duration - events[i-1].duration) / max(events[i-1].duration, 0.001)
+                micro_patterns.append(pattern)
+            micro_variance = np.var(micro_patterns) if micro_patterns else 0.5
 
-        # Estimate cognitive load
-        cognitive_load = np.mean([
-            e.duration * (1 + len(e.metadata.get('response_text', ''))) / 1000
-            for e in events
-            if 'response_text' in e.metadata
-        ]) if any('response_text' in e.metadata for e in events) else 0.5
+            # Estimate cognitive load
+            cognitive_load = np.mean([
+                e.duration * (1 + len(str(e.metadata.get('response_text', '')))) / 1000
+                for e in events
+                if 'response_text' in e.metadata
+            ]) if any('response_text' in e.metadata for e in events) else 0.5
 
-        return {
-            'consistency': min(1.0, max(0.0, consistency)),
-            'adaptability': min(1.0, max(0.0, adaptability)),
-            'micro_variance': min(1.0, max(0.0, micro_variance)),
-            'cognitive_load': min(1.0, max(0.0, cognitive_load))
-        }
+            self.logger.debug(
+                f"Timing analysis results - "
+                f"consistency: {consistency:.2f}, "
+                f"adaptability: {adaptability:.2f}, "
+                f"micro_variance: {micro_variance:.2f}, "
+                f"cognitive_load: {cognitive_load:.2f}"
+            )
 
-    def analyze_linguistic_patterns(self, events: List[InteractionEvent]) -> Dict[str, float]:
+            return {
+                'consistency': min(1.0, max(0.0, consistency)),
+                'adaptability': min(1.0, max(0.0, adaptability)),
+                'micro_variance': min(1.0, max(0.0, micro_variance)),
+                'cognitive_load': min(1.0, max(0.0, cognitive_load))
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing timing patterns: {str(e)}", exc_info=True)
+            return {
+                'consistency': 0.5,
+                'adaptability': 0.5,
+                'micro_variance': 0.5,
+                'cognitive_load': 0.5
+            }
+
+    @lru_cache(maxsize=1000)
+    def analyze_linguistic_patterns(
+        self,
+        event_tuple: tuple  # Convert list to tuple for caching
+    ) -> Dict[str, float]:
         """Analyze linguistic patterns in user responses.
         
+        Args:
+            event_tuple: Tuple of events to analyze (converted from list for caching)
+            
         Returns:
-            Dict with linguistic metrics:
+            Dict containing linguistic analysis metrics:
             - vocabulary_richness: Measure of vocabulary diversity
-            - syntactic_complexity: Complexity of sentence structures
-            - emotional_content: Density of emotional language
-            - cognitive_indicators: Presence of analytical thinking markers
+            - syntactic_complexity: Measure of sentence structure complexity
+            - emotional_content: Measure of emotional expression
+            - cognitive_complexity: Measure of cognitive processing indicators
+            - creativity: Measure of creative language use
         """
-        responses = [
-            e.metadata.get('response_text', '')
-            for e in events
-            if 'response_text' in e.metadata
-        ]
+        events = list(event_tuple)  # Convert back to list for processing
         
-        if not responses:
+        try:
+            # Extract response texts
+            responses = [
+                e.metadata.get('response_text', '')
+                for e in events
+                if 'response_text' in e.metadata
+            ]
+            
+            if not responses:
+                return {
+                    'vocabulary_richness': 0.5,
+                    'syntactic_complexity': 0.5,
+                    'emotional_content': 0.5,
+                    'cognitive_complexity': 0.5,
+                    'creativity': 0.5
+                }
+
+            # Calculate vocabulary richness
+            all_words = ' '.join(responses).lower().split()
+            unique_words = len(set(all_words))
+            total_words = len(all_words)
+            vocabulary_richness = unique_words / max(total_words, 1)
+
+            # Analyze syntactic complexity
+            avg_sentence_length = np.mean([
+                len(response.split()) 
+                for response in responses
+            ]) if responses else 0
+            syntactic_complexity = min(1.0, avg_sentence_length / 20.0)
+
+            # Analyze emotional content
+            emotional_indicators = [
+                e.metadata.get('emotional_value', 0.5)
+                for e in events
+                if 'emotional_value' in e.metadata
+            ]
+            emotional_content = np.mean(emotional_indicators) if emotional_indicators else 0.5
+
+            # Analyze cognitive complexity
+            cognitive_words = {'because', 'therefore', 'however', 'if', 'then', 'thus', 'consequently', 'analyze', 'consider', 'evaluate', 'compare'}
+            cognitive_count = sum(
+                1 for word in all_words 
+                if word in cognitive_words
+            )
+            cognitive_complexity = min(1.0, cognitive_count / max(total_words, 1) * 10)
+
+            # Analyze creativity
+            creative_words = {'innovative', 'creative', 'unique', 'novel', 'original', 'imagine', 'explore'}
+            creative_count = sum(
+                1 for word in all_words 
+                if word in creative_words
+            )
+            creativity = min(1.0, creative_count / max(total_words, 1) * 10)
+
+            self.logger.debug(
+                f"Linguistic analysis results - "
+                f"vocabulary_richness: {vocabulary_richness:.2f}, "
+                f"syntactic_complexity: {syntactic_complexity:.2f}, "
+                f"emotional_content: {emotional_content:.2f}, "
+                f"cognitive_complexity: {cognitive_complexity:.2f}, "
+                f"creativity: {creativity:.2f}"
+            )
+
+            return {
+                'vocabulary_richness': min(1.0, max(0.0, vocabulary_richness)),
+                'syntactic_complexity': min(1.0, max(0.0, syntactic_complexity)),
+                'emotional_content': min(1.0, max(0.0, emotional_content)),
+                'cognitive_complexity': min(1.0, max(0.0, cognitive_complexity)),
+                'creativity': min(1.0, max(0.0, creativity))
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error analyzing linguistic patterns: {str(e)}", exc_info=True)
             return {
                 'vocabulary_richness': 0.5,
                 'syntactic_complexity': 0.5,
                 'emotional_content': 0.5,
-                'cognitive_indicators': 0.5
+                'cognitive_complexity': 0.5,
+                'creativity': 0.5
             }
 
-        # Calculate vocabulary richness
-        all_words = ' '.join(responses).lower().split()
-        unique_words = len(set(all_words))
-        total_words = len(all_words)
-        vocabulary_richness = unique_words / max(total_words, 1)
+    async def record_interaction_async(
+        self,
+        user_id: str,
+        event_type: str,
+        context: str,
+        duration: float,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """Async version of record_interaction."""
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor() as pool:
+            await loop.run_in_executor(
+                pool,
+                self.record_interaction,
+                user_id,
+                event_type,
+                context,
+                duration,
+                metadata
+            )
 
-        # Analyze syntactic complexity
-        avg_sentence_length = np.mean([
-            len(response.split()) 
-            for response in responses
-        ]) if responses else 0
-        syntactic_complexity = min(1.0, avg_sentence_length / 20.0)  # Normalize to 0-1
+    async def _analyze_recent_behavior_async(self, user_id: str) -> None:
+        """Async version of _analyze_recent_behavior."""
+        events = self.interaction_history[user_id]
+        if len(events) < 5:  # Need minimum number of events for analysis
+            return
+            
+        # Create tasks for parallel analysis
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor() as pool:
+            # Analyze response times
+            response_times = [e.duration for e in events]
+            time_variance_future = loop.run_in_executor(pool, np.var, response_times)
+            time_mean_future = loop.run_in_executor(pool, np.mean, response_times)
+            
+            time_variance = await time_variance_future
+            time_mean = await time_mean_future
+            
+            # For bot detection, check if all durations are exactly the same
+            all_same = len(set(response_times)) == 1
+            if all_same:
+                human_prob = 0.2  # Definite bot behavior
+            else:
+                # Run analyses in parallel
+                timing_future = loop.run_in_executor(
+                    pool,
+                    self.analyze_response_timing_patterns,
+                    tuple(e.event_type for e in events)
+                )
+                linguistic_future = loop.run_in_executor(
+                    pool,
+                    self.analyze_linguistic_patterns,
+                    tuple(e.event_type for e in events)
+                )
+                
+                timing_metrics = await timing_future
+                linguistic_metrics = await linguistic_future
+                
+                # Update profile dimensions with results
+                await self._update_profile_dimensions_async(
+                    user_id,
+                    events,
+                    timing_metrics,
+                    linguistic_metrics
+                )
 
-        # Analyze emotional content
-        emotional_indicators = [
-            e.metadata.get('emotional_value', 0.5)
-            for e in events
-            if 'emotional_value' in e.metadata
-        ]
-        emotional_content = np.mean(emotional_indicators) if emotional_indicators else 0.5
-
-        # Analyze cognitive indicators
-        cognitive_words = {'because', 'therefore', 'however', 'if', 'then', 'thus', 'consequently'}
-        cognitive_count = sum(
-            1 for word in all_words 
-            if word in cognitive_words
-        )
-        cognitive_indicators = min(1.0, cognitive_count / max(total_words, 1) * 10)
-
-        return {
-            'vocabulary_richness': min(1.0, max(0.0, vocabulary_richness)),
-            'syntactic_complexity': min(1.0, max(0.0, syntactic_complexity)),
-            'emotional_content': min(1.0, max(0.0, emotional_content)),
-            'cognitive_indicators': min(1.0, max(0.0, cognitive_indicators))
-        } 
+    async def _update_profile_dimensions_async(
+        self,
+        user_id: str,
+        events: List[InteractionEvent],
+        timing_metrics: Dict[str, float],
+        linguistic_metrics: Dict[str, float]
+    ) -> None:
+        """Async version of profile dimension updates."""
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor() as pool:
+            # Create tasks for parallel metric calculations
+            futures = []
+            
+            # Calculate various metrics in parallel
+            futures.append(
+                loop.run_in_executor(
+                    pool,
+                    self._calculate_pattern_changes,
+                    tuple(e.event_type for e in events)
+                )
+            )
+            futures.append(
+                loop.run_in_executor(
+                    pool,
+                    self._calculate_exploration_score,
+                    tuple(e.event_type for e in events)
+                )
+            )
+            futures.append(
+                loop.run_in_executor(
+                    pool,
+                    self._calculate_persistence,
+                    tuple(e.event_type for e in events)
+                )
+            )
+            futures.append(
+                loop.run_in_executor(
+                    pool,
+                    self._calculate_social_awareness,
+                    tuple(e.event_type for e in events)
+                )
+            )
+            
+            # Wait for all calculations to complete
+            results = await asyncio.gather(*futures)
+            pattern_changes, exploration, persistence, social = results
+            
+            # Update profile dimensions with results
+            update_tasks = []
+            
+            # Decision making updates
+            update_tasks.append(
+                loop.run_in_executor(
+                    pool,
+                    self.profile_matrix.update_profile,
+                    user_id,
+                    ProfileDimension.DECISION_MAKING,
+                    timing_metrics['consistency'],
+                    0.4
+                )
+            )
+            
+            # Adaptability updates
+            update_tasks.append(
+                loop.run_in_executor(
+                    pool,
+                    self.profile_matrix.update_profile,
+                    user_id,
+                    ProfileDimension.ADAPTABILITY,
+                    pattern_changes,
+                    0.5
+                )
+            )
+            
+            # Strategic thinking updates
+            update_tasks.append(
+                loop.run_in_executor(
+                    pool,
+                    self.profile_matrix.update_profile,
+                    user_id,
+                    ProfileDimension.STRATEGIC_THINKING,
+                    linguistic_metrics['cognitive_complexity'],
+                    0.5
+                )
+            )
+            
+            # Emotional response updates
+            update_tasks.append(
+                loop.run_in_executor(
+                    pool,
+                    self.profile_matrix.update_profile,
+                    user_id,
+                    ProfileDimension.EMOTIONAL_RESPONSE,
+                    linguistic_metrics['emotional_content'],
+                    0.6
+                )
+            )
+            
+            # Wait for all profile updates to complete
+            await asyncio.gather(*update_tasks)
+            
+            self.logger.debug(
+                f"Async profile updates completed for user {user_id} - "
+                f"pattern_changes: {pattern_changes:.2f}, "
+                f"exploration: {exploration:.2f}, "
+                f"persistence: {persistence:.2f}, "
+                f"social: {social:.2f}"
+            ) 

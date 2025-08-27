@@ -72,7 +72,7 @@ class TokenTransactionRecord(Base):
     amount = Column(Numeric(precision=20, scale=8), nullable=False)
     timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
     description = Column(String, nullable=False)
-    metadata = Column(JSON, nullable=True)
+    metadata_ = Column('metadata', JSON, nullable=True)
     
     # Relationships
     balance = relationship("TokenBalance", back_populates="transactions")
@@ -126,7 +126,7 @@ class BitcoinTokenRecord(Base):
     token_id = Column(String, nullable=False)  # tick
     balance = Column(Numeric(precision=20, scale=8), nullable=False, default=0)
     last_updated = Column(DateTime, nullable=False, default=datetime.utcnow)
-    metadata = Column(JSON, nullable=True)
+    metadata_ = Column('metadata', JSON, nullable=True)
     
     # Relationships
     balance_record = relationship("TokenBalance", back_populates="bitcoin_tokens")

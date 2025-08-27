@@ -1,186 +1,149 @@
-# Getting Started with Vortex of Enlightenment
+# Getting Started with Vortex
 
-Welcome to your journey of enlightenment! This guide will help you begin your path through the mystical realms of wisdom.
+Welcome to the Vortex of Enlightenment project! This guide will help you set up and start using the system.
 
-## System Requirements
+## Prerequisites
 
-### Essential Requirements
-- Python 3.8 or higher
-- pip package manager
-- Terminal with Unicode support
-- 2GB free disk space
-- Internet connection (for initial setup)
-
-### Recommended
-- Dark mode terminal
-- Terminal with 256 color support
-- Modern monospace font
+- Python 3.9 or higher
+- pip (Python package manager)
+- Git
+- A Unix-like environment (Linux/MacOS) or Windows with WSL
 
 ## Installation
 
-1. **Clone the Repository**
+1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/vortex.git
    cd vortex
    ```
 
-2. **Set Up Virtual Environment**
+2. Create and activate a virtual environment:
    ```bash
-   # Create virtual environment
    python -m venv venv
-   
-   # Activate it
-   # On Unix/macOS:
-   source venv/bin/activate
-   # On Windows:
-   venv\Scripts\activate
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install Dependencies**
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Verify Installation**
+4. Install development dependencies (if contributing):
    ```bash
-   python -m vortex verify
+   pip install -r requirements-dev.txt
    ```
+
+## Initial Setup
+
+1. Configure your environment:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your preferred settings
+   ```
+
+2. Initialize the database:
+   ```bash
+   python -m vortex.db.init
+   ```
+
+3. Run the initial setup:
+   ```bash
+   python setup.py develop
+   ```
+
+## Running the System
+
+1. Start the main application:
+   ```bash
+   python run_game.py
+   ```
+
+2. Run tests (optional):
+   ```bash
+   ./run_tests.sh
+   ```
+
+## Core Concepts
+
+### The Pond System
+- Interactive meditation spaces
+- Energy flow and balance
+- Guide interactions
+- Token earning opportunities
+
+### Profile System
+- Personal progress tracking
+- Behavioral analysis
+- Achievement system
+- Customized challenges
+
+### Token System
+- Different token types
+- Earning mechanisms
+- Usage and benefits
+- Multiplier system
 
 ## First Steps
 
-### 1. Initial Launch
-```bash
-python -m vortex start
-```
+1. Complete the initial questionnaire
+2. Explore the basic pond system
+3. Connect with your first guide
+4. Begin basic challenges
+5. Track your progress
 
-You'll be greeted with the Voight-Kampff questionnaire, which helps personalize your journey.
+## Advanced Features
 
-### 2. Basic Navigation
+### Guide Interaction
+- Learn about different guides
+- Understand their domains
+- Complete guide-specific challenges
+- Earn special tokens
 
-#### Essential Commands
-| Command | Description |
-|---------|-------------|
-| `help` | Show available commands |
-| `map` | Display current location |
-| `status` | Show your profile |
-| `enter <pond>` | Enter a specific pond |
-| `back` | Return to previous location |
-| `save` | Save your progress |
-| `exit` | Save and exit |
+### Challenge System
+- Progressive difficulty
+- Multi-guide challenges
+- Special events
+- Seasonal activities
 
-#### Example Session
-```bash
-> help
-[Available commands displayed...]
-
-> map
-Location: Central Hub
-Available Paths:
-- Wisdom Pond (North)
-- Kindness Pond (East)
-...
-
-> enter wisdom
-Entering Wisdom Pond...
-```
-
-## Understanding the Interface
-
-### 1. The Central Hub
-- Starting point of your journey
-- Access to all six ponds
-- Profile status display
-- Current challenges overview
-
-### 2. Navigation Markers
-🌊 - Water element
-🔥 - Fire element
-🌪️ - Air element
-🌍 - Earth element
-✨ - Spirit element
-⚪ - Void element
-
-### 3. Progress Indicators
-- Energy levels
-- Pond resonance
-- Challenge completion
-- Wisdom tokens
-
-## Your First Journey
-
-### 1. Complete the Questionnaire
-- Answer honestly
-- No "right" answers
-- Helps tailor your experience
-
-### 2. Explore the Central Hub
-- Read the welcome message
-- Check your initial profile
-- Review available paths
-
-### 3. Choose Your First Pond
-- Start with any pond
-- Follow intuition
-- Each offers unique wisdom
-
-### 4. Complete Initial Challenges
-- Begin with basics
-- Learn pond mechanics
-- Earn initial tokens
-
-## Tips for Success
-
-### 1. Regular Practice
-- Set aside dedicated time
-- Visit daily if possible
-- Complete at least one challenge per session
-
-### 2. Balanced Approach
-- Explore all ponds
-- Don't rush progress
-- Balance challenge types
-
-### 3. Track Your Journey
-- Review progress regularly
-- Note insights
-- Observe pattern connections
+### Token Management
+- Token types overview
+- Earning strategies
+- Using tokens effectively
+- Multiplier optimization
 
 ## Troubleshooting
 
 ### Common Issues
+1. Database connection problems
+   - Check your .env configuration
+   - Ensure database service is running
 
-1. **Display Problems**
-   - Ensure terminal supports Unicode
-   - Check color support
-   - Verify font compatibility
+2. Token system issues
+   - Verify wallet connection
+   - Check token balance
+   - Review transaction history
 
-2. **Connection Issues**
-   ```bash
-   python -m vortex repair
-   ```
+3. Guide interaction problems
+   - Confirm guide availability
+   - Check challenge prerequisites
+   - Review energy levels
 
-3. **Progress Not Saving**
-   ```bash
-   python -m vortex sync
-   ```
+### Getting Help
+- Check the FAQ section
+- Review error messages
+- Join the community
+- Contact support
 
 ## Next Steps
 
-1. ✅ Complete installation
-2. ✅ Run initial setup
-3. ✅ Complete questionnaire
-4. 👉 Explore Central Hub
-5. 👉 Enter first pond
-6. 👉 Complete first challenge
+1. Read the [Mythology Guide](./mythology.md)
+2. Review the [Architecture Documentation](../technical/architecture.md)
+3. Join the community
+4. Start your journey
 
-## Additional Resources
+## Resources
 
-- [User Manual](user_manual.md) - Detailed system guide
-- [Pond Guide](../technical/ponds.md) - Deep dive into pond mechanics
-- [Mythology Reference](../reference/mythology.md) - Understanding the wisdom traditions
-
----
-
-Remember: Your journey is unique. The system adapts to your path and pace. Trust your intuition and embrace the process of growth.
-
-Need help? Join our [community](https://discord.gg/vortex) or check the [FAQ](../reference/faq.md). 
+- [Full Documentation](../index.md)
+- [API Reference](../api/index.md)
+- [Community Guidelines](../community/guidelines.md)
+- [Contributing Guide](../CONTRIBUTING.md) 

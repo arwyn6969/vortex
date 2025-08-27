@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import Mock, patch
-from ..src.zones.harmony_pond import HarmonyPond
-from ..src.core.user_profiling.profile_matrix import ProfileDimension
-from ..src.core.exceptions import NodeSetupError
+from vortex.src.zones.harmony_pond import HarmonyPond
+from vortex.src.core.player import Player
+from vortex.src.core.user_profiling.profile_matrix import ProfileMatrix, ProfileDimension
+from vortex.src.core.exceptions import NodeSetupError
 
 class TestHarmonyPond(unittest.TestCase):
     def setUp(self):

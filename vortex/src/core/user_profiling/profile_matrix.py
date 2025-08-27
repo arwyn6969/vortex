@@ -33,6 +33,8 @@ class ProfileDimension(Enum):
     STRATEGIC_THINKING = "strategic_thinking"
     MORAL_ALIGNMENT = "moral_alignment"
     ADAPTABILITY = "adaptability"  # How well they adapt to new situations
+    CULTURAL_AWARENESS = "cultural_awareness"  # Respect and understanding of cultures
+    RESILIENCE = "resilience"  # Ability to recover from challenges
     CURIOSITY = "curiosity"  # Drive to explore and learn
     PERSISTENCE = "persistence"  # Determination in face of challenges
     SOCIAL_AWARENESS = "social_awareness"  # Understanding of social dynamics
@@ -60,6 +62,44 @@ class BehavioralProfile:
     interaction_count: int
     dimension_correlations: Dict[Tuple[ProfileDimension, ProfileDimension], float] = None
     feature_importance: Dict[ProfileDimension, float] = None
+
+    def to_dict(self) -> dict:
+        """Convert BehavioralProfile to a JSON-serializable dict."""
+        return {
+            'user_id': self.user_id,
+            'dimensions': {dim.value: val for dim, val in self.dimensions.items()},
+            'confidence_scores': {dim.value: val for dim, val in self.confidence_scores.items()},
+            'is_human_probability': self.is_human_probability,
+            'last_updated': self.last_updated,
+            'interaction_count': self.interaction_count,
+            'dimension_correlations': {f"{dim1.value},{dim2.value}": corr for (dim1, dim2), corr in (self.dimension_correlations or {}).items()},
+            'feature_importance': {dim.value: val for dim, val in (self.feature_importance or {}).items()}
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'BehavioralProfile':
+        """Create BehavioralProfile from a dict."""
+        dimensions = {ProfileDimension(k): v for k, v in data['dimensions'].items()}
+        confidence_scores = {ProfileDimension(k): v for k, v in data['confidence_scores'].items()}
+        dimension_correlations = None
+        if data.get('dimension_correlations') is not None:
+            dimension_correlations = {}
+            for key, corr in data['dimension_correlations'].items():
+                dim1_str, dim2_str = key.split(',', 1)
+                dimension_correlations[(ProfileDimension(dim1_str), ProfileDimension(dim2_str))] = corr
+        feature_importance = None
+        if data.get('feature_importance') is not None:
+            feature_importance = {ProfileDimension(k): v for k, v in data['feature_importance'].items()}
+        return cls(
+            user_id=data['user_id'],
+            dimensions=dimensions,
+            confidence_scores=confidence_scores,
+            is_human_probability=data['is_human_probability'],
+            last_updated=data['last_updated'],
+            interaction_count=data['interaction_count'],
+            dimension_correlations=dimension_correlations,
+            feature_importance=feature_importance
+        )
 
 class ProfileMatrix:
     """Manages behavioral profiling and analysis for users with ML enhancement."""
@@ -132,35 +172,42 @@ class ProfileMatrix:
         self.pattern_history[user_id] = []
         return profile
 
-    def update_profile(
-        self,
-        user_id: str,
-        dimension: ProfileDimension,
-        value: float,
-        confidence: float,
-        context: Optional[Dict] = None
-    ) -> None:
-        """Update a specific dimension of a user's profile with enhanced ML features."""
+    def update_profile(self, user_id: str, updates: Dict[ProfileDimension, float]) -> None:
+        """Update multiple dimensions of a user's profile at once."""
         if user_id not in self.profiles:
             self.create_profile(user_id)
             
         profile = self.profiles[user_id]
-        current_conf = profile.confidence_scores[dimension]
-        new_conf = current_conf + confidence
         
-        # Weighted average based on confidence
-        current_val = profile.dimensions[dimension]
-        profile.dimensions[dimension] = (
-            (current_val * current_conf + value * confidence) / new_conf
-        )
-        profile.confidence_scores[dimension] = new_conf
+        # Update each dimension
+        for dimension, value in updates.items():
+            # Ensure value is within bounds
+            value = max(0.0, min(1.0, value))
+            
+            # Calculate confidence based on cross-dimensional analysis
+            confidence = self._calculate_cross_dimensional_confidence(
+                user_id, dimension, value
+            )
+            
+            # Update the dimension with the new value
+            current_conf = profile.confidence_scores[dimension]
+            new_conf = current_conf + confidence
+            
+            # Weighted average based on confidence
+            current_val = profile.dimensions[dimension]
+            profile.dimensions[dimension] = (
+                (current_val * current_conf + value * confidence) / new_conf
+            )
+            profile.confidence_scores[dimension] = new_conf
+            
+        # Update metadata
         profile.interaction_count += 1
         profile.last_updated = datetime.now().timestamp()
         
         # Store state in pattern history
         if user_id not in self.pattern_history:
             self.pattern_history[user_id] = []
-        
+            
         # Add current state to history
         current_state = {dim: profile.dimensions[dim] for dim in ProfileDimension}
         self.pattern_history[user_id].append(current_state)
@@ -168,7 +215,7 @@ class ProfileMatrix:
         # Trim history if needed
         if len(self.pattern_history[user_id]) > self.MAX_HISTORY_SIZE:
             self.pattern_history[user_id] = self.pattern_history[user_id][-self.MAX_HISTORY_SIZE:]
-        
+            
         # Apply temporal decay to historical data
         self._apply_temporal_decay(user_id)
         
@@ -182,14 +229,15 @@ class ProfileMatrix:
         # Trigger adaptive dimension grouping
         self._update_adaptive_dimension_groups(user_id)
         
-        # Update prediction models if needed
-        if user_id in self.prediction_models and dimension in self.prediction_models[user_id]:
-            # Clear the model to force retraining with new data
-            self.prediction_models[user_id][dimension] = Prophet(
-                changepoint_prior_scale=0.05,
-                seasonality_prior_scale=0.1,
-                seasonality_mode='multiplicative'
-            )
+        # Update prediction models
+        for dimension in updates:
+            if user_id in self.prediction_models and dimension in self.prediction_models[user_id]:
+                # Clear the model to force retraining with new data
+                self.prediction_models[user_id][dimension] = Prophet(
+                    changepoint_prior_scale=0.05,
+                    seasonality_prior_scale=0.1,
+                    seasonality_mode='multiplicative'
+                )
 
     def _apply_temporal_decay(self, user_id: str) -> None:
         """Apply decay factor to historical data."""
@@ -773,7 +821,7 @@ class ProfileMatrix:
         
         return profile
 
-    def update_profile(self, user_id: str, profile: BehavioralProfile) -> None:
+    def update_full_profile(self, user_id: str, profile: BehavioralProfile) -> None:
         """Update a user's behavioral profile with Redis caching."""
         self.profiles[user_id] = profile
         
@@ -928,3 +976,6 @@ class ProfileMatrix:
             "lower_bound": lower_bound,
             "upper_bound": upper_bound
         } 
+
+# Alias for test compatibility: allow importing BehavioralMatrix
+BehavioralMatrix = ProfileMatrix 

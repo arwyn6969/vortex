@@ -1,0 +1,1 @@
+import os; package_dir=os.path.dirname(__file__); core_path=os.path.normpath(os.path.join(package_dir,"..","vortex","src","core")); next_core=os.path.normpath(os.path.join(package_dir,"..","vortex-next","src","core")); if os.path.isdir(core_path): __path__.append(core_path); if os.path.isdir(next_core): __path__.append(next_core)

@@ -1,0 +1,82 @@
+graph LR
+    %% Define the Sefirot/Zones
+    Keter[Crown Pond - Keter]
+    Chokhmah[Brain Galaxy/Wisdom Pond - Chokhmah]
+    Binah[Zen Zone - Binah]
+    Chesed[Mercy Pond - Chesed]
+    Gevurah[Gains Grotto - Gevurah]
+    Tiferet[Vibe Temple - Tiferet]
+    Netzach[Boundaries Pond - Netzach]
+    Hod[Glory Pond/Meme Studio - Hod]
+    Yesod[Harmony Pond - Yesod]
+    Malkhut[Kingdom Pond - Malkhut]
+    
+    %% Use direction to force layout
+    %% Explicitly set column structure
+    L1[" "]:::invisible --- L2[" "]:::invisible --- L3[" "]:::invisible
+    M1[" "]:::invisible --- M2[" "]:::invisible --- M3[" "]:::invisible --- M4[" "]:::invisible
+    R1[" "]:::invisible --- R2[" "]:::invisible --- R3[" "]:::invisible
+    
+    %% Force the layout with explicit positioning
+    %% Left pillar
+    L1 ~~~ Binah
+    L2 ~~~ Gevurah
+    L3 ~~~ Hod
+    
+    %% Middle pillar
+    M1 ~~~ Keter
+    M2 ~~~ Tiferet
+    M3 ~~~ Yesod
+    M4 ~~~ Malkhut
+    
+    %% Right pillar
+    R1 ~~~ Chokhmah
+    R2 ~~~ Chesed
+    R3 ~~~ Netzach
+    
+    %% Create pillar headers (with invisible connections)
+    LeftHeader[Left Pillar - Severity]:::pillarHeader ~~~ Binah
+    MiddleHeader[Middle Pillar - Balance]:::pillarHeader ~~~ Keter
+    RightHeader[Right Pillar - Mercy]:::pillarHeader ~~~ Chokhmah
+    
+    %% Connections based on paths in src/mythology/sefirot.py
+    %% Middle Column paths
+    Keter -- 11: Aleph --> Chokhmah
+    Keter -- 13: Gimel --> Tiferet
+    Chokhmah -- 21: Kaph --> Tiferet
+    Binah -- 22: Lamed --> Tiferet
+    Netzach -- 29: Qoph --> Yesod
+    Hod -- 30: Resh --> Yesod
+    Yesod -- 32: Tav --> Malkhut
+    
+    %% Right Column paths
+    Keter -- 12: Beth --> Binah
+    Chokhmah -- 14: Daleth --> Binah
+    Chokhmah -- 15: He --> Chesed
+    Binah -- 17: Zain --> Chesed
+    Chesed -- 23: Mem --> Gevurah
+    Chesed -- 24: Nun --> Netzach
+    Gevurah -- 27: Peh --> Hod
+    Netzach -- 28: Tzaddi --> Hod
+    
+    %% Left Column paths
+    Keter -- 10: Yod --> Chokhmah
+    Chokhmah -- 16: Vav --> Gevurah
+    Binah -- 18: Chet --> Gevurah
+    Chesed -- 20: Yod --> Tiferet
+    Gevurah -- 25: Samekh --> Tiferet
+    Gevurah -- 26: Ayin --> Netzach
+    Hod -- 31: Shin --> Malkhut
+    
+    %% Styling
+    classDef default fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef rightPillar fill:#88f,stroke:#333,stroke-width:2px;
+    classDef leftPillar fill:#f88,stroke:#333,stroke-width:2px;
+    classDef middlePillar fill:#8f8,stroke:#333,stroke-width:2px;
+    classDef pillarHeader fill:none,stroke:none,color:#333,text-align:center,font-weight:bold;
+    classDef invisible fill:none,stroke:none,color:transparent;
+    
+    class Chokhmah,Chesed,Netzach rightPillar;
+    class Binah,Gevurah,Hod leftPillar;
+    class Keter,Tiferet,Yesod,Malkhut middlePillar;
+    class L1,L2,L3,M1,M2,M3,M4,R1,R2,R3 invisible; 

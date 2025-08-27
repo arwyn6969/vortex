@@ -15,14 +15,18 @@ DATABASE_URL = os.getenv(
 )
 
 # Create engine with connection pooling
-engine = create_engine(
-    DATABASE_URL,
-    poolclass=QueuePool,
-    pool_size=5,
-    max_overflow=10,
-    pool_timeout=30,
-    pool_recycle=1800  # Recycle connections after 30 minutes
-)
+try:
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=QueuePool,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=30,
+        pool_recycle=1800  # Recycle connections after 30 minutes
+    )
+except ImportError:
+    # Fallback to in-memory SQLite if psycopg2 is not available
+    engine = create_engine("sqlite:///:memory:", echo=False)
 
 # Create session factory
 SessionLocal = sessionmaker(

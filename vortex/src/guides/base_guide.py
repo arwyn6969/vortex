@@ -5,6 +5,7 @@ from typing import Dict, Optional, List, TypedDict, Set, Any
 from ..core.user_profiling.profile_matrix import ProfileDimension
 from ..core.user_profiling.personalization import ContentItem
 from ..mythology.archetype_manager import ArchetypeManager, CulturalSystem, ArchetypeMapping
+from .llm_dialogue import LLMDialogueGenerator, DialogueContext
 
 class InteractionRecord(TypedDict):
     """Type definition for interaction history records."""
@@ -28,15 +29,39 @@ class Guide:
         self.attributes = attributes
         self.archetype_manager = ArchetypeManager()
         self.interaction_history: List[InteractionRecord] = []
+        self.dialogue_generator = LLMDialogueGenerator()
+        self.guidance_style = {
+            "balanced": 0.5,
+            "ethical": 0.5,
+            "nurturing": 0.5,
+            "direct": 0.5
+        }
         
         # Load archetype mapping
         self.archetype_mapping = self.archetype_manager.get_archetype(archetype_name)
         if not self.archetype_mapping:
-            raise ValueError(f"Invalid archetype name: {archetype_name}")
+            # Archetype mapping not found; fallback to None
+            self.archetype_mapping = None
+        # Initialize zone and consciousness for zone guides
+        self.zone = None
+        self.consciousness = {
+            "attunement": {"strength": 0.5, "clarity": 0.5, "current_focus": None},
+            "teaching": {"mode": "receptive", "approach": "subtle", "current_lesson": None},
+            "communion": {"channel_strength": 0.5, "understanding_depth": 0.5, "current_dialogue": None}
+        }
     
     def get_welcome_message(self, profile: Dict[ProfileDimension, float]) -> str:
         """Get personalized welcome message based on user profile."""
-        raise NotImplementedError("Subclasses must implement get_welcome_message")
+        context = DialogueContext(
+            guide_name=self.name,
+            guide_archetype=self.archetype_name,
+            cultural_system=self.cultural_system.value,
+            attributes=self.attributes,
+            profile=profile,
+            interaction_history=self.interaction_history,
+            guidance_style=self.guidance_style
+        )
+        return self.dialogue_generator.generate_welcome(context)
     
     def generate_response(
         self,
@@ -45,7 +70,54 @@ class Guide:
         context: Optional[Dict] = None
     ) -> str:
         """Generate contextually appropriate response."""
-        raise NotImplementedError("Subclasses must implement generate_response")
+        # Record the interaction
+        self.record_interaction(
+            context="user_dialogue",
+            profile=profile,
+            metadata={"input": user_input, "context": context}
+        )
+        
+        # Update guidance style based on profile
+        self._adapt_guidance_style(profile)
+
+        # Adapt to zone virtue progression if this guide is connected to the context zone
+        if context and "zone" in context and self.zone and context["zone"] == self.zone.name and hasattr(self.zone, "virtue_meter"):
+            vm_value = self.zone.virtue_meter.value  # retrieve the virtue value from the zone
+            # ensure attunement strength matches or exceeds the zone's virtue level for conscious attunement
+            self.consciousness["attunement"]["strength"] = max(self.consciousness["attunement"]["strength"], vm_value)
+            # adjust teaching approach: subtle for low virtue, direct for higher virtue
+            self.consciousness["teaching"]["approach"] = "subtle" if vm_value < 0.5 else "direct"
+
+        dialogue_context = DialogueContext(
+            guide_name=self.name,
+            guide_archetype=self.archetype_name,
+            cultural_system=self.cultural_system.value,
+            attributes=self.attributes,
+            profile=profile,
+            interaction_history=self.interaction_history,
+            guidance_style=self.guidance_style
+        )
+        
+        return self.dialogue_generator.generate_response(dialogue_context, user_input)
+    
+    def _adapt_guidance_style(self, profile: Dict[ProfileDimension, float]) -> None:
+        """Adapt guidance style based on user profile."""
+        moral_alignment = profile.get(ProfileDimension.MORAL_ALIGNMENT, 0.5)
+        empathy = profile.get(ProfileDimension.EMPATHY, 0.5)
+        wisdom = profile.get(ProfileDimension.WISDOM, 0.5)
+        
+        # Adjust guidance style based on profile dimensions
+        if moral_alignment > 0.7:
+            self.guidance_style["ethical"] = min(1.0, self.guidance_style["ethical"] + 0.1)
+            self.guidance_style["direct"] = min(1.0, self.guidance_style["direct"] + 0.1)
+        
+        if empathy > 0.7:
+            self.guidance_style["nurturing"] = min(1.0, self.guidance_style["nurturing"] + 0.1)
+            self.guidance_style["balanced"] = min(1.0, self.guidance_style["balanced"] + 0.1)
+            
+        if wisdom > 0.7:
+            self.guidance_style["balanced"] = min(1.0, self.guidance_style["balanced"] + 0.1)
+            self.guidance_style["ethical"] = min(1.0, self.guidance_style["ethical"] + 0.1)
     
     def record_interaction(
         self,
@@ -97,29 +169,6 @@ class Guide:
         """Determine if guide should adapt personality based on affinity."""
         return self.calculate_affinity(profile) < threshold 
 
-    """Base class for zone guides who can commune with their zones."""
-    
-    def __init__(self, name: str):
-        self.name = name
-        self.zone = None  # Will be set when connected to zone
-        self.consciousness = {
-            "attunement": {  # Connection to zone's archetypal nature
-                "strength": 0.5,
-                "clarity": 0.5,
-                "current_focus": None
-            },
-            "teaching": {  # How guide is facilitating learning
-                "mode": "receptive",
-                "approach": "subtle",
-                "current_lesson": None
-            },
-            "communion": {  # State of connection with zone
-                "channel_strength": 0.5,
-                "understanding_depth": 0.5,
-                "current_dialogue": None
-            }
-        }
-        
     def connect_to_zone(self, zone) -> None:
         """Establish conscious connection with a zone."""
         self.zone = zone

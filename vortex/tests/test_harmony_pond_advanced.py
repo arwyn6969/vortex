@@ -2,12 +2,13 @@
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
-from ..src.zones.harmony_pond import HarmonyPond
-from ..src.core.user_profiling.profile_matrix import ProfileDimension
-from ..src.core.user_profiling.adaptive_learning import LearningPathNode
-from ..src.core.user_profiling.personalization import ContentItem
-from ..src.core.exceptions import NodeSetupError
-from ..src.core.profiling import performance_monitor
+from vortex.src.zones.harmony_pond import HarmonyPond
+from vortex.src.core.player import Player
+from vortex.src.core.user_profiling.profile_matrix import ProfileDimension
+from vortex.src.core.user_profiling.adaptive_learning import LearningPathNode
+from vortex.src.core.user_profiling.personalization import ContentItem
+from vortex.src.core.exceptions import NodeSetupError
+from vortex.src.core.profiling.performance_monitor import performance_monitor
 
 class TestHarmonyPondAdvanced(unittest.TestCase):
     """Test suite for advanced Harmony Pond functionality."""

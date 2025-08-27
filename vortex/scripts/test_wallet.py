@@ -3,6 +3,9 @@
 
 import sys
 import os
+import pytest
+
+pytest.skip("Manual wallet script - skip under pytest", allow_module_level=True)
 
 # Add the src directory to the Python path
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))

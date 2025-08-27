@@ -5,8 +5,8 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import logging
 from ..mythology.sefirot import PATHS, get_connected_paths, get_direct_connections
-from ..redis_config import RedisConfig
-from .. import redis_service
+from ..core.redis_config import RedisConfig
+from ..core import redis_service
 import json
 
 # Configure logging

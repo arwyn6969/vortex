@@ -1,6 +1,6 @@
 import unittest
-from ..src.core.user_profiling.questionnaire import VoightKampffQuestionnaire, Question
-from ..src.core.user_profiling.profile_matrix import ProfileDimension
+from vortex.src.core.user_profiling.questionnaire import VoightKampffQuestionnaire, Question
+from vortex.src.core.user_profiling.profile_matrix import ProfileDimension
 
 class TestVoightKampffQuestionnaire(unittest.TestCase):
     def setUp(self):

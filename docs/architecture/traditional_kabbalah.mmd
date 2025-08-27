@@ -1,0 +1,91 @@
+graph TD
+    %% Traditional Kabbalah Tree of Life with standard layout
+    
+    %% Define the Sefirot (use fixed positioning)
+    Keter(("1. Keter<br/>Crown")):::keter
+    Chok(("2. Chokhmah<br/>Wisdom")):::chokhmah
+    Binah(("3. Binah<br/>Understanding")):::binah
+    Chesed(("4. Chesed<br/>Mercy")):::chesed
+    Gevurah(("5. Gevurah<br/>Severity")):::gevurah
+    Tiferet(("6. Tiferet<br/>Beauty")):::tiferet
+    Netzach(("7. Netzach<br/>Victory")):::netzach
+    Hod(("8. Hod<br/>Glory")):::hod
+    Yesod(("9. Yesod<br/>Foundation")):::yesod
+    Malkhut(("10. Malkhut<br/>Kingdom")):::malkhut
+    
+    %% The Three Pillars
+    subgraph pillarRight["Pillar of Mercy (Masculine)"]
+        Chok
+        Chesed
+        Netzach
+    end
+    
+    subgraph pillarMiddle["Pillar of Balance (Equilibrium)"]
+        Keter
+        Tiferet
+        Yesod
+        Malkhut
+    end
+    
+    subgraph pillarLeft["Pillar of Severity (Feminine)"]
+        Binah
+        Gevurah
+        Hod
+    end
+    
+    %% Force horizontal layout with correct positioning
+    pillarLeft --- pillarMiddle --- pillarRight
+    linkStyle 0,1 stroke-width:0px,opacity:0;
+    
+    %% The 22 Paths with Hebrew Letters
+    %% Middle Pillar
+    Keter -- "א Aleph" --> Tiferet
+    Tiferet -- "ל Lamed" --> Yesod
+    Yesod -- "ת Tav" --> Malkhut
+    
+    %% Right Pillar
+    Keter -- "ד Daleth" --> Chok
+    Chok -- "ו Vav" --> Tiferet
+    Chok -- "ה He" --> Chesed
+    Chesed -- "ט Teth" --> Tiferet
+    Chesed -- "נ Nun" --> Netzach
+    Tiferet -- "כ Kaph" --> Netzach
+    Netzach -- "צ Tzaddi" --> Yesod
+    
+    %% Left Pillar
+    Keter -- "ג Gimel" --> Binah
+    Binah -- "ז Zayin" --> Tiferet
+    Binah -- "ח Cheth" --> Gevurah
+    Gevurah -- "ט Teth" --> Tiferet
+    Gevurah -- "פ Peh" --> Hod
+    Tiferet -- "מ Mem" --> Hod
+    Hod -- "ר Resh" --> Yesod
+    
+    %% Horizontal Paths
+    Chok -- "ב Beth" --> Binah
+    Chesed -- "י Yod" --> Gevurah
+    Netzach -- "ס Samekh" --> Hod
+    
+    %% Diagonal Paths
+    Chok -- "ח Chet" --> Gevurah
+    Binah -- "ו Vav" --> Chesed
+    Chesed -- "נ Nun" --> Hod
+    Gevurah -- "ע Ayin" --> Netzach
+    Netzach -- "ק Qoph" --> Malkhut
+    Hod -- "ש Shin" --> Malkhut
+
+    %% The Lightning Flash
+    Keter ==> Chok ==> Binah ==> Chesed ==> Gevurah ==> Tiferet ==> Netzach ==> Hod ==> Yesod ==> Malkhut
+    linkStyle 22,23,24,25,26,27,28,29,30,31 stroke:#ffff00,stroke-width:4px;
+    
+    %% Styling
+    classDef keter fill:white,stroke:gold,stroke-width:3px,color:black;
+    classDef chokhmah fill:#dddddd,stroke:#333,stroke-width:2px,color:black;
+    classDef binah fill:black,stroke:#333,stroke-width:2px,color:white;
+    classDef chesed fill:#0000ff,stroke:#333,stroke-width:2px,color:white;
+    classDef gevurah fill:#ff0000,stroke:#333,stroke-width:2px,color:white;
+    classDef tiferet fill:#ffff00,stroke:#333,stroke-width:2px,color:black;
+    classDef netzach fill:#00ff00,stroke:#333,stroke-width:2px,color:black;
+    classDef hod fill:#ffa500,stroke:#333,stroke-width:2px,color:black;
+    classDef yesod fill:#800080,stroke:#333,stroke-width:2px,color:white;
+    classDef malkhut fill:#8B4513,stroke:#333,stroke-width:2px,color:white; 

@@ -10,9 +10,17 @@ vortex/
 │   ├── core/                # Core game systems
 │   │   ├── __init__.py
 │   │   ├── engine.py       # Main game engine
-│   │   ├── player.py       # Player state & profile
+│   │   ├── adaptive_game.py # Adaptive gameplay system
 │   │   ├── constants.py    # System constants
-│   │   └── progression.py  # Virtue/Vice mechanics
+│   │   ├── progression.py  # Virtue/Vice mechanics
+│   │   ├── llm/              # LLM integration
+│   │   │   ├── __init__.py
+│   │   │   ├── deepseek_client.py  # Deepseek-R1 70B client
+│   │   │   └── config.py     # LLM configuration
+│   │   └── user_profiling/ # User profiling systems
+│   │       ├── __init__.py
+│   │       ├── behavioral_analysis.py  # Behavioral tracking
+│   │       └── questionnaire.py       # Initial profiling
 │   │
 │   ├── zones/             # Zone implementations
 │   │   ├── __init__.py
@@ -25,28 +33,15 @@ vortex/
 │   │   ├── understanding_pond.py # Binah implementation
 │   │   └── harmony_pond.py   # Yesod implementation
 │   │
-│   ├── profiling/         # Behavioral profiling
-│   │   ├── __init__.py
-│   │   ├── questionnaire.py  # Voight-Kampff system
-│   │   ├── analyzer.py      # Response analysis
-│   │   └── dimensions.py    # Behavioral dimensions
-│   │
 │   ├── guides/           # Guide system
 │   │   ├── __init__.py
 │   │   ├── base_guide.py  # Guide framework
+│   │   ├── llm_dialogue.py   # LLM dialogue system
 │   │   ├── personality.py # Personality engine
-│   │   └── archetypes/    # Cultural variants
-│   │       ├── egyptian/
-│   │       ├── mayan/
-│   │       └── dogon/
-│   │
-│   ├── mythology/        # Mythological framework
-│   │   ├── __init__.py
-│   │   ├── sefirot.py    # Kabbalistic system
-│   │   ├── ogdoad.py     # Egyptian system
-│   │   ├── dogon.py      # Dogon cosmology
-│   │   ├── mayan.py      # Mayan calendar
-│   │   └── integration.py # Cross-cultural mapping
+│   │   ├── maat.py       # Egyptian wisdom guide
+│   │   ├── isis.py       # Egyptian nurture guide
+│   │   ├── horus.py      # Egyptian protection guide
+│   │   └── odin.py       # Norse wisdom guide
 │   │
 │   └── ui/              # User interface
 │       ├── __init__.py
@@ -61,19 +56,34 @@ vortex/
 │   │   ├── ogdoad/
 │   │   ├── dogon/
 │   │   └── mayan/
+│   │
 │   └── content/         # Game content
 │       ├── challenges/
 │       ├── dialogs/
 │       └── scenarios/
 │
 ├── tests/              # Test suite
-│   ├── unit/
-│   │   ├── test_profiling.py
-│   │   ├── test_zones.py
-│   │   └── test_mythology.py
-│   └── integration/
-│       ├── test_progression.py
-│       └── test_cross_cultural.py
+│   ├── core/           # Core system tests
+│   │   ├── test_engine.py
+│   │   ├── test_adaptive_game.py
+│   │   ├── test_progression.py
+│   │   └── user_profiling/
+│   │       ├── test_behavioral_analysis.py
+│   │       └── test_questionnaire.py
+│   ├── guides/         # Guide system tests
+│   │   ├── test_base_guide.py
+│   │   ├── test_maat.py
+│   │   ├── test_isis.py
+│   │   ├── test_horus.py
+│   │   └── test_odin.py
+│   ├── zones/          # Zone implementation tests
+│   │   ├── test_base_zone.py
+│   │   ├── test_stream_manager.py
+│   │   └── test_ponds.py
+│   └── integration/    # Cross-system integration tests
+│       ├── test_behavioral_integration.py
+│       ├── test_guide_profiling.py
+│       └── test_zone_progression.py
 │
 ├── docs/               # Documentation
 │   ├── integration.md  # System integration
@@ -93,9 +103,21 @@ vortex/
 
 ### Game Engine (`src/core/`)
 - Complete implementation of core game loop
+- Adaptive gameplay system with real-time adjustments
 - Player state management with profile integration
 - Virtue/Vice progression system
 - Cross-cultural achievement tracking
+- Behavioral analysis integration
+
+### User Profiling (`src/core/user_profiling/`)
+- Behavioral analysis system
+  - Real-time interaction tracking
+  - Pattern recognition
+  - Temporal analysis
+- Initial questionnaire framework
+- Multi-dimensional behavioral tracking
+- Guide interaction optimization
+- Adaptive difficulty scaling
 
 ### Zone System (`src/zones/`)
 - All pond implementations complete
@@ -103,17 +125,20 @@ vortex/
 - Dynamic content adaptation based on profiles
 - Cross-cultural challenge integration
 
-### Profiling System (`src/profiling/`)
-- Enhanced Voight-Kampff questionnaire
-- Multi-dimensional behavioral analysis
-- Real-time profile adaptation
-- Content personalization engine
+### LLM Integration (`src/core/llm/`)
+- Deepseek-R1 70B model integration
+- Error handling and retries
+- Memory-efficient processing
+- Response validation
+- Conversation management
 
 ### Guide System (`src/guides/`)
-- Adaptive personality framework
-- Cultural archetype integration
-- Dynamic teaching methods
-- Personalized interaction patterns
+- LLM-powered dialogue system
+- Profile-based adaptation
+- Cultural context integration
+- Conversation memory
+- Response validation
+- Error recovery
 
 ### Mythology Framework (`src/mythology/`)
 - Complete Sefirot-Ogdoad mapping
@@ -158,7 +183,58 @@ vortex/
 - Update integration guides
 
 ### Testing
-- Unit tests for new features
-- Integration tests for systems
-- Cultural accuracy validation
-- Performance benchmarking 
+- Unit tests for all components
+- Mock LLM integration
+- Integration testing
+- Performance benchmarks
+- Cultural validation
+
+### Cultural Accuracy
+- Keep mythology references updated
+- Document cross-cultural connections
+- Maintain technical specifications
+- Update integration guides
+
+### Testing Framework
+1. **Core Testing** (`tests/core/`)
+   - Unit tests for engine components
+   - Behavioral analysis validation
+   - Profile management tests
+   - LLM integration tests
+   - Performance benchmarks
+
+2. **Guide Testing** (`tests/guides/`)
+   - Base guide functionality
+   - LLM dialogue system
+   - Personality adaptation
+   - Cultural integration
+   - Error handling
+   - Memory management
+
+3. **Integration Testing** (`tests/integration/`)
+   - Guide-Zone interactions
+   - Profile adaptation flows
+   - Cultural context handling
+   - Memory persistence
+   - Error recovery systems
+   - System stability
+   - Cross-cultural wisdom
+   - Virtue progression
+   - Emotional state handling
+   - Challenge completion
+   - Multi-component scenarios
+
+4. **Test Coverage**
+   - Core systems: 90%
+   - Guide system: 85%
+   - Integration tests: 75%
+   - Cultural validation: 70%
+
+### Development Guidelines
+
+#### Testing Standards
+- All new features require tests
+- Integration tests for component interactions
+- Cultural sensitivity validation
+- Performance benchmarking
+- Error recovery verification 

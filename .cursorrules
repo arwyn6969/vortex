@@ -6,15 +6,32 @@
         "**/__pycache__/**",
         "**/.git/**",
         "**/venv/**",
+        "**/.venv/**",
         "**/dist/**",
-        "**/build/**"
+        "**/build/**",
+        "**/htmlcov/**",
+        "**/.pytest_cache/**",
+        "**/vortex.egg-info/**",
+        "**/.mypy_cache/**",
+        "**/.coverage/**",
+        "**/node_modules/**",
+        "**/.ipynb_checkpoints/**"
     ],
     "search": {
         "exclude": [
             "**/__pycache__/**",
             "**/.git/**",
-            "**/venv/**"
-        ]
+            "**/venv/**",
+            "**/.venv/**",
+            "**/htmlcov/**",
+            "**/.pytest_cache/**",
+            "**/.mypy_cache/**",
+            "**/node_modules/**"
+        ],
+        "includeHidden": false,
+        "followSymlinks": false,
+        "useIgnoreFiles": true,
+        "useGitignore": true
     },
     "python": {
         "analysis": {
@@ -23,20 +40,103 @@
             "inlayHints": {
                 "functionReturnTypes": true,
                 "variableTypes": true,
-                "parameterTypes": true
+                "parameterTypes": true,
+                "enumMemberValues": true,
+                "propertyDeclarationTypes": true
             },
-            "autoImportCompletions": true
+            "autoImportCompletions": true,
+            "useLibraryCodeForTypes": true,
+            "diagnosticSeverityOverrides": {
+                "reportMissingTypeStubs": "warning",
+                "reportUnknownMemberType": "warning",
+                "reportMissingTypeArgument": "error",
+                "reportPrivateUsage": "warning",
+                "reportUndefinedVariable": "error",
+                "reportGeneralTypeIssues": "error",
+                "reportFloatPrecision": "warning",
+                "reportComplexMath": "warning",
+                "reportSpecialFloatValues": "warning"
+            },
+            "stubPath": "typings",
+            "extraPaths": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/tests"
+            ],
+            "extraLibs": [
+                "astropy",
+                "ephem",
+                "skyfield",
+                "numpy",
+                "scipy",
+                "pandas"
+            ]
         },
         "formatting": {
             "provider": "black",
             "blackPath": "black",
-            "blackArgs": ["--line-length", "88"]
+            "blackArgs": [
+                "--line-length",
+                "88",
+                "--target-version",
+                "py39",
+                "--preview"
+            ]
         },
         "linting": {
             "pylintEnabled": true,
             "mypyEnabled": true,
             "flake8Enabled": true,
-            "banditEnabled": true
+            "banditEnabled": true,
+            "pydocstyleEnabled": true,
+            "pylintArgs": [
+                "--disable=C0111",
+                "--max-line-length=88",
+                "--good-names=i,j,k,ex,Run,_,x,y,z,df,ax,ra,dec,alt,az,lat,lon",
+                "--ignore-patterns=test_.*?py",
+                "--extension-pkg-whitelist=numpy,pandas,tensorflow,astropy,ephem,skyfield",
+                "--max-args=10",
+                "--generated-members=numpy.*,torch.*,astropy.*,ephem.*,skyfield.*"
+            ],
+            "flake8Args": [
+                "--max-line-length=88",
+                "--ignore=E203,W503",
+                "--per-file-ignores=__init__.py:F401"
+            ],
+            "mypyArgs": [
+                "--ignore-missing-imports",
+                "--follow-imports=silent",
+                "--show-column-numbers",
+                "--disallow-untyped-defs",
+                "--disallow-incomplete-defs",
+                "--check-untyped-defs",
+                "--disallow-untyped-decorators",
+                "--no-implicit-optional",
+                "--warn-redundant-casts",
+                "--warn-return-any",
+                "--warn-unused-ignores",
+                "--warn-unused-configs",
+                "--strict-optional",
+                "--allow-redefinition",
+                "--implicit-reexport"
+            ],
+            "banditArgs": [
+                "-r",
+                "-c",
+                "pyproject.toml"
+            ]
+        },
+        "testing": {
+            "pytestEnabled": true,
+            "unittestEnabled": false,
+            "pytestArgs": [
+                "--cov=vortex",
+                "--cov-report=term-missing",
+                "--cov-report=html",
+                "--doctest-modules",
+                "--hypothesis-show-statistics",
+                "--numprocesses=auto"
+            ],
+            "autoTestDiscoverOnSaveEnabled": true
         }
     },
     "editor": {
@@ -45,6 +145,104 @@
         "rulers": [88],
         "wordWrap": "on",
         "tabSize": 4,
-        "insertSpaces": true
+        "insertSpaces": true,
+        "detectIndentation": true,
+        "quickSuggestions": {
+            "strings": true,
+            "comments": true,
+            "other": true
+        },
+        "suggestOnTriggerCharacters": true,
+        "acceptSuggestionOnEnter": "on",
+        "bracketPairColorization.enabled": true,
+        "guides.bracketPairs": true,
+        "semanticHighlighting.enabled": true,
+        "gitlens.codeLens.enabled": true,
+        "suggest.snippetsPreventQuickSuggestions": false,
+        "codeActionsOnSave": {
+            "source.organizeImports": true,
+            "source.fixAll": true
+        }
+    },
+    "docstrings": {
+        "generateDocstringOnEnter": true,
+        "docstringFormat": "google",
+        "includeExtendedSummary": true,
+        "includeName": false,
+        "guessTypes": true,
+        "startOnNewLine": true,
+        "includeDescription": true,
+        "spaceBeforeParagraph": true,
+        "paramFormat": "type",
+        "returnFormat": "type",
+        "makePublicWithTripleQuotes": true,
+        "customSections": [
+            "Parameters",
+            "Returns",
+            "Raises",
+            "Notes",
+            "References",
+            "Examples",
+            "Astronomical Constants",
+            "Coordinate Systems",
+            "Time Systems"
+        ],
+        "includeMathJax": true
+    },
+    "git": {
+        "enableSmartCommit": true,
+        "confirmSync": false,
+        "autofetch": true,
+        "autoStash": true,
+        "pruneOnFetch": true,
+        "fetchOnPull": true,
+        "branchSortOrder": "alphabetically",
+        "showInlineBlame": true
+    },
+    "terminal": {
+        "integrated.env.osx": {
+            "PYTHONPATH": "${workspaceFolder}",
+            "PYTHONDEVMODE": "1",
+            "PYTHONWARNINGS": "default"
+        }
+    },
+    "jupyter": {
+        "sendSelectionToInteractiveWindow": true,
+        "interactiveWindowMode": "perFile",
+        "notebookFileRoot": "${workspaceFolder}",
+        "enablePlotViewer": true,
+        "enableCellCodeLens": true,
+        "markdownRegularExpression": "^(#\\s*%%\\s*\\[markdown\\]|#\\s*\\[markdown\\]|#\\s*%%\\s*md|#\\s*%%markdown)",
+        "pythonExportMethod": "direct",
+        "plotlyConfig": {
+            "responsive": true,
+            "scrollZoom": true,
+            "modeBarButtonsToRemove": ["sendDataToCloud"]
+        },
+        "enableAstroNotebookFeatures": true,
+        "defaultPlotLibrary": "plotly"
+    },
+    "files": {
+        "associations": {
+            "*.ipynb": "jupyter-notebook",
+            "*.py": "python",
+            "*.pyi": "python",
+            "*.toml": "toml",
+            "*.yaml": "yaml",
+            "*.yml": "yaml",
+            "*.json": "json",
+            "*.md": "markdown"
+        },
+        "exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/__pycache__": true,
+            "**/.pytest_cache": true,
+            "**/.mypy_cache": true,
+            "**/node_modules": true
+        }
     }
 } 

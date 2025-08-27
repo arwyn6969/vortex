@@ -2,6 +2,20 @@
 Sefirot paths and connections definitions.
 """
 from typing import Dict, List, Tuple
+from enum import Enum
+
+class SefirotAttribute(Enum):
+    """Enum for the ten Sefirot attributes."""
+    KETER = "keter"
+    CHOKMAH = "chokhmah"
+    BINAH = "binah"
+    CHESED = "chesed"
+    GEVURAH = "gevurah"
+    TIFERET = "tiferet"
+    NETZACH = "netzach"
+    HOD = "hod"
+    YESOD = "yesod"
+    MALKHUT = "malkhut"
 
 # Path definitions with Hebrew letters
 PATHS = {

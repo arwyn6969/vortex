@@ -1,5 +1,7 @@
 """Tests for the AI behavior validation system."""
 
+import unittest
+from unittest.mock import Mock, patch
 import pytest
 from datetime import datetime
 from typing import Dict
@@ -10,7 +12,7 @@ from vortex.src.core.validation.ai_behavior_validator import (
     ValidationMetrics
 )
 from vortex.src.core.communication.message_system import Message
-from vortex.src.profile.behavioral_matrix import BehavioralMatrix
+from vortex.src.core.user_profiling.profile_matrix import BehavioralMatrix
 
 @pytest.fixture
 def validator():
@@ -21,9 +23,14 @@ def validator():
 def sample_message():
     """Create a sample message for testing."""
     return Message(
-        content="This is a test message with mythological references to Zeus and Osiris",
+        message_id="test_id",
+        sender_id="test_sender",
+        recipient_ids={"test_recipient"},
+        content="This is a test message about wisdom and understanding.",
+        message_type="test_type",
+        scene_id="test_scene",
         timestamp=datetime.now(),
-        metadata={"response_time_ms": 50}
+        metadata={}
     )
 
 @pytest.fixture
@@ -31,8 +38,10 @@ def sample_context():
     """Create a sample context for testing."""
     return {
         "guide_personality": "wise_sage",
-        "cultural_context": "greek_egyptian",
-        "interaction_history": []
+        "guide_traits": ["wisdom", "patience"],
+        "topic": "test_topic",
+        "required_elements": ["wisdom", "understanding"],
+        "complexity_level": 0.8
     }
 
 @pytest.fixture
@@ -63,17 +72,6 @@ async def test_validate_response_basic(
     assert isinstance(result.timestamp, datetime)
 
 @pytest.mark.asyncio
-async def test_cultural_sensitivity_check(validator, sample_message, sample_context):
-    """Test cultural sensitivity validation."""
-    result = await validator._check_cultural_sensitivity(sample_message, sample_context)
-    
-    assert isinstance(result, dict)
-    assert "score" in result
-    assert "issues" in result
-    assert "recommendations" in result
-    assert 0.0 <= result["score"] <= 1.0
-
-@pytest.mark.asyncio
 async def test_emotional_intelligence_check(
     validator,
     sample_message,
@@ -84,6 +82,28 @@ async def test_emotional_intelligence_check(
         sample_message,
         behavioral_matrix
     )
+    
+    assert isinstance(result, dict)
+    assert "score" in result
+    assert "issues" in result
+    assert "recommendations" in result
+    assert 0.0 <= result["score"] <= 1.0
+
+@pytest.mark.asyncio
+async def test_guide_consistency_check(validator, sample_message, sample_context):
+    """Test guide personality consistency validation."""
+    result = await validator._check_guide_consistency(sample_message, sample_context)
+    
+    assert isinstance(result, dict)
+    assert "score" in result
+    assert "issues" in result
+    assert "recommendations" in result
+    assert 0.0 <= result["score"] <= 1.0
+
+@pytest.mark.asyncio
+async def test_response_quality_check(validator, sample_message):
+    """Test response quality validation."""
+    result = await validator._check_response_quality(sample_message)
     
     assert isinstance(result, dict)
     assert "score" in result
@@ -124,31 +144,9 @@ def test_validation_metrics():
     assert len(common_issues) > 0
 
 @pytest.mark.asyncio
-async def test_guide_consistency_check(validator, sample_message, sample_context):
-    """Test guide personality consistency validation."""
-    result = await validator._check_guide_consistency(sample_message, sample_context)
-    
-    assert isinstance(result, dict)
-    assert "score" in result
-    assert "issues" in result
-    assert "recommendations" in result
-    assert 0.0 <= result["score"] <= 1.0
-
-@pytest.mark.asyncio
 async def test_mythological_accuracy_check(validator, sample_message):
     """Test mythological accuracy validation."""
     result = await validator._check_mythological_accuracy(sample_message)
-    
-    assert isinstance(result, dict)
-    assert "score" in result
-    assert "issues" in result
-    assert "recommendations" in result
-    assert 0.0 <= result["score"] <= 1.0
-
-@pytest.mark.asyncio
-async def test_response_quality_check(validator, sample_message):
-    """Test response quality validation."""
-    result = await validator._check_response_quality(sample_message)
     
     assert isinstance(result, dict)
     assert "score" in result

@@ -505,39 +505,45 @@ class VoightKampffQuestionnaire:
         ]
         
     def get_question(self, index: int) -> Optional[Question]:
-        """Retrieve a specific question by index."""
+        """Get a question by its index."""
         if 0 <= index < len(self.questions):
             return self.questions[index]
         return None
         
-    def analyze_response(
-        self,
-        question: Question,
-        option_index: int
-    ) -> Dict[str, float]:
-        """Analyze a user's response to generate profile updates."""
-        # Validate inputs
-        if not isinstance(option_index, int):
-            raise ValueError("option_index must be an integer")
+    def analyze_response(self, question: Question, response: str) -> Dict[ProfileDimension, float]:
+        """Analyze a response and return its impact on profile dimensions."""
+        # Convert text response to option index
+        try:
+            # First try to parse as direct index
+            option_index = int(response) - 1
+            if not (0 <= option_index < len(question.options)):
+                # If invalid index, try to match text
+                response_lower = response.lower()
+                for i, option in enumerate(question.options):
+                    if response_lower in option.lower():
+                        option_index = i
+                        break
+                else:
+                    # If no match found, use first option as default
+                    option_index = 0
+        except ValueError:
+            # If not a number, try to match text
+            response_lower = response.lower()
+            for i, option in enumerate(question.options):
+                if response_lower in option.lower():
+                    option_index = i
+                    break
+            else:
+                # If no match found, use first option as default
+                option_index = 0
+                
+        # Calculate impacts based on chosen option
+        impacts = {}
+        option_count = len(question.options)
+        for dimension, base_impact in question.dimension_impacts.items():
+            # Calculate impact based on option index
+            # First option has full impact, last option has minimal impact
+            impact_scale = 1.0 - (option_index / (option_count - 1))
+            impacts[dimension] = base_impact * impact_scale
             
-        if option_index < 0 or option_index >= len(question.options):
-            raise ValueError(
-                f"option_index must be between 0 and {len(question.options)-1}"
-            )
-            
-        # Response analysis weights for each option (0-3)
-        weights = [1.0, 0.7, 0.3, 0.0]
-        weight = weights[option_index]
-        
-        # Generate impact values for each dimension
-        impacts = {
-            dim: value * weight
-            for dim, value in question.dimension_impacts.items()
-        }
-        
-        # Add human probability assessment
-        impacts['human_probability'] = (
-            question.human_detection_weight * weight
-        )
-        
         return impacts 

@@ -175,4 +175,11 @@ class RedisService:
             return bool(self.redis.flushdb())
         except Exception as e:
             logger.error(f"Error clearing Redis data: {str(e)}")
-            return False 
+            return False
+
+# Instantiate a default RedisService instance for module-level access
+_default_redis_service = RedisService()
+
+def __getattr__(name: str):
+    """Forward module-level attribute access to the default RedisService instance."""
+    return getattr(_default_redis_service, name) 

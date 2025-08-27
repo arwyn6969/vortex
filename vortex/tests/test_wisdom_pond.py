@@ -1,8 +1,9 @@
 import unittest
 from unittest.mock import Mock, patch
-from ..src.zones.wisdom_pond import WisdomPond
-from ..src.core.user_profiling.profile_matrix import ProfileDimension
-from ..src.core.exceptions import GuidanceError
+from vortex.src.zones.wisdom_pond import WisdomPond
+from vortex.src.core.player import Player
+from vortex.src.core.user_profiling.profile_matrix import ProfileMatrix, ProfileDimension
+from vortex.src.core.exceptions import GuidanceError
 
 class TestWisdomPond(unittest.TestCase):
     def setUp(self):

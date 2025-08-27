@@ -1,0 +1,133 @@
+graph TD
+    %% Core Sefirot with attributes
+    Keter["Keter - Crown<br/>Pure Spirit<br/>Guide: Metatron"]
+    Chokhmah["Chokhmah - Wisdom<br/>Zodiac/Grey<br/>Guide: Thoth"]
+    Binah["Binah - Understanding<br/>Saturn/Black<br/>Guide: Monk Pepe"]
+    Chesed["Chesed - Mercy<br/>Jupiter/Blue<br/>Guide: Ma'at"]
+    Gevurah["Gevurah - Severity<br/>Mars/Red<br/>Guide: Sekhmet"]
+    Tiferet["Tiferet - Beauty<br/>Sun/Yellow<br/>Guide: Vibe Pepe"]
+    Netzach["Netzach - Victory<br/>Venus/Green"]
+    Hod["Hod - Glory<br/>Mercury/Orange<br/>Guide: Michael"]
+    Yesod["Yesod - Foundation<br/>Moon/Violet"]
+    Malkhut["Malkhut - Kingdom<br/>Earth/Brown<br/>Guide: Sandalphon"]
+    
+    %% Setting up the correct Tree of Life structure with grid layout
+    
+    %% First create invisible nodes for positioning
+    topSpace[" "]:::invisible
+    
+    %% Second row positioning (Chokhmah and Binah)
+    chokhmahSpace[" "]:::invisible
+    binahSpace[" "]:::invisible
+    
+    %% Third row positioning (Chesed and Gevurah)
+    chesedSpace[" "]:::invisible
+    gevurahSpace[" "]:::invisible
+    
+    %% Fourth row positioning (Netzach and Hod)
+    netzachSpace[" "]:::invisible
+    hodSpace[" "]:::invisible
+    
+    %% Final row positioning (Malkhut)
+    bottomSpace[" "]:::invisible
+    
+    %% Create proper layout with invisible connectors
+    topSpace --- chokhmahSpace & binahSpace
+    linkStyle 0,1 stroke-width:0px;
+    
+    chokhmahSpace --- chesedSpace
+    binahSpace --- gevurahSpace
+    linkStyle 2,3 stroke-width:0px;
+    
+    chesedSpace --- netzachSpace
+    gevurahSpace --- hodSpace
+    linkStyle 4,5 stroke-width:0px;
+    
+    netzachSpace & hodSpace --- bottomSpace
+    linkStyle 6,7 stroke-width:0px;
+    
+    %% Position the actual Sefirot using the space nodes
+    topSpace --- Keter
+    linkStyle 8 stroke-width:0px;
+    
+    chokhmahSpace --- Chokhmah
+    binahSpace --- Binah
+    linkStyle 9,10 stroke-width:0px;
+    
+    chesedSpace --- Chesed
+    gevurahSpace --- Gevurah
+    linkStyle 11,12 stroke-width:0px;
+    
+    Tiferet --- tSpace[" "]:::invisible
+    linkStyle 13 stroke-width:0px;
+    
+    netzachSpace --- Netzach
+    hodSpace --- Hod
+    linkStyle 14,15 stroke-width:0px;
+    
+    Yesod --- ySpace[" "]:::invisible
+    bottomSpace --- Malkhut
+    linkStyle 16,17 stroke-width:0px;
+
+    %% Correct path connections according to traditional kabbalah
+    %% Middle Pillar
+    Keter -- 1 --> Tiferet
+    Tiferet -- 19 --> Yesod 
+    Yesod -- 32 --> Malkhut
+    
+    %% Right Pillar
+    Keter -- 3 --> Chokhmah
+    Chokhmah -- 6 --> Tiferet
+    Chokhmah -- 5 --> Chesed
+    Chesed -- 10 --> Tiferet
+    Chesed -- 16 --> Netzach
+    Tiferet -- 18 --> Netzach
+    Netzach -- 24 --> Yesod
+    
+    %% Left Pillar
+    Keter -- 2 --> Binah
+    Binah -- 8 --> Tiferet
+    Binah -- 7 --> Gevurah
+    Gevurah -- 11 --> Tiferet
+    Gevurah -- 17 --> Hod
+    Tiferet -- 20 --> Hod
+    Hod -- 25 --> Yesod
+    
+    %% Horizontal connections
+    Chokhmah -- 4 --> Binah
+    Chesed -- 9 --> Gevurah
+    Netzach -- 22 --> Hod
+    
+    %% Diagonal connections
+    Chokhmah -- 12 --> Gevurah
+    Binah -- 13 --> Chesed
+    Chesed -- 14 --> Hod
+    Gevurah -- 15 --> Netzach
+    Netzach -- 26 --> Malkhut
+    Hod -- 27 --> Malkhut
+    
+    %% Styling
+    classDef default fill:#fff,stroke:#333,stroke-width:2px;
+    classDef crown fill:#fff,stroke:gold,stroke-width:3px;
+    classDef wisdom fill:#ddd,stroke:#333,stroke-width:2px;
+    classDef understanding fill:#000,stroke:#333,stroke-width:2px,color:#fff;
+    classDef mercy fill:#88f,stroke:#333,stroke-width:2px;
+    classDef severity fill:#f88,stroke:#333,stroke-width:2px;
+    classDef beauty fill:#ff8,stroke:#333,stroke-width:2px;
+    classDef victory fill:#8f8,stroke:#333,stroke-width:2px;
+    classDef glory fill:#fa8,stroke:#333,stroke-width:2px;
+    classDef foundation fill:#f8f,stroke:#333,stroke-width:2px;
+    classDef kingdom fill:#a85,stroke:#333,stroke-width:2px;
+    classDef invisible opacity:0,height:0;
+    
+    %% Apply styles to nodes
+    class Keter crown;
+    class Chokhmah wisdom;
+    class Binah understanding;
+    class Chesed mercy;
+    class Gevurah severity;
+    class Tiferet beauty;
+    class Netzach victory;
+    class Hod glory;
+    class Yesod foundation;
+    class Malkhut kingdom; 

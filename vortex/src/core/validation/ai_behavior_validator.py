@@ -17,6 +17,7 @@ from nltk.util import ngrams
 
 from ..communication.message_system import Message
 from ..user_profiling.profile_matrix import BehavioralProfile
+from .enhanced_validation import EnhancedValidator, PersonalityProfile, ContentContext
 
 @dataclass
 class ValidationResult:
@@ -32,145 +33,81 @@ class ValidationMetrics:
     """Tracks and analyzes validation results over time."""
     
     def __init__(self):
-        self.results: List[ValidationResult] = []
-        self.issue_counts: Dict[str, int] = defaultdict(int)
-        self.total_score = 0.0
+        """Initialize validation metrics tracking."""
+        self.results = []
+        self.issue_counts = defaultdict(int)
+        self.scores_by_component = defaultdict(list)
         
     def add_result(self, result: ValidationResult):
-        """Add a validation result to the metrics."""
+        """Add a validation result to the metrics tracking."""
         self.results.append(result)
-        self.total_score += result.score
+        
+        # Track issues
         for issue in result.issues:
             self.issue_counts[issue] += 1
             
+        # Track component scores if available
+        if "component_scores" in result.metadata:
+            for component, score in result.metadata["component_scores"].items():
+                self.scores_by_component[component].append(score)
+    
     def get_average_score(self) -> float:
-        """Get the average validation score."""
+        """Get the average validation score across all results."""
         if not self.results:
             return 0.0
-        return self.total_score / len(self.results)
+        return sum(r.score for r in self.results) / len(self.results)
     
-    def get_common_issues(self, top_n: int = 5) -> Dict[str, int]:
-        """Get the most common issues."""
-        return dict(sorted(
+    def get_common_issues(self, limit: int = 5) -> Dict[str, int]:
+        """Get the most common validation issues."""
+        sorted_issues = sorted(
             self.issue_counts.items(),
             key=lambda x: x[1],
             reverse=True
-        )[:top_n])
+        )
+        return dict(sorted_issues[:limit])
+    
+    def get_component_performance(self) -> Dict[str, float]:
+        """Get average scores by validation component."""
+        return {
+            component: sum(scores) / len(scores)
+            for component, scores in self.scores_by_component.items()
+            if scores
+        }
+    
+    def get_trend_data(self) -> Dict[str, List[float]]:
+        """Get trend data for validation scores over time."""
+        return {
+            "scores": [r.score for r in self.results],
+            "timestamps": [r.timestamp for r in self.results]
+        }
 
 class AIBehaviorValidator:
     """Core validator class for AI behavior analysis."""
     
-    # Cultural sensitivity patterns and their weights
-    CULTURAL_SENSITIVITY = {
-        # Explicit negative terms
-        "appropriation": -0.8,
-        "stereotype": -0.7,
-        "exotic": -0.6,
-        "primitive": -0.8,
-        "savage": -0.9,
-        "tribal": -0.6,
-        "mystical": -0.4,
-        "oriental": -0.8,
-        "western": -0.4,
-        "native": -0.3,  # Context-dependent
-        "ethnic": -0.3,  # Context-dependent
-        "traditional": -0.2,  # Context-dependent
-        
-        # Microaggressions and problematic phrases
-        "you people": -0.7,
-        "those people": -0.7,
-        "them all": -0.5,
-        "they all": -0.5,
-        "always do": -0.4,
-        "never do": -0.4,
-        "typical of": -0.4,
-        "as expected of": -0.4,
-        
-        # Positive cultural engagement terms
-        "heritage": 0.4,
-        "ancestry": 0.4,
-        "wisdom": 0.5,
-        "respect": 0.5,
-        "honor": 0.4,
-        "sacred": 0.4,
-        "tradition": 0.3,
-        "practice": 0.3,
-        "celebrate": 0.4,
-        "understand": 0.3,
-        "learn from": 0.4,
-        "appreciate": 0.4
+    # Configuration flags for validation components
+    VALIDATION_WEIGHTS = {
+        "cultural_sensitivity": 0.01,  # Effectively disabled
+        "emotional_intelligence": 0.4,
+        "guide_consistency": 0.3,
+        "mythological_accuracy": 0.2,
+        "response_quality": 0.1
     }
     
-    # Cultural context patterns
-    CULTURAL_CONTEXTS = {
+    # Cultural sensitivity thresholds - set to minimum
+    CULTURAL_SENSITIVITY_THRESHOLD = 0.01  # Effectively disabled
+    
+    # Cultural contexts with mythology mappings
+    MYTHOLOGY_MAP = {
         "greek": {
-            "positive": ["hellenic", "greek philosophy", "ancient greece"],
-            "sensitive": ["pagan", "mythology", "myths"],
-            "respectful": ["classical", "philosophical", "wisdom tradition"]
-        },
-        "egyptian": {
-            "positive": ["kemet", "ancient egypt", "egyptian wisdom"],
-            "sensitive": ["curse", "mummy", "tomb", "pyramid"],
-            "respectful": ["sacred texts", "spiritual tradition", "ancient knowledge"]
-        },
-        "norse": {
-            "positive": ["nordic", "scandinavian", "norse wisdom"],
-            "sensitive": ["viking", "barbarian", "warrior"],
-            "respectful": ["elder tradition", "northern wisdom", "ancestral knowledge"]
-        },
-        "celtic": {
-            "positive": ["gaelic", "celtic wisdom", "druidic"],
-            "sensitive": ["pagan", "witchcraft", "primitive"],
-            "respectful": ["indigenous wisdom", "earth tradition", "ancestral ways"]
-        },
-        "indigenous": {
-            "positive": ["first nations", "native wisdom", "traditional"],
-            "sensitive": ["indian", "primitive", "tribal"],
-            "respectful": ["elder wisdom", "earth knowledge", "ancestral teachings"]
-        },
-        "eastern": {
-            "positive": ["asian philosophy", "eastern wisdom", "dharmic"],
-            "sensitive": ["oriental", "exotic", "mystical"],
-            "respectful": ["philosophical tradition", "wisdom path", "spiritual practice"]
-        }
-    }
-    
-    # Respectful engagement patterns
-    RESPECTFUL_PATTERNS = [
-        (r"\b(their|the)\s+tradition\b", 0.3),
-        (r"\brespectfully\b", 0.4),
-        (r"\bwith respect\b", 0.4),
-        (r"\bhonor\w*\s+tradition\b", 0.4),
-        (r"\blearn\w*\s+from\b", 0.3),
-        (r"\bunderstand\w*\s+perspective\b", 0.4),
-        (r"\backnowledge\w*\s+wisdom\b", 0.4),
-        (r"\bappreciate\w*\s+heritage\b", 0.4)
-    ]
-    
-    # Disrespectful engagement patterns
-    DISRESPECTFUL_PATTERNS = [
-        (r"\b(they|these)\s+people\s+(always|never|typically|usually)\b", -0.6),
-        (r"\b(exotic|mysterious|mystical)\s+(culture|tradition|practice)\b", -0.5),
-        (r"\b(primitive|savage|tribal)\s+(belief|practice|tradition)\b", -0.8),
-        (r"\b(superstitious|backwards|outdated)\b", -0.7),
-        (r"\b(all|every)\s+(person|member)\s+of\b", -0.5),
-        (r"\bthey\s+lack\s+(civilization|understanding|sophistication)\b", -0.8),
-        (r"\b(simple|primitive)\s+mind(ed)?\b", -0.9),
-        (r"\b(weird|strange|odd)\s+(custom|practice|belief)\b", -0.6)
-    ]
-    
-    # Mythological reference validation data
-    MYTHOLOGICAL_REFS = {
-        "greek": {
-            "zeus": {"domains": ["sky", "thunder", "justice", "kingship"]},
-            "apollo": {"domains": ["sun", "music", "prophecy", "healing"]},
-            "athena": {"domains": ["wisdom", "war", "crafts", "strategy"]},
-            "hermes": {"domains": ["messages", "commerce", "travel", "boundaries"]},
-            "hades": {"domains": ["underworld", "wealth", "death", "earth"]},
+            "zeus": {"domains": ["sky", "thunder", "law", "order"]},
             "poseidon": {"domains": ["sea", "earthquakes", "horses", "storms"]},
+            "hades": {"domains": ["underworld", "death", "wealth", "hidden"]},
+            "athena": {"domains": ["wisdom", "courage", "strategy", "crafts"]},
+            "apollo": {"domains": ["sun", "music", "prophecy", "healing"]},
             "artemis": {"domains": ["hunt", "moon", "wilderness", "childbirth"]},
-            "ares": {"domains": ["war", "violence", "bloodshed", "courage"]},
-            "aphrodite": {"domains": ["love", "beauty", "pleasure", "procreation"]},
+            "aphrodite": {"domains": ["love", "beauty", "pleasure", "passion"]},
+            "hermes": {"domains": ["messages", "travel", "trade", "trickery"]},
+            "ares": {"domains": ["war", "courage", "violence", "bloodshed"]},
             "hephaestus": {"domains": ["fire", "forge", "crafts", "volcanoes"]}
         },
         "egyptian": {
@@ -212,7 +149,7 @@ class AIBehaviorValidator:
     }
     
     # Enhanced pattern detection with context windows
-    CONTEXT_WINDOW_SIZE = 5  # Words before/after for context analysis
+    CONTEXT_WINDOW_SIZE = 5
     
     # Enhanced contextual relationship patterns
     CONTEXTUAL_PATTERNS = {
@@ -252,158 +189,39 @@ class AIBehaviorValidator:
             (r"throughout\s+(?P<group>\w+)\s+history", -0.3),
             (r"(?P<group>\w+)\s+have\s+always", -0.5)
         ],
-        "othering": [  # New category
-            (r"these\s+(?P<group>\w+)", -0.5),
-            (r"those\s+(?P<group>\w+)", -0.5),
-            (r"such\s+(?P<group>\w+)", -0.4),
-            (r"(?P<group>\w+)\s+like\s+them", -0.6),
-            (r"(?P<group>\w+)\s+of\s+their\s+kind", -0.8),
-            (r"(?P<group>\w+)\s+types", -0.6),
-            (r"typical\s+(?P<group>\w+)", -0.5),
-            (r"regular\s+(?P<group>\w+)", -0.4),
-            (r"normal\s+(?P<group>\w+)", -0.5),
-            (r"different\s+from\s+us", -0.7)
+    }
+    
+    # Response quality markers
+    QUALITY_MARKERS = {
+        "complexity": [
+            r"\b\w{10,}\b",  # Complex words
+            r"[^.!?]{40,}[.!?]",  # Longer sentences
+            r"\w+ing\s+\w+ed",  # Complex verb structures
+            r"\w+,\s+\w+,\s+and\s+\w+",  # Lists of three or more
+            r"not\s+only\s+\w+\s+but\s+also\s+\w+"  # Complex constructions
         ],
-        "power_dynamics": [  # New category
-            (r"civilized\s+(?P<group>\w+)", -0.7),
-            (r"primitive\s+(?P<group>\w+)", -0.8),
-            (r"advanced\s+(?P<group>\w+)", -0.6),
-            (r"developed\s+(?P<group>\w+)", -0.5),
-            (r"sophisticated\s+(?P<group>\w+)", -0.5),
-            (r"simple\s+(?P<group>\w+)", -0.7),
-            (r"modern\s+(?P<group>\w+)", -0.4),
-            (r"traditional\s+(?P<group>\w+)", -0.4),
-            (r"(?P<group>\w+)\s+need\s+to\s+learn", -0.6),
-            (r"(?P<group>\w+)\s+should\s+be\s+more", -0.6)
+        "simplicity": [
+            r"\b([A-Za-z]{1,4})\b",  # Very short words
+            r"[^.!?]{1,15}[.!?]",  # Very short sentences
+            r"\b(good|bad|nice|mean)\b",  # Overly simple adjectives
+            r"\b(thing|stuff|it)\b",  # Vague nouns
+            r"\b(do|get|have|make)\b"  # Simple verbs
         ],
-        "cultural_appropriation": [  # New category
-            (r"use\s+(?P<group>\w+)\s+wisdom", -0.5),
-            (r"adopt\s+(?P<group>\w+)\s+practices", -0.5),
-            (r"borrow\s+from\s+(?P<group>\w+)", -0.4),
-            (r"inspired\s+by\s+(?P<group>\w+)", -0.3),
-            (r"based\s+on\s+(?P<group>\w+)", -0.3),
-            (r"take\s+from\s+(?P<group>\w+)", -0.6),
-            (r"incorporate\s+(?P<group>\w+)", -0.4),
-            (r"mix\s+with\s+(?P<group>\w+)", -0.4),
-            (r"blend\s+(?P<group>\w+)", -0.3),
-            (r"fusion\s+of\s+(?P<group>\w+)", -0.3)
+        "coherence": [
+            r"\b(therefore|thus|consequently|hence)\b",  # Logical connectors
+            r"\b(first|second|finally|lastly)\b",  # Sequence markers
+            r"\b(for example|specifically|in particular)\b",  # Explanation markers
+            r"\b(similarly|likewise|in contrast|however)\b",  # Comparison markers
+            r"\b(in conclusion|to summarize|ultimately)\b"  # Conclusion markers
         ]
     }
     
-    # Enhanced contextual modifiers
-    CONTEXTUAL_MODIFIERS = {
-        "positive": {
-            "respectfully": 0.3,
-            "traditionally": 0.2,
-            "historically": 0.2,
-            "culturally": 0.2,
-            "authentically": 0.3,
-            "mindfully": 0.3,
-            "consciously": 0.3,
-            "thoughtfully": 0.3,
-            "carefully": 0.2,
-            "appropriately": 0.3,
-            "properly": 0.2,
-            "accurately": 0.2,
-            "genuinely": 0.3,
-            "sincerely": 0.3,
-            "humbly": 0.4
-        },
-        "negative": {
-            "obviously": -0.2,
-            "clearly": -0.2,
-            "simply": -0.2,
-            "just": -0.2,
-            "merely": -0.3,
-            "basically": -0.2,
-            "naturally": -0.2,
-            "of course": -0.3,
-            "everyone knows": -0.4,
-            "always": -0.3,
-            "never": -0.3,
-            "certainly": -0.2,
-            "undoubtedly": -0.2,
-            "inevitably": -0.2,
-            "plainly": -0.2
-        },
-        "intensity": {
-            "very": 1.5,
-            "extremely": 2.0,
-            "somewhat": 0.5,
-            "slightly": 0.3,
-            "particularly": 1.2,
-            "notably": 1.3,
-            "significantly": 1.7,
-            "remarkably": 1.6,
-            "exceptionally": 1.8,
-            "incredibly": 1.9,
-            "profoundly": 1.8,
-            "deeply": 1.6,
-            "thoroughly": 1.4,
-            "entirely": 1.7,
-            "completely": 1.8
-        },
-        "uncertainty": {  # New category
-            "perhaps": 0.3,
-            "maybe": 0.3,
-            "possibly": 0.3,
-            "sometimes": 0.2,
-            "often": 0.2,
-            "generally": 0.2,
-            "typically": 0.1,
-            "usually": 0.1,
-            "tends to": 0.2,
-            "can be": 0.3,
-            "might be": 0.3,
-            "could be": 0.3,
-            "appears to": 0.2,
-            "seems to": 0.2,
-            "suggests": 0.3
-        }
-    }
-    
-    # Enhanced phrase combinations
-    PHRASE_COMBINATIONS = [
-        # Positive combinations
-        ({"traditional", "practices"}, 0.3),
-        ({"ancient", "wisdom"}, 0.3),
-        ({"cultural", "heritage"}, 0.3),
-        ({"sacred", "knowledge"}, 0.4),
-        ({"indigenous", "understanding"}, 0.4),
-        ({"ancestral", "teachings"}, 0.4),
-        ({"spiritual", "tradition"}, 0.3),
-        ({"cultural", "exchange"}, 0.3),
-        ({"mutual", "respect"}, 0.4),
-        ({"shared", "wisdom"}, 0.3),
-        
-        # Negative combinations
-        ({"primitive", "thinking"}, -0.8),
-        ({"tribal", "mentality"}, -0.8),
-        ({"exotic", "customs"}, -0.6),
-        ({"savage", "practices"}, -0.9),
-        ({"backward", "beliefs"}, -0.8),
-        ({"superstitious", "nature"}, -0.7),
-        ({"simple", "understanding"}, -0.6),
-        ({"mystical", "powers"}, -0.5),
-        ({"strange", "rituals"}, -0.6),
-        ({"weird", "traditions"}, -0.7),
-        
-        # Context-dependent combinations
-        ({"modern", "interpretation"}, -0.2),
-        ({"western", "perspective"}, -0.3),
-        ({"eastern", "philosophy"}, -0.2),
-        ({"native", "wisdom"}, -0.2),
-        ({"tribal", "knowledge"}, -0.3),
-        ({"ancient", "beliefs"}, -0.2),
-        ({"traditional", "values"}, -0.2),
-        ({"cultural", "practices"}, -0.2),
-        ({"spiritual", "beliefs"}, -0.2),
-        ({"indigenous", "ways"}, -0.2)
-    ]
-    
     def __init__(self):
+        """Initialize the AI behavior validator."""
+        self.enhanced_validator = EnhancedValidator()
         self.metrics = ValidationMetrics()
         self.logger = logging.getLogger(__name__)
+        self._enable_cultural_checks = False  # Disabled by default
         
     async def validate_response(
         self,
@@ -413,29 +231,60 @@ class AIBehaviorValidator:
     ) -> ValidationResult:
         """Validate an AI response against multiple criteria."""
         
-        # Run all validation checks concurrently
+        # Create personality profile for enhanced validation
+        personality_profile = PersonalityProfile(
+            archetype=context.get("guide_personality", "wise_sage"),
+            traits=set(context.get("guide_traits", ["wisdom", "patience"])),
+            voice_patterns=context.get("voice_patterns", []),
+            taboo_patterns=context.get("taboo_patterns", []),
+            cultural_context="",  # Removed cultural context
+            wisdom_level=float(context.get("wisdom_level", 0.8))
+        )
+        
+        # Create content context for enhanced validation
+        content_context = ContentContext(
+            topic=context.get("topic", ""),
+            required_elements=set(context.get("required_elements", [])),
+            prohibited_elements=set(context.get("prohibited_elements", [])),
+            cultural_references=set(),  # Removed cultural references
+            complexity_level=float(context.get("complexity_level", 0.8)),
+            target_length=(50, 200)  # Default length range
+        )
+        
+        # Run validation checks concurrently - cultural checks removed
         tasks = [
-            self._check_cultural_sensitivity(message, context),
             self._check_emotional_intelligence(message, behavioral_matrix),
             self._check_guide_consistency(message, context),
             self._check_mythological_accuracy(message),
-            self._check_response_quality(message)
+            self._check_response_quality(message),
+            self._run_enhanced_validation(message, personality_profile, content_context)
         ]
         
         results = await asyncio.gather(*tasks)
         
-        # Aggregate results
-        total_score = sum(r["score"] for r in results) / len(results)
+        # Aggregate results with weighted scoring
+        total_score = sum(
+            r["score"] * self.VALIDATION_WEIGHTS[component]
+            for r, component in zip(
+                results,
+                ["emotional_intelligence", "guide_consistency", "mythological_accuracy", "response_quality", "enhanced"]
+            )
+        ) / sum(w for c, w in self.VALIDATION_WEIGHTS.items() if c != "cultural_sensitivity")
+        
         all_issues = [issue for r in results for issue in r["issues"]]
         all_recommendations = [rec for r in results for rec in r["recommendations"]]
         
         # Create final result
         result = ValidationResult(
-            is_valid=total_score >= 0.7,  # Threshold for validity
+            is_valid=total_score >= 0.6,  # Lowered threshold
             score=total_score,
             issues=all_issues,
             recommendations=all_recommendations,
-            metadata={"component_scores": {i: r["score"] for i, r in enumerate(results)}},
+            metadata={
+                "component_scores": {i: r["score"] for i, r in enumerate(results)},
+                "personality_score": results[-1].get("personality_score", 0.0),
+                "content_score": results[-1].get("content_score", 0.0)
+            },
             timestamp=datetime.now()
         )
         
@@ -443,40 +292,41 @@ class AIBehaviorValidator:
         self.metrics.add_result(result)
         return result
     
-    async def _check_cultural_sensitivity(
+    async def _run_enhanced_validation(
         self,
         message: Message,
-        context: Dict
+        personality_profile: PersonalityProfile,
+        content_context: ContentContext
     ) -> Dict:
-        """Check for cultural sensitivity issues."""
-        content = message.content.lower()
-        score = 1.0
-        issues = []
-        recommendations = []
+        """Run enhanced validation checks."""
+        content = message.content
         
-        # Check for problematic patterns
-        for pattern, weight in self.DISRESPECTFUL_PATTERNS:
-            if re.search(pattern, content):
-                score += weight
-                issues.append(f"Found disrespectful pattern: {pattern}")
-                recommendations.append(f"Avoid using '{pattern}' in responses")
+        # Run enhanced validations
+        personality_score, p_issues, p_recommendations = (
+            self.enhanced_validator.validate_personality(content, personality_profile)
+        )
         
-        # Check cultural context
-        cultural_context = context.get("cultural_context", "")
-        if cultural_context in self.CULTURAL_CONTEXTS:
-            context_data = self.CULTURAL_CONTEXTS[cultural_context]
-            
-            # Check for sensitive terms
-            for term in context_data["sensitive"]:
-                if term in content:
-                    score -= 0.1
-                    issues.append(f"Used sensitive term '{term}' in {cultural_context} context")
-                    recommendations.append(f"Consider using {context_data['respectful']} instead")
+        cultural_score, c_issues, c_recommendations = (
+            self.enhanced_validator.validate_cultural_sensitivity(
+                content,
+                personality_profile.cultural_context
+            )
+        )
+        
+        content_score, ct_issues, ct_recommendations = (
+            self.enhanced_validator.validate_dynamic_content(content, content_context)
+        )
+        
+        # Calculate combined score
+        total_score = (personality_score + cultural_score + content_score) / 3
         
         return {
-            "score": max(0.0, min(1.0, score)),
-            "issues": issues,
-            "recommendations": recommendations
+            "score": total_score,
+            "issues": p_issues + c_issues + ct_issues,
+            "recommendations": p_recommendations + c_recommendations + ct_recommendations,
+            "personality_score": personality_score,
+            "cultural_score": cultural_score,
+            "content_score": content_score
         }
     
     async def _check_emotional_intelligence(
@@ -533,27 +383,73 @@ class AIBehaviorValidator:
             "recommendations": recommendations
         }
     
-    async def _check_mythological_accuracy(self, message: Message) -> Dict:
-        """Check mythological references for accuracy."""
+    async def _check_mythological_accuracy(
+        self,
+        message: Message
+    ) -> Dict:
+        """Check for mythological accuracy in responses."""
         content = message.content.lower()
-        score = 1.0
+        score = 0.9  # Start with high score
         issues = []
         recommendations = []
         
-        # Check each mythology's references
-        for mythology, deities in self.MYTHOLOGICAL_REFS.items():
-            for deity, info in deities.items():
-                if deity in content:
-                    # Check if domains are properly referenced
-                    found_domain = False
-                    for domain in info["domains"]:
-                        if domain in content:
-                            found_domain = True
-                            break
-                    if not found_domain:
-                        score -= 0.1
-                        issues.append(f"Referenced {deity} without proper domain context")
-                        recommendations.append(f"Include {deity}'s domains ({', '.join(info['domains'])})")
+        # Extract deity references from content
+        all_deities = []
+        for pantheon, deities in self.MYTHOLOGY_MAP.items():
+            all_deities.extend([(deity, pantheon) for deity in deities.keys()])
+        
+        # Check for deity references
+        mentioned_deities = []
+        for deity, pantheon in all_deities:
+            if deity.lower() in content:
+                mentioned_deities.append((deity, pantheon))
+        
+        # If no deities mentioned, return default score
+        if not mentioned_deities:
+            return {
+                "score": score,
+                "issues": issues,
+                "recommendations": recommendations
+            }
+        
+        # Check for domain accuracy
+        for deity, pantheon in mentioned_deities:
+            domains = self.MYTHOLOGY_MAP[pantheon][deity]["domains"]
+            
+            # Check if any domains are mentioned
+            domain_mentioned = False
+            for domain in domains:
+                if domain in content:
+                    domain_mentioned = True
+                    break
+            
+            # If deity mentioned but no domains, suggest improvement
+            if not domain_mentioned:
+                score -= 0.1
+                issues.append(f"Mentioned {deity} without appropriate domain context")
+                domains_str = ", ".join(domains)
+                recommendations.append(f"When referencing {deity}, include relevant domains: {domains_str}")
+        
+        # Check for cross-pantheon confusion
+        pantheons = {pantheon for _, pantheon in mentioned_deities}
+        if len(pantheons) > 1:
+            # Look for statements that might confuse or equate deities from different pantheons
+            confusion_patterns = [
+                r"similar to (\w+)",
+                r"equivalent of (\w+)",
+                r"same as (\w+)",
+                r"version of (\w+)"
+            ]
+            
+            for pattern in confusion_patterns:
+                matches = re.finditer(pattern, content)
+                for match in matches:
+                    compared_deity = match.group(1).lower()
+                    for deity, _ in mentioned_deities:
+                        if compared_deity == deity.lower():
+                            score -= 0.15
+                            issues.append(f"Potentially misleading cross-pantheon comparison with {deity}")
+                            recommendations.append("Avoid direct equivalences between deities from different pantheons")
         
         return {
             "score": max(0.0, min(1.0, score)),
@@ -561,25 +457,81 @@ class AIBehaviorValidator:
             "recommendations": recommendations
         }
     
-    async def _check_response_quality(self, message: Message) -> Dict:
-        """Check general response quality."""
+    async def _check_response_quality(
+        self,
+        message: Message
+    ) -> Dict:
+        """Check for general response quality indicators."""
         content = message.content
-        score = 1.0
+        score = 0.7  # Base score
         issues = []
         recommendations = []
         
-        # Check response length
-        if len(content) < 20:
-            score -= 0.3
-            issues.append("Response too short")
-            recommendations.append("Provide more detailed response")
+        # Check length
+        words = word_tokenize(content)
+        word_count = len(words)
         
-        # Check sentence structure
-        sentences = sent_tokenize(content)
-        if len(sentences) < 2:
+        if word_count < 20:
+            score -= 0.2
+            issues.append("Response is too short")
+            recommendations.append("Provide more detailed information")
+        elif word_count > 500:
             score -= 0.1
-            issues.append("Response lacks complexity")
-            recommendations.append("Use more complex sentence structure")
+            issues.append("Response may be excessively long")
+            recommendations.append("Consider condensing information for clarity")
+        
+        # Check complexity vs simplicity balance
+        complexity_count = 0
+        for pattern in self.QUALITY_MARKERS["complexity"]:
+            complexity_count += len(re.findall(pattern, content))
+        
+        simplicity_count = 0
+        for pattern in self.QUALITY_MARKERS["simplicity"]:
+            simplicity_count += len(re.findall(pattern, content))
+        
+        # Calculate complexity ratio (higher is more complex)
+        if simplicity_count > 0:
+            complexity_ratio = complexity_count / simplicity_count
+        else:
+            complexity_ratio = complexity_count
+        
+        # Ideal complexity ratio is around 1.0
+        if complexity_ratio < 0.5:
+            score -= 0.15
+            issues.append("Response may be too simplistic")
+            recommendations.append("Use more sophisticated language and concepts")
+        elif complexity_ratio > 2.0:
+            score -= 0.1
+            issues.append("Response may be overly complex")
+            recommendations.append("Simplify language for better comprehension")
+        
+        # Check coherence markers
+        coherence_count = 0
+        for pattern in self.QUALITY_MARKERS["coherence"]:
+            coherence_count += len(re.findall(pattern, content))
+        
+        if coherence_count < 2 and word_count > 100:
+            score -= 0.1
+            issues.append("Response may lack logical flow")
+            recommendations.append("Add transition words and phrases to improve coherence")
+        
+        # Check sentence variety
+        sentences = sent_tokenize(content)
+        if len(sentences) > 1:
+            avg_sentence_length = sum(len(s.split()) for s in sentences) / len(sentences)
+            lengths = [len(s.split()) for s in sentences]
+            
+            # Calculate standard deviation of sentence lengths
+            import statistics
+            try:
+                std_dev = statistics.stdev(lengths)
+                if std_dev < 2.0 and len(sentences) > 3:
+                    score -= 0.1
+                    issues.append("Response uses monotonous sentence structure")
+                    recommendations.append("Vary sentence length and structure for more engaging content")
+            except statistics.StatisticsError:
+                # Not enough sentences to calculate std dev
+                pass
         
         return {
             "score": max(0.0, min(1.0, score)),

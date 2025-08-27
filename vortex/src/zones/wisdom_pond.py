@@ -602,4 +602,6 @@ class BrainGalaxy(Zone):
             ethical_choice,
             synthesis
         ]:
-            self.learning_path.add_node(node) 
+            self.learning_path.add_node(node)
+
+WisdomPond = BrainGalaxy 

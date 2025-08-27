@@ -4,8 +4,10 @@ import asyncio
 import pytest
 from decimal import Decimal
 from uuid import uuid4
+import unittest
+from unittest.mock import Mock, patch
 
-from ..src.core.finance.bitcoin_tokens import BitcoinTokenService
+from vortex.src.core.finance.bitcoin_tokens import BitcoinTokenService
 from ..src.core.finance.token_config import calculate_token_multipliers
 
 TEST_ADDRESS = "1AwS3wRFNCoymKs69BXjAA4VfgWvuKvx4j"

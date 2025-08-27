@@ -1,5 +1,5 @@
 import unittest
-from ..src.core.user_profiling.profile_matrix import ProfileDimension, BehavioralProfile
+from vortex.src.core.user_profiling.profile_matrix import ProfileDimension, BehavioralProfile
 from typing import Dict
 import time
 

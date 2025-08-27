@@ -426,5 +426,3 @@ class MercyPond(Zone):
             profile.get(dim, 0) >= value * 0.7  # 70% of requirements
             for dim, value in node.requirements.items()
         )
-```
-```

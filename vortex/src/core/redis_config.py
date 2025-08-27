@@ -1,29 +1,43 @@
-"""Redis configuration and connection settings."""
+"""Redis configuration module."""
 
-from typing import Optional
-import os
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class RedisConfig:
-    """Redis connection configuration."""
-    host: str = os.getenv("REDIS_HOST", "localhost")
-    port: int = int(os.getenv("REDIS_PORT", "6379"))
-    db: int = int(os.getenv("REDIS_DB", "0"))
-    password: Optional[str] = os.getenv("REDIS_PASSWORD")
-    ssl: bool = os.getenv("REDIS_SSL", "false").lower() == "true"
-    
+    """Redis configuration settings."""
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 0
+    password: Optional[str] = None
+    socket_timeout: Optional[float] = None
+    socket_connect_timeout: Optional[float] = None
+    socket_keepalive: Optional[bool] = None
+    socket_keepalive_options: Optional[dict] = None
+    connection_pool: Optional[object] = None
+    unix_socket_path: Optional[str] = None
+    encoding: str = "utf-8"
+    encoding_errors: str = "strict"
+    decode_responses: bool = True
+    retry_on_timeout: bool = False
+    ssl: bool = False
+    ssl_keyfile: Optional[str] = None
+    ssl_certfile: Optional[str] = None
+    ssl_cert_reqs: Optional[str] = None
+    ssl_ca_certs: Optional[str] = None
+    max_connections: Optional[int] = None
+
     # Cache settings
-    default_cache_ttl: int = int(os.getenv("REDIS_CACHE_TTL", "3600"))  # 1 hour
-    max_cache_size: int = int(os.getenv("REDIS_MAX_CACHE_SIZE", "10000"))
+    default_cache_ttl: int = 3600  # 1 hour
+    max_cache_size: int = 10000
     
     # Message queue settings
-    default_queue_ttl: int = int(os.getenv("REDIS_QUEUE_TTL", "86400"))  # 24 hours
-    max_queue_size: int = int(os.getenv("REDIS_MAX_QUEUE_SIZE", "100000"))
+    default_queue_ttl: int = 86400  # 24 hours
+    max_queue_size: int = 100000
     
     # Real-time settings
-    pubsub_channel_prefix: str = os.getenv("REDIS_PUBSUB_PREFIX", "vortex:")
-    max_subscribers: int = int(os.getenv("REDIS_MAX_SUBSCRIBERS", "1000"))
+    pubsub_channel_prefix: str = "vortex:"
+    max_subscribers: int = 1000
     
     # Key prefixes
     CACHE_PREFIX: str = "vortex:cache:"

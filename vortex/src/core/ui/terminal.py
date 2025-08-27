@@ -3,7 +3,7 @@ Terminal-based user interface for the game.
 """
 import os
 import sys
-from typing import Optional, Callable
+from typing import Optional, Callable, List
 from datetime import datetime
 
 class TerminalUI:
@@ -60,25 +60,25 @@ wisdom reflect the essence of your being.
         """Display text to the user."""
         print(text)
     
-    def prompt(self, message: str) -> str:
-        """Prompt the user for input."""
+    def get_input(self, prompt: str = "> ") -> str:
+        """Get input from the user with the specified prompt."""
         try:
-            response = input(f"{message} ")
+            response = input(prompt)
             self._handle_keystrokes(response)
-            return response
-        except (KeyboardInterrupt, EOFError):
-            self.display_text("\nFarewell, seeker...")
-            sys.exit(0)
-    
-    def get_command(self) -> str:
-        """Get a command from the user."""
-        try:
-            command = input("\nWhat would you like to do? ").strip().lower()
-            self._handle_keystrokes(command)
-            self.last_command = command
-            return command
+            return response.strip()
         except (KeyboardInterrupt, EOFError):
             return "quit"
+    
+    def process_input(self, user_input: str) -> Optional[str]:
+        """Process user input and return any response."""
+        if not user_input:
+            return None
+            
+        # Store last command
+        self.last_command = user_input.lower()
+        
+        # Return None to indicate no specific response needed
+        return None
     
     def display_error(self, message: str):
         """Display an error message."""
@@ -92,7 +92,7 @@ wisdom reflect the essence of your being.
         """Display a visual separator."""
         print("\n" + "─" * 60 + "\n")
     
-    def display_options(self, options: list, prompt_text: str = "Choose an option:"):
+    def display_options(self, options: List[str], prompt_text: str = "Choose an option:"):
         """Display a list of options and get user selection."""
         print(f"\n{prompt_text}")
         for i, option in enumerate(options, 1):
@@ -100,9 +100,20 @@ wisdom reflect the essence of your being.
         
         while True:
             try:
-                choice = int(self.prompt("\nEnter your choice (number):"))
+                choice = int(self.get_input("\nEnter your choice (number): "))
                 if 1 <= choice <= len(options):
                     return choice - 1
                 print("Please enter a valid option number.")
             except ValueError:
-                print("Please enter a number.") 
+                print("Please enter a number.")
+                
+    def update_display(self, text: str):
+        """Update the display with new text."""
+        self.display_text(text)
+        
+    def show_status(self, status: dict):
+        """Display current game status."""
+        self.display_separator()
+        for key, value in status.items():
+            print(f"{key}: {value}")
+        self.display_separator() 

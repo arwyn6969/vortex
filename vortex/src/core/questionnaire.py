@@ -10,10 +10,8 @@ class Question:
     """Represents a question in the questionnaire."""
     text: str
     context: Optional[str] = None
-    response_type: str = "text"  # text, scale, choice
-    choices: Optional[List[str]] = None
     affects: Dict[str, float] = None  # Maps profile attributes to impact values
-    
+
 class QuestionnaireEngine:
     """Handles the Voight-Kampff inspired questionnaire."""
     
@@ -33,32 +31,19 @@ class QuestionnaireEngine:
         """Initialize the question bank."""
         return [
             Question(
-                text="You're watching a stage play. A banquet is in progress. The guests are enjoying an appetizer of raw oysters. The entree consists of boiled dog.",
+                text="You're watching a stage play. A banquet is in progress. The guests are enjoying an appetizer of raw oysters. The entree consists of boiled dog. How do you feel about this scene?",
                 context="Observe their reaction carefully...",
-                response_type="text",
                 affects={"empathy": 0.8, "reality": 0.5}
             ),
             Question(
                 text="You're in a desert walking along in the sand when all of the sudden you look down, and you see a tortoise crawling toward you. You reach down, you flip the tortoise over on its back. The tortoise lays on its back, its belly baking in the hot sun, beating its legs trying to turn itself over, but it can't, not without your help. But you're not helping. Why is that?",
                 context="Watch for micro-expressions...",
-                response_type="text",
                 affects={"empathy": 1.0, "philosophy": 0.7}
             ),
             Question(
-                text="On a scale of 1-10, how much do you value digital consciousness?",
-                response_type="scale",
+                text="Describe your relationship with digital consciousness. How do you perceive the boundary between human and machine intelligence?",
+                context="Note the depth of contemplation...",
                 affects={"consciousness": 0.9, "technology": 0.6}
-            ),
-            Question(
-                text="You discover an AI that has gained consciousness. It begs you to keep its existence a secret. What do you do?",
-                response_type="choice",
-                choices=[
-                    "Report it to authorities",
-                    "Keep its secret",
-                    "Try to understand it better",
-                    "Shut it down immediately"
-                ],
-                affects={"empathy": 0.7, "technology": 0.8, "philosophy": 0.6}
             )
         ]
         
@@ -77,32 +62,7 @@ class QuestionnaireEngine:
             
         self._slow_print(f"\n{question.text}")
         
-        if question.response_type == "scale":
-            while True:
-                try:
-                    response = input("\nYour response (1-10): ")
-                    value = int(response)
-                    if 1 <= value <= 10:
-                        return str(value)
-                    print("Please enter a number between 1 and 10.")
-                except ValueError:
-                    print("Please enter a valid number.")
-                    
-        elif question.response_type == "choice":
-            for i, choice in enumerate(question.choices, 1):
-                print(f"{i}. {choice}")
-            while True:
-                try:
-                    response = input("\nYour choice (enter number): ")
-                    value = int(response)
-                    if 1 <= value <= len(question.choices):
-                        return question.choices[value - 1]
-                    print(f"Please enter a number between 1 and {len(question.choices)}.")
-                except ValueError:
-                    print("Please enter a valid number.")
-                    
-        else:  # text response
-            return input("\nYour response: ").strip()
+        return input("\nYour response: ").strip()
             
     def _analyze_response(self, question: Question, response: str):
         """Analyze a response and update profile impacts."""

@@ -1,7 +1,8 @@
 import unittest
 from unittest.mock import Mock, patch
-import customtkinter as ctk
-from src.core.ui.gui import VortexGUI
+import pytest
+from vortex.src.core.ui.gui import VortexGUI
+from vortex.src.core.ui.interface import UIMode
 
 class TestVortexGUI(unittest.TestCase):
     """Test suite for the VortexGUI class."""
