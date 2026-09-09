@@ -32,8 +32,18 @@ Three pillars:
 - Balance: Keter, Tiferet, Yesod, Malkhut
 
 Canonical zone assignments live in `vortex/src/mythology/correspondences.py`.
-Path numbers and Hebrew letters live in `vortex/src/mythology/sefirot.py`.
+The 22 undirected streams live in `vortex/src/mythology/paths.py`.
 `go` may only travel a defined path. Streams *are* those paths.
+
+## Veils
+
+The graph is not the same as the walk.
+
+- **Crown** is unnamed until Mercy and Severity both stand in Tiferet. Then Gimel (and Aleph, Beth) may be walked.
+- **Qoph** (Netzach–Malkhut) is the back of the head. It lights when the seeker Looks at Netzach. Tav (Yesod–Malkhut) remains the honest descent.
+- The Watcher may **darken** a stream for haste, pillar tilt, or thin presence. Sit reopens darkness. Veils are unread, not closed.
+
+Session gates: `vortex/src/mythology/veils.py`. Playable walk: [PLAY.md](PLAY.md).
 
 ## Dialects
 
@@ -66,6 +76,7 @@ Silent. Universal. No welcome line.
 - Scores pillar drift and authenticity
 - Emits directives the face-guide must obey
 - Never speaks to the player
+- May close a stream. Never chats about why. The world simply changes.
 
 The HR-shaped agent chart is this function in costume.
 Clearance is initiation grade. Secret visibility means "does not incarnate as NPC."
@@ -112,5 +123,8 @@ into "same energy as Hod." Guest guides stay guest guides.
 | Sefirah ↔ pond ↔ dialects ↔ ledger floor | `vortex/src/mythology/correspondences.py` |
 | Placement, path travel, dialect pick | `vortex/src/core/lattice.py` |
 | Watcher directive vocabulary | `vortex/src/core/watcher_directives.py` |
-| Path numbers and letters | `vortex/src/mythology/sefirot.py` |
+| 22 streams (letter, title, meaning) | `vortex/src/mythology/paths.py` |
+| Session veils (Crown, Qoph) | `vortex/src/mythology/veils.py` |
+| Path numbers and older intelligences | `vortex/src/mythology/sefirot.py` |
 | How to wire the rest of the repo | `docs/doctrine/STAIRCASE.md` |
+| Playable session | `docs/doctrine/PLAY.md` |
