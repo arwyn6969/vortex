@@ -12,3 +12,5 @@ Files:
 - `lattice.ts` — ten ponds, undirected edges including Qoph, `streamStatus` veils
 
 The Grok-hosted session is the current playable face. This folder is the kernel so the Python CLI and the web game do not drift.
+
+What to build next (Bound, Watcher referee, multi-seeker, CLI freeze-or-wire): `docs/doctrine/NEXT.md`.

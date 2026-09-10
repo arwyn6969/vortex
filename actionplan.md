@@ -1,66 +1,52 @@
 # Vortex Action Plan
 
 ## Current Status
-The project has completed basic infrastructure and is in Phase 3 (Polish and Testing), with several key systems implemented but requiring refinement and validation.
 
-## Immediate Priorities
+The engine is the Tree of Life. Doctrine, 22 named streams, Crown/Qoph
+veils, and a playable web session exist. The CLI `Game.start()` path is
+only partly wired to that lattice.
 
-### 1. AI Behavior Validation (High Priority)
-- Complete the AI behavior validator implementation
-- Implement comprehensive test cases for guide interactions
-- Add cultural sensitivity validation
-- Enhance the validation framework for dynamic content
+Source of truth for what to build next: [docs/doctrine/NEXT.md](docs/doctrine/NEXT.md).
 
-### 2. Token System Refinement
-- Optimize token collection mechanics
-- Implement advanced token analytics
-- Complete Bitcoin token integration
-- Add token system monitoring and metrics
+## Immediate priorities (2026)
 
-### 3. Pond System Enhancement
-- Complete the Dogon and Mayan system integration
-- Implement dynamic difficulty adjustment
-- Enhance cross-pond progression mechanics
-- Add advanced stream unlocking validation
+### 1. Bound (High)
 
-### 4. Testing Infrastructure
-- Expand integration test coverage
-- Implement automated playtesting framework
-- Add performance benchmarking
-- Create validation suite for mythological accuracy
+- Issue a one-time challenge at Kingdom Pond only.
+- Verify a wallet signature. Store address + signature. Never ingest WIF.
+- Bound = sigil + six ponds + four rites + signed address.
 
-### 5. Documentation Updates
-- Complete API reference documentation
-- Add detailed system interaction guides
-- Create troubleshooting documentation
-- Document token system architecture
+### 2. Watcher as hidden referee
 
-## Implementation Order
+- Second model, no chat surface.
+- Emit `WatcherDirective` objects the face-guide must obey without quoting.
+- Keep haste / pillar-tilt / thin-presence darkening as the public world.
 
-1. Week 1-2:
-   - Complete AI behavior validator
-   - Expand test coverage
-   - Begin token system refinement
+### 3. Hod mark that can touch the chain
 
-2. Week 3-4:
-   - Implement token analytics
-   - Complete pond system enhancements
-   - Update documentation
+- Sigil stays language in-game.
+- Optional STAMPS / SRC-20 mint from the *player's* wallet.
+- Read inscriptions back only at Malkhut.
 
-3. Week 5-6:
-   - Finalize testing infrastructure
-   - Complete system integration
-   - Polish user experience
+### 4. More than one seeker
 
-## Success Metrics
-- 90%+ test coverage
-- Validated AI behavior across all ponds
-- Completed token system integration
-- Updated documentation for all systems
-- Stable performance metrics
+- Local profiles, one shared tree.
+- Shared darkened streams. Personal Harmony. No accounts.
 
-## Next Steps
-After completing these priorities, focus will shift to Phase 4 (Advanced Features) including:
-- LLM-powered dialogue system
-- Dynamic content generation
-- Advanced analytics implementation 
+### 5. CLI wire or freeze
+
+- Either finish `STAIRCASE.md` Game-loop wiring, or freeze `run_game.py`
+  and let `vortex/web` be the playable kernel.
+
+## Still parked
+
+GPS, HealthKit, government ID, federated learning, AR/VR as a
+prerequisite, extra maps per mythology. Those violate hospitality and
+split the lattice.
+
+## Success
+
+- A seeker can walk 22 letters, open Crown by Harmony, and Bound at Kingdom
+  without pasting a key.
+- The Watcher never speaks.
+- Python `paths.py` / `veils.py` and `vortex/web/*.ts` do not drift.

@@ -8,6 +8,8 @@ Doctrine: [docs/doctrine/THE_LATTICE.md](docs/doctrine/THE_LATTICE.md)
 
 Playable layer: [docs/doctrine/PLAY.md](docs/doctrine/PLAY.md)
 
+Next (suggestions): [docs/doctrine/NEXT.md](docs/doctrine/NEXT.md)
+
 ## Core Features
 
 - **Mystical Framework**: pond system, sacred streams, multiple traditions, symbolic pathways
@@ -45,6 +47,7 @@ pytest vortex/tests/test_lattice.py vortex/tests/test_paths.py vortex/tests/test
 - [The Lattice](docs/doctrine/THE_LATTICE.md)
 - [Playable layer](docs/doctrine/PLAY.md)
 - [Staircase](docs/doctrine/STAIRCASE.md)
+- [Next](docs/doctrine/NEXT.md)
 - [Architecture](docs/architecture.md)
 - [Security](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
