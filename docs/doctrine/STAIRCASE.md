@@ -2,9 +2,10 @@
 
 The lattice was already drawn in zone files, Pepe guides, sefirot paths,
 The Watcher, and the Bitcoin tools. The running `Game.start()` path did
-not climb those stairs. This branch installs the missing middle.
+not climb those stairs. This document is the missing middle for the CLI.
+Play-layer work after veils lives in [NEXT.md](NEXT.md).
 
-## Done on this branch
+## Done
 
 1. Doctrine (`THE_LATTICE.md`).
 2. One correspondence table for all ten sefirot.
@@ -17,8 +18,16 @@ not climb those stairs. This branch installs the missing middle.
 7. Tests for placement, path legality, Malkhut floor, and key refusal.
 8. MIT `LICENSE` (README already claimed it).
 9. `SECURITY.md` for the ledger floor.
+10. 22 named streams (`paths.py` / `vortex/web/paths.ts`). A second walk
+    names the meaning.
+11. Session veils (`veils.py` / `streamStatus`): Crown until Harmony,
+    Qoph after Look at Netzach, Watcher-dark for haste.
+12. Playable web session described in [PLAY.md](PLAY.md).
 
-## Still to wire (follow-up PRs, keep them small)
+## Still to wire on the CLI (keep PRs small)
+
+These are leftover `Game.start()` stairs. Alternative: freeze the CLI
+and treat the web kernel as source of truth. See [NEXT.md](NEXT.md) §5.
 
 1. `Game.assign_guide` should call `Lattice.place()` then
    `GuideFactory.create_for_placement(...)`.
@@ -32,6 +41,13 @@ not climb those stairs. This branch installs the missing middle.
 6. Content-creation permissions gate on `node.creation_unlock`, not admin.
 7. Replace local 70B `DeepseekClient` load with an API-shaped client.
    Guides and Watcher may be different models; they must not be the same call.
+
+## Play-layer suggestions (not CLI)
+
+Bound (signed address at Malkhut), Hod sigil as STAMPS / SRC-20,
+Watcher as a hidden referee model, more than one seeker on the same tree.
+
+Details and order: [NEXT.md](NEXT.md).
 
 ## Non-goals that stay out
 
