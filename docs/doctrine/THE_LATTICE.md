@@ -128,3 +128,4 @@ into "same energy as Hod." Guest guides stay guest guides.
 | Path numbers and older intelligences | `vortex/src/mythology/sefirot.py` |
 | How to wire the rest of the repo | `docs/doctrine/STAIRCASE.md` |
 | Playable session | `docs/doctrine/PLAY.md` |
+| Suggestions after the lattice review | `docs/doctrine/NEXT.md` |

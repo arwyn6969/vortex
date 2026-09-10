@@ -2,6 +2,7 @@
 
 This is the living game of the doctrine in [THE_LATTICE.md](THE_LATTICE.md).
 The CLI still exists. The web layer is how a seeker actually walks.
+Suggestions for what to build next live in [NEXT.md](NEXT.md).
 
 ## What a session is
 
@@ -13,7 +14,7 @@ The CLI still exists. The web layer is how a seeker actually walks.
 6. **Work** — Look / Sit / a rite in each pond. Hod holds a sigil (language, not a key). Kingdom notes an address.
 7. **Harmony** — if Mercy and Severity both stand when you are in Tiferet, the heart records a meeting and **Crown opens**.
 8. **Qoph** — Netzach–Malkhut, the back of the head. Veiled until you Look at Boundaries Pond. Tav (Yesod–Malkhut) is the honest descent.
-9. **Bound** — sigil + six ponds + four rites + a noted address. The tree has a name on the floor of the world.
+9. **Bound** — sigil + six ponds + four rites + a *signed* address at Kingdom. Suggested next: prove the noted address with a wallet signature. See [NEXT.md](NEXT.md).
 
 ## Veils (the lattice doing work)
 
@@ -46,7 +47,10 @@ Streams: `vortex/src/mythology/paths.py` (22 letters). Ledger floor: Kingdom onl
 
 ## Staircase still open
 
-- Sign the Malkhut challenge from a wallet. Never ingest WIF.
-- Mint the Hod sigil as STAMPS / SRC-20.
+Full suggestions: [NEXT.md](NEXT.md). Short list:
+
+- Sign the Malkhut challenge from a wallet. Never ingest WIF. That completes Bound.
+- Mint the Hod sigil as STAMPS / SRC-20 from the player's wallet, then read it back only at Kingdom.
 - Watcher as a hidden referee model (no chat surface).
-- More than one seeker on the same tree.
+- More than one seeker on the same tree (local profiles, shared veils, personal Harmony).
+- Wire the CLI `Game` loop to the lattice, or freeze it and let the web kernel be source of truth.
