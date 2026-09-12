@@ -142,11 +142,12 @@ test("save extension preserves Nile v3 journeys, rejects impossible story state,
   );
   const old = JSON.parse(original);
   const migrated = parseWorld(original);
-  assert.equal(migrated.version, 4);
+  assert.equal(migrated.version, 5);
   const restored = structuredClone(migrated) as any;
   restored.version = 3;
   delete restored.seekers[0].stories;
   delete restored.seekers[0].festival;
+  delete restored.seekers[0].inquiries;
   assert.deepEqual(restored, old);
   assert.deepEqual(activeSeeker(migrated)!.stories, {});
   assert.equal(activeSeeker(migrated)!.festival, null);

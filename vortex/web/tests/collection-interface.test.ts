@@ -91,6 +91,11 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
     await settle();
   };
   try {
+    // Happy DOM has no Web Locks; emulate the supported browser contract here.
+    Object.defineProperty(window.navigator, "locks", {
+      configurable: true,
+      value: { request: async (_name: string, work: () => unknown) => work() },
+    });
     await import("../main.ts");
     await settle();
     await click('[data-modal="collection"]');

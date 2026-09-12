@@ -15,6 +15,23 @@ export default defineConfig({
   server: { strictPort: true, port: 5173 },
   plugins: [
     {
+      name: "vortex-document-policy",
+      apply: "build",
+      transformIndexHtml() {
+        return [
+          {
+            tag: "meta",
+            attrs: {
+              "http-equiv": "Content-Security-Policy",
+              content:
+                "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.counterparty.io:4000; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'",
+            },
+            injectTo: "head-prepend" as const,
+          },
+        ];
+      },
+    },
+    {
       name: "vortex-offline",
       generateBundle(_options, bundle) {
         const assets = publicFiles("vortex/web/public");
@@ -40,6 +57,9 @@ const CACHE=${JSON.stringify(cache)};
 const FILES=${JSON.stringify(urls)};
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)));
+});
+self.addEventListener('message', event => {
+  if(event.data?.type === 'ACTIVATE_UPDATE') self.skipWaiting();
 });
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('vortex-') && key !== CACHE).map(key => caches.delete(key)))));

@@ -34,6 +34,11 @@ test("the interface follows a selected story, delivers it, remembers its outcome
       registerTool: (tool: JourneyTool) => registered.set(tool.name, tool),
     },
   });
+  // Happy DOM has no Web Locks; emulate the supported browser contract here.
+  Object.defineProperty(window.navigator, "locks", {
+    configurable: true,
+    value: { request: async (_name: string, work: () => unknown) => work() },
+  });
   await import("../main.ts");
   const settle = async () => {
     for (let i = 0; i < 8; i++)
@@ -124,7 +129,7 @@ test("the interface follows a selected story, delivers it, remembers its outcome
   // it does not claim support in a real browser's implementation.
   assert.deepEqual(
     [...registered.keys()],
-    ["get_journey_state", "take_journey_action"],
+    ["read_atlas_entry", "get_journey_state", "take_journey_action"],
   );
   const read = registered.get("get_journey_state")!,
     action = registered.get("take_journey_action")!;

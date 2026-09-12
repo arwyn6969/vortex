@@ -1,3 +1,5 @@
+import { ATLAS, ATLAS_SOURCES, atlasEntry, RELATIONS } from "./atlas.ts";
+import { inquiryError, TABLET_CHOICES, GATE_CHOICES } from "./inquiries.ts";
 import { isOffice, NODES, neighbors } from "./lattice.ts";
 import { activeSeeker, status, readyToRoot } from "./session.ts";
 import type { World, Action } from "./session.ts";
@@ -34,6 +36,8 @@ const actions = [
   "story-deliver",
   "story-resolve",
   "festival",
+  "study",
+  "inquiry",
 ] as const;
 export function journeySnapshot(w: World) {
   const s = activeSeeker(w);
@@ -48,6 +52,17 @@ export function journeySnapshot(w: World) {
     seeker: { id: s.id, name: s.name },
     location: { id: s.current, name: NODES[s.current].pond },
     rooted: s.rooted,
+    inquiries: { ...s.inquiries, seen: [...s.inquiries.seen] },
+    encounters: (["tablet", "gate"] as const).map((task) => ({
+      task,
+      choices: (task === "tablet" ? TABLET_CHOICES : GATE_CHOICES).map(
+        (label, choice) => ({
+          label,
+          choice,
+          unavailable: inquiryError(s, { type: "inquiry", task, choice }),
+        }),
+      ),
+    })),
     festival: s.festival,
     next: nextStep(w, s),
     exits: neighbors(s.current).map((id) => ({
@@ -99,22 +114,35 @@ function parseAction(raw: unknown): {
     "seekerId",
     "revision",
     "action",
+    ...(p.action === "study"
+      ? ["entry"]
+      : p.action === "inquiry"
+        ? ["task"]
+        : []),
     ...(p.action === "walk"
       ? ["office"]
       : p.action?.toString().startsWith("story-")
         ? ["story"]
         : []),
-    ...(["rite", "story-start", "story-resolve", "festival"].includes(
-      String(p.action),
-    )
+    ...([
+      "rite",
+      "story-start",
+      "story-resolve",
+      "festival",
+      "inquiry",
+    ].includes(String(p.action))
       ? ["choice"]
       : []),
   ]);
   if (Object.keys(p).some((key) => !allowed.has(key)))
     throw new Error("Unexpected action fields.");
-  const choice = ["rite", "story-start", "story-resolve", "festival"].includes(
-    String(p.action),
-  );
+  const choice = [
+    "rite",
+    "story-start",
+    "story-resolve",
+    "festival",
+    "inquiry",
+  ].includes(String(p.action));
   if (
     choice &&
     (!Number.isInteger(p.choice) ||
@@ -123,7 +151,19 @@ function parseAction(raw: unknown): {
   )
     throw new Error("Choice must be 0, 1, or 2.");
   let action: Action;
-  if (p.action === "walk") {
+  if (p.action === "study") {
+    if (typeof p.entry !== "string" || !atlasEntry(p.entry))
+      throw new Error("Unknown atlas entry.");
+    action = { type: "study", entry: p.entry };
+  } else if (p.action === "inquiry") {
+    if (!["testimony", "tablet", "gate"].includes(String(p.task)))
+      throw new Error("Unknown encounter.");
+    action = {
+      type: "inquiry",
+      task: p.task as "testimony" | "tablet" | "gate",
+      choice: Number(p.choice),
+    };
+  } else if (p.action === "walk") {
     if (!isOffice(p.office)) throw new Error("Unknown office.");
     action = { type: "walk", to: p.office };
   } else if (
@@ -154,9 +194,39 @@ export function registerJourneyTools(
   if (!context?.registerTool) return () => lifecycle.abort();
   const tools: JourneyTool[] = [
     {
+      name: "read_atlas_entry",
+      description:
+        "Read a published atlas entry and its sourced or interpretive connections. This does not mark it remembered or change a journey.",
+      inputSchema: {
+        type: "object",
+        properties: { entry: { type: "string", enum: ATLAS.map((x) => x.id) } },
+        required: ["entry"],
+        additionalProperties: false,
+      },
+      annotations: { readOnlyHint: true, untrustedContentHint: true },
+      execute(input) {
+        if (
+          !input ||
+          typeof input !== "object" ||
+          Array.isArray(input) ||
+          Object.keys(input).some((k) => k !== "entry")
+        )
+          throw new Error("Provide only an atlas entry identifier.");
+        const entry = atlasEntry(String((input as { entry: unknown }).entry));
+        if (!entry) throw new Error("Unknown atlas entry.");
+        return {
+          ...entry,
+          sourceRecord: ATLAS_SOURCES[entry.source],
+          connections: RELATIONS.filter(
+            (r) => r.from === entry.id || r.to === entry.id,
+          ).map((r) => ({ ...r, sourceRecord: ATLAS_SOURCES[r.source] })),
+        };
+      },
+    },
+    {
       name: "get_journey_state",
       description:
-        "Read the active VORTEX journey, legal exits, story stages, choices and next step. Does not expose wallet details or the journal.",
+        "Read the active VORTEX journey, legal exits, story stages, remembered atlas entries, encounter choices and next step. Does not expose wallet details or the journal.",
       inputSchema: {
         type: "object",
         properties: {},
@@ -177,7 +247,7 @@ export function registerJourneyTools(
     {
       name: "take_journey_action",
       description:
-        "Perform one visible game action and save it: walk, look, sit, rite, root, start/deliver/resolve a story, or celebrate the festival. Read the current state first. Choice indexes are 0–2. Sigils, identity changes and wallet operations stay in the interface.",
+        "Perform one visible game action and save it: walk, look, sit, rite, root, start/deliver/resolve a story, celebrate the festival, remember an atlas entry, or resolve an inquiry. Read atlas entries with read_atlas_entry before studying them. Testimony is at Yesod and uses choice 0. Read the current state first. Choice indexes are 0–2. Sigils, identity changes and wallet operations stay in the interface.",
       inputSchema: {
         type: "object",
         properties: {
@@ -186,6 +256,8 @@ export function registerJourneyTools(
           action: { type: "string", enum: actions },
           office: { type: "string", enum: IDS },
           story: { type: "string", enum: IDS },
+          entry: { type: "string", enum: ATLAS.map((x) => x.id) },
+          task: { type: "string", enum: ["testimony", "tablet", "gate"] },
           choice: { type: "integer", minimum: 0, maximum: 2 },
         },
         required: ["seekerId", "revision", "action"],
