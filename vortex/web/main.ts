@@ -39,6 +39,8 @@ import { registerJourneyTools } from "./webmcp.ts";
 import type { JourneyContext } from "./webmcp.ts";
 import { storyPanel, storyBook, festivalPanel } from "./story-view.ts";
 import { completedStories, returnMemory } from "./stories.ts";
+import { CollectionLookup } from "./counterparty.ts";
+import { collectionBody, collectionInvitation } from "./collection-view.ts";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let world = emptyWorld();
@@ -48,8 +50,16 @@ let loading = true,
   newJourney = false;
 let tracked: { seeker: string; story: SefirahId } | null = null;
 let view: "tree" | "codex" | "journal" | "rares" | "stories" = "tree";
-let modal: "journeys" | "settings" | "help" | "wallet" | "rare" | null = null;
+let modal:
+  "journeys" | "settings" | "help" | "wallet" | "rare" | "collection" | null =
+  null;
 let modalTrigger: [string, string] | null = null;
+let collectionFilter: "world" | "all" = "world",
+  collectionVisible = 50;
+let collectionSeeker: string | null = null;
+const collection = new CollectionLookup(() => {
+  if (modal === "collection") render();
+});
 let selectedRare = "THOTHPEPE";
 let message = "",
   messageError = false,
@@ -133,6 +143,7 @@ async function act(action: Action) {
   }
 }
 function closeDialog() {
+  if (modal === "collection") collection.edit("");
   modal = null;
   message = "";
   pendingDelete = "";
@@ -493,6 +504,7 @@ function tree(s: Seeker) {
         "</button></div></section>"
       : "") +
     festivalPanel(s) +
+    (s.current === "malkhut" ? collectionInvitation() : "") +
     (s.looked.includes(s.current)
       ? '<button class="rare-encounter" data-rare="' +
         rareAt(s.current).name +
@@ -709,7 +721,15 @@ function dialog(s: Seeker | null) {
           s.dialect +
           "</button></div>"
         : "") +
-      '<div class="privacy-note"><h2>Your journey stays here.</h2><p>The frog guides use authored, contextual dialogue. A silent Watcher keeps the rules of the tree. Questions are not saved or sent to a model. Saves live in this browser and are not encrypted. Export them before clearing browser data.</p><p>Optional wallet proof is verified on this device. No keys, transactions, accounts, or analytics are requested. Local progress is not an external credential.</p><p>These are fictional correspondences, not claims of authority over the living traditions that inspired them.</p></div>';
+      '<div class="privacy-note"><h2>Your journey stays here.</h2><p>The frog guides use authored, contextual dialogue. A silent Watcher keeps the rules of the tree. Questions are not saved or sent to a model. Saves live in this browser and are not encrypted. Export them before clearing browser data.</p><p>Optional wallet proof is verified on this device. The address ledger sends only the public address you submit to Counterparty; that lookup is not saved with your journey. No keys, transactions, accounts, or analytics are requested. Local progress is not an external credential.</p><p>These are fictional correspondences, not claims of authority over the living traditions that inspired them.</p></div>';
+  } else if (modal === "collection" && s && s.current === "malkhut") {
+    title = "The address ledger";
+    body = collectionBody(
+      collection.state,
+      s,
+      collectionFilter,
+      collectionVisible,
+    );
   } else if (modal === "rare") {
     const r = RARES.find((r) => r.name === selectedRare)!;
     title = r.name;
@@ -790,6 +810,18 @@ function render() {
     (el) => el.id || (el.classList.contains("ask-guide") ? "ask-guide" : ""),
   );
   const s = activeSeeker(world);
+  if (
+    modal !== "collection" &&
+    (collection.state.status !== "idle" || collection.state.input)
+  )
+    collection.edit("");
+  if (
+    modal === "collection" &&
+    (!s || s.id !== collectionSeeker || s.current !== "malkhut")
+  ) {
+    collection.edit("");
+    modal = null;
+  }
   document.documentElement.dataset.motion = reduced ? "reduced" : "full";
   app.innerHTML =
     header(s) +
@@ -902,6 +934,15 @@ async function toggleSound() {
 app.addEventListener("input", (event) => {
   const el = event.target as HTMLInputElement;
   if (el.id === "question" || el.id === "sigil") drafts[el.id] = el.value;
+  if (el.id === "collection-address") {
+    const start = el.selectionStart,
+      end = el.selectionEnd;
+    collection.edit(el.value);
+    render();
+    document
+      .querySelector<HTMLInputElement>("#collection-address")
+      ?.setSelectionRange(start, end);
+  }
 });
 app.addEventListener("click", async (event) => {
   const el = (event.target as Element).closest<HTMLElement>(
@@ -920,6 +961,13 @@ app.addEventListener("click", async (event) => {
   } else if ("close" in d) {
     closeDialog();
   } else if ("modal" in d) {
+    if (d.modal === "collection" && (!s || s.current !== "malkhut")) return;
+    if (d.modal === "collection") {
+      collectionSeeker = s!.id;
+      collection.edit("");
+      collectionFilter = "world";
+      collectionVisible = 50;
+    }
     modalTrigger = ["data-modal", d.modal!];
     modal = d.modal as typeof modal;
     message = "";
@@ -930,6 +978,21 @@ app.addEventListener("click", async (event) => {
   } else if ("home" in d) {
     view = "tree";
     newJourney = false;
+    render();
+  } else if ("collectionCancel" in d) collection.cancel();
+  else if ("collectionClear" in d) collection.clear();
+  else if ("collectionRetry" in d && modal === "collection") {
+    collectionVisible = 50;
+    void collection.run();
+  } else if (
+    "collectionFilter" in d &&
+    (d.collectionFilter === "world" || d.collectionFilter === "all")
+  ) {
+    collectionFilter = d.collectionFilter;
+    collectionVisible = 50;
+    render();
+  } else if ("collectionMore" in d) {
+    collectionVisible += 50;
     render();
   } else if ("topic" in d) {
     await act({ type: "talk", text: d.topic! });
@@ -953,6 +1016,11 @@ app.addEventListener("click", async (event) => {
           : "story-" + (hint.target ?? s.current),
       );
   } else if ("track" in d && s && IDS.includes(d.track as SefirahId)) {
+    if (modal === "collection") {
+      collection.edit("");
+      modal = null;
+      modalTrigger = null;
+    }
     tracked = { seeker: s.id, story: d.track as SefirahId };
     view = "tree";
     render();
@@ -1167,6 +1235,11 @@ app.addEventListener("submit", async (event) => {
   const form = event.target as HTMLFormElement,
     f = new FormData(form);
   try {
+    if (form.id === "collection-form" && modal === "collection") {
+      collection.edit(String(f.get("address")));
+      collectionVisible = 50;
+      void collection.run();
+    }
     if (form.id === "gate-form") {
       name = safeText(f.get("name"), 32, 2);
       if (
@@ -1290,4 +1363,8 @@ const disposeJourneyTools = registerJourneyTools(
     render();
   },
 );
-import.meta.hot?.dispose(disposeJourneyTools);
+import.meta.hot?.dispose(() => {
+  disposeJourneyTools();
+  collection.edit("");
+});
+window.addEventListener("pagehide", () => collection.clear());
