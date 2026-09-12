@@ -2341,6 +2341,129 @@ dialog:has(.original-art) {
 .collection-invitation button {
   flex: 0 0 170px;
 }
+.asset-atlas,
+.stamp-invitation {
+  margin: 28px 0;
+  padding: 28px;
+  border: 1px solid #577368;
+  border-left: 3px solid #b99a5d;
+  background: #102924;
+}
+.asset-atlas h2,
+.stamp-invitation h2 {
+  margin: 12px 0;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+}
+.asset-atlas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px 32px;
+}
+.asset-atlas > .actions {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+}
+.asset-atlas p,
+.stamp-invitation p {
+  max-width: 72ch;
+  line-height: 1.7;
+}
+.asset-atlas input {
+  max-width: 640px;
+}
+#asset-destination {
+  margin-top: 16px;
+  overflow-wrap: anywhere;
+}
+#asset-destination .secondary {
+  display: inline-flex;
+  white-space: normal;
+}
+.archive-section-title {
+  margin: 36px 0 24px;
+  font-size: 1.5rem;
+}
+dialog:has(.stamp-teaching) {
+  width: min(800px, calc(100% - 32px));
+  max-width: 800px;
+}
+.stamp-intro {
+  line-height: 1.7;
+}
+.stamp-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 24px 0 32px;
+}
+.stamp-path button {
+  flex: 1 1 180px;
+  padding: 12px;
+  font-size: 0.875rem;
+}
+.stamp-path [aria-pressed="true"] {
+  color: #10251e;
+  background: #dec78d;
+  border-color: #dec78d;
+}
+.stamp-teaching h2 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin: 12px 0 20px;
+  line-height: 1.15;
+}
+.stamp-teaching blockquote {
+  margin: 0 0 28px;
+  padding-left: 20px;
+  border-left: 2px solid #b99a5d;
+  color: #eddbb2;
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.65;
+}
+.stamp-record {
+  padding-top: 20px;
+  border-top: 1px solid #577368;
+}
+.stamp-record h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.stamp-record p,
+.stamp-reflection p {
+  line-height: 1.75;
+}
+.stamp-record a {
+  display: inline-block;
+  margin: 4px 16px 8px 0;
+}
+.stamp-reflection {
+  padding: 20px 0;
+  margin-top: 12px;
+  border-top: 1px solid #577368;
+}
+.stamp-reflection summary {
+  cursor: pointer;
+  color: #eddbb2;
+  line-height: 1.6;
+}
+.stamp-boundary {
+  padding-top: 16px;
+  border-top: 1px solid #577368;
+  line-height: 1.7;
+}
+@media (max-width: 600px) {
+  .asset-atlas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .asset-atlas,
+  .stamp-invitation {
+    padding: 20px;
+  }
+  .stamp-path button {
+    flex-basis: 100%;
+  }
+}
 dialog:has(#collection-form) {
   width: min(920px, calc(100% - 32px));
   max-width: 920px;

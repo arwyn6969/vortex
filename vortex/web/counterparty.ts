@@ -43,7 +43,7 @@ export class CollectionError extends Error {
 const invalid = () =>
   new CollectionError(
     "invalid",
-    "The service returned incomplete or inconsistent balance data. Try again later or inspect the address on Tokenscan.",
+    "The service returned incomplete or inconsistent balance data. Try again later or inspect the address on xcp.io.",
   );
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value))
@@ -147,7 +147,7 @@ async function readResponse(response: Response): Promise<unknown> {
   )
     throw new CollectionError(
       "limit",
-      "This response is too large to load safely here. Inspect the address on Tokenscan.",
+      "This response is too large to load safely here. Inspect the address on xcp.io.",
     );
   const reader = response.body.getReader(),
     decoder = new TextDecoder("utf-8", { fatal: true });
@@ -161,7 +161,7 @@ async function readResponse(response: Response): Promise<unknown> {
       if (bytes > COLLECTION_LIMITS.bytesPerPage)
         throw new CollectionError(
           "limit",
-          "This response is too large to load here. Inspect the address on Tokenscan.",
+          "This response is too large to load here. Inspect the address on xcp.io.",
         );
       text += decoder.decode(part.value, { stream: true });
     }
@@ -274,7 +274,7 @@ export async function fetchCollection(
       if (pages >= COLLECTION_LIMITS.pages)
         throw new CollectionError(
           "limit",
-          "This address has more than 2,000 balance entries. No partial total is shown. Inspect the full address on Tokenscan.",
+          "This address has more than 2,000 balance entries. No partial total is shown. Inspect the full address on xcp.io.",
         );
       const query = new URLSearchParams({
         limit: String(COLLECTION_LIMITS.pageSize),
@@ -339,7 +339,7 @@ export async function fetchCollection(
     if (rows !== count)
       throw new CollectionError(
         "changed",
-        "The response did not contain every reported balance. Refresh or check Tokenscan; no partial total is shown.",
+        "The response did not contain every reported balance. Refresh or check xcp.io; no partial total is shown.",
       );
     const nodeHeight = readiness(await request(""));
     if (nodeHeight !== startHeight)
