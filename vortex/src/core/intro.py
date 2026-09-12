@@ -53,7 +53,7 @@ Before we proceed, you must understand and acknowledge the following:
 1. PRIVACY WARNING
    - Share only what you're comfortable with
    - Your experience will directly reflect your level of engagement
-   - All data is encrypted and stored securely
+   - Local saves are not encrypted; never enter secrets
 
 2. PARTICIPATION NOTICE
    - All entities are welcome (humans, bots, alternate personas)

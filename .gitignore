@@ -57,3 +57,9 @@ cover/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Local review artifacts and private runtime state
+review/
+saves/
+.openai/execution-profile.json
+.openai/metrics/

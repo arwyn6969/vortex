@@ -1,283 +1,37 @@
-# VORTEX Architecture
+# Architecture
 
-## System Overview
+The maintained game is a static Vite/TypeScript application. Rendering, saved state, art, dialogue, and proof verification run in the browser. A server is only needed to deliver static files. The default Python command is a small standard-library static server, not the old simulation engine.
 
-VORTEX is a text-based adventure game with a focus on spiritual and mythological themes. The system combines adaptive gameplay, profile-based user interactions, and a rich mythological framework to create a personalized journey for each player.
+## Source of truth
 
-```
-┌─────────────────────────┐
-│       Game Engine       │
-├─────────────────────────┤
-│    Event Bus System     │
-├─────┬───────────┬───────┤
-│User │  Guide    │Location│
-│Prof.│  System   │ System │
-├─────┼───────────┼───────┤
-│Token│Achievement│Challenge│
-│Sys. │  System   │ System  │
-└─────┴───────────┴────────┘
-```
+`vortex/src/mythology/correspondences.py` and `paths.py` own the ten offices and twenty-two edges. `tools/generate_lattice.py` exports a deterministic JSON table. `npm run check:lattice` fails when that export drifts. Change the Python canon first, regenerate, and commit the JSON.
 
-## Core Components
+`vortex/web/lattice.ts` provides typed graph helpers. `session.ts` is a pure transition reducer: validate an action, clone the world, advance its revision, and apply its effects. An invalid move cannot consume a turn or modify the original state. Content does not control movement, wallet verification, or rewards.
 
-### Game Engine
+`content.ts` owns the authored scenes, guide voices, and rites. `rares.ts` assigns verified assets to temples as fictional associations. The original asset metadata lives in `rarepepe-data.json`; provenance and original-image checksums live in `docs/references/`. The map's underlying Egyptian and other cultural correspondences are unchanged.
 
-The Game Engine is the central coordinator of the VORTEX experience, orchestrating all other components and managing the overall game state.
+## State and persistence
 
-**Key Responsibilities:**
-- Game initialization and shutdown
-- Player creation and management
-- Turn management and game flow
-- Component coordination via the Event Bus
-- Save/load functionality
+A version-3 world holds the shared clock, temporary edge darkness, selected seeker, and up to twelve seekers. Each seeker has their own visited/looked/rested offices, rites, crossings, Harmony, sigil, journal, and optional proof. One rest per office provides a pillar increase; rites cannot be farmed. The Watcher only dims an edge when another legal exit remains. Sit clears the shared darkness.
 
-**Key Files:**
-- `vortex/src/core/game.py` - Main game coordination class
-- `vortex/src/core/engine.py` - Core engine functionality
-- `vortex/src/core/config.py` - Configuration management
+`storage.ts` reconstructs validated data instead of trusting arbitrary imported objects. It bounds files, records and strings, verifies saved signatures, rejects duplicate identities and conflicting histories, and preserves unreadable data. Writes compare revisions, while the UI uses the Web Locks API to serialize cooperating tabs when available. Browsers without Web Locks still detect stale revisions, but localStorage alone cannot provide a transaction across a simultaneous read/write race. Use one active tab on those browsers.
 
-### Event Bus System
+The save is local and user-editable. It is not an anti-cheat system or proof of ownership. No encryption or account recovery is claimed. Export/import is the migration path between browsers; unverified older schemas remain untouched.
 
-The Event Bus facilitates decoupled communication between components through a publish-subscribe pattern.
+## Wallet boundary
 
-**Key Responsibilities:**
-- Event registration and unregistration
-- Event dispatch to subscribers
-- Asynchronous communication
+`wallet.ts` accepts an address and externally produced signature. The game has no key input or transaction submission path. The challenge binds purpose, Bitcoin mainnet, seeker identity, sigil, address, nonce, issue time and expiry. Changing a sigil removes the old proof. Imported proofs are reverified.
 
-**Key Files:**
-- `vortex/src/core/communication/event_bus.py` - Event bus implementation
+The verifier dependency is loaded on demand. The adapter understands finalized BIP-322 `smp` prefixes and compatible unprefixed simple signatures; it deliberately excludes full transactions, PSBTs, multisig and Taproot script paths. Legacy recoverable signatures are limited to P2PKH. Known valid/invalid vectors come from the [Bitcoin BIPs repository](https://github.com/bitcoin/bips/blob/master/bip-0322/basic-test-vectors.json). Specification: [BIP 322](https://bips.dev/322/).
 
-### User Profiling System
+A stored proof says a message verified for an address at the recorded time. It does not prove current control of funds, token holdings, real-world identity, or exclusive possession of a key. No blockchain request occurs during play. The real-token gallery uses a documented build-time snapshot; it never guesses a live balance or price.
 
-The User Profiling System analyzes player responses and behavior to build a psychological profile that influences gameplay.
+## Delivery and accessibility
 
-**Key Responsibilities:**
-- Initial questionnaire administration
-- Profile creation and updates
-- Profile storage and retrieval
-- Profile dimension analysis
+The main game is a small initial JavaScript bundle; signature code loads separately. Images are local, compressed, and dimensioned. There are no remote font calls. A generated service worker caches the production application and artwork, with cache versions based on emitted file names and public-file content. It leaves cross-origin and non-GET requests alone. An update waits for old tabs to close before taking over, avoiding changes to a running game.
 
-**Key Files:**
-- `vortex/src/core/user_profiling/questionnaire.py` - VoightKampff questionnaire
-- `vortex/src/core/user_profiling/profile_matrix.py` - Profile storage and analysis
+The interface uses native buttons/forms/dialogs, keyboard-operated map nodes, visible focus, text exits equivalent to the map, a skip link, reduced-motion support, and sound that starts only after a deliberate choice. Tests run reducers, persistence, cryptographic fixtures, and an emulated DOM journey. They are not a claim of a manual accessibility audit or a real-wallet interoperability audit.
 
-### Guide System
+## Boundaries for further development
 
-The Guide System provides mythological guides that interact with the player based on their profile, offering guidance and narratives tailored to their preferences.
-
-**Key Responsibilities:**
-- Guide selection based on user profile
-- Dialogue generation and management
-- LLM-powered conversations
-- Cultural and mythological consistency
-
-**Key Files:**
-- `vortex/src/guides/guide_factory.py` - Guide creation and selection
-- `vortex/src/guides/base_guide.py` - Guide base functionality
-- `vortex/src/guides/llm_dialogue.py` - LLM-powered dialogue system
-
-### Location System
-
-The Location System manages the game's spatial structure, including ponds, pathways, and connectivity between realms.
-
-**Key Responsibilities:**
-- Location management and descriptions
-- Navigation between locations
-- Location-specific interactions
-- Discovery tracking
-
-**Key Files:**
-- `vortex/src/zones/location_manager.py` - Location management
-- `vortex/src/zones/pond_system.py` - Pond implementation
-
-### Token System
-
-The Token System manages the in-game currency and progression mechanics.
-
-**Key Responsibilities:**
-- Token collection and spending
-- Token-based unlocks
-- Token analytics
-- Progression tracking
-
-**Key Files:**
-- `vortex/src/core/finance/token_system.py` - Token implementation
-- `vortex/src/core/crypto/bitcoin_integration.py` - Bitcoin token integration
-
-### Achievement System
-
-The Achievement System tracks player accomplishments and provides rewards for specific milestones.
-
-**Key Responsibilities:**
-- Achievement tracking and unlocking
-- Notification of achievements
-- Achievement persistence
-- Achievement-based rewards
-
-**Key Files:**
-- `vortex/src/core/achievements.py` - Achievement functionality
-
-### Challenge System
-
-The Challenge System provides puzzles, questions, and tasks adaptive to the player's profile.
-
-**Key Responsibilities:**
-- Challenge generation and presentation
-- Challenge difficulty adaptation
-- Response validation
-- Reward allocation
-
-**Key Files:**
-- `vortex/src/core/adaptive_game.py` - Adaptive gameplay mechanics
-
-## Data Flow
-
-### Player Interaction Flow
-
-```
-┌──────────┐    ┌───────────┐    ┌──────────┐
-│  Player  │───►│ Terminal  │───►│  Game    │
-│  Input   │    │    UI     │    │  Engine  │
-└──────────┘    └───────────┘    └────┬─────┘
-                                      │
-                                      ▼
-┌──────────┐    ┌───────────┐    ┌──────────┐
-│  Guide   │◄───│   Event   │◄───│ Command  │
-│ Response │    │    Bus    │    │ Processor│
-└──────────┘    └───────────┘    └──────────┘
-```
-
-1. Player enters text input through the Terminal UI
-2. Input is passed to the Game Engine
-3. Game Engine processes the command through Command Processor
-4. Relevant events are published to the Event Bus
-5. Appropriate guide responds based on player input and profile
-
-### Profile Creation Flow
-
-```
-┌──────────┐    ┌───────────┐    ┌──────────┐
-│ Initial  │───►│ Voight-   │───►│ Profile  │
-│  Setup   │    │ Kampff    │    │  Matrix  │
-└──────────┘    └───────────┘    └────┬─────┘
-                                      │
-                                      ▼
-┌──────────┐    ┌───────────┐    ┌──────────┐
-│  Guide   │◄───│   Guide   │◄───│ Profile  │
-│Selection │    │  Factory  │    │ Analysis │
-└──────────┘    └───────────┘    └──────────┘
-```
-
-1. Player begins initial setup
-2. VoightKampff questionnaire assesses player attributes
-3. Profile Matrix creates and stores player profile
-4. Profile Analysis determines key player characteristics
-5. Guide Factory selects appropriate guide based on profile
-6. Guide is assigned to the player
-
-### LLM Dialogue Generation Flow
-
-```
-┌──────────┐    ┌───────────┐    ┌──────────┐
-│  Player  │───►│ Dialogue  │───►│  Prompt  │
-│  Input   │    │  Context  │    │Generation │
-└──────────┘    └───────────┘    └────┬─────┘
-                                      │
-                                      ▼
-┌──────────┐    ┌───────────┐    ┌──────────┐
-│ Response │◄───│ Response  │◄───│ Deepseek │
-│ to Player│    │ Validation│    │   LLM    │
-└──────────┘    └───────────┘    └──────────┘
-```
-
-1. Player input is combined with dialogue context
-2. Prompt is generated based on guide personality and user profile
-3. Prompt is sent to Deepseek-R1 LLM
-4. Generated response is validated for quality and safety
-5. Valid response is presented to the player
-
-## Configuration System
-
-The VORTEX configuration system provides a centralized way to manage application settings with the following features:
-
-- Default configuration values for all components
-- Environment variable overrides using VORTEX_CATEGORY__NAME format
-- Configuration file support in JSON format
-- Type conversion and validation
-- Hierarchical configuration structure
-
-Example usage:
-```python
-from vortex.src.core.config import config
-
-# Get configuration values
-db_url = config.get("database.url")
-debug_mode = config.get("app.debug", default=False)
-
-# Check if a configuration exists
-if config.has("llm.api_key"):
-    # Use the API key
-    api_key = config.get("llm.api_key")
-```
-
-## Persistence Layer
-
-VORTEX uses multiple persistence mechanisms:
-
-1. **File-based Storage**
-   - Save files for game state
-   - Configuration files
-   - Asset storage
-   
-2. **Database Storage (SQLAlchemy)**
-   - User profiles
-   - Achievement records
-   - Historical data
-   
-3. **Redis Cache**
-   - Session data
-   - Temporary state
-   - Performance-critical caching
-
-## Testing Architecture
-
-The VORTEX testing infrastructure includes:
-
-1. **Unit Tests**
-   - Component-level testing with pytest
-   - Mocking for external dependencies
-   
-2. **Integration Tests**
-   - Cross-component functionality testing
-   - Event system validation
-   
-3. **System Tests**
-   - End-to-end gameplay scenarios
-   - Performance benchmarking
-
-## Future Architecture Extensions
-
-### Web Interface
-
-A planned web interface will extend the system with:
-
-- RESTful API for game interactions
-- WebSocket for real-time updates
-- Web-based UI for improved accessibility
-
-### Enhanced LLM Integration
-
-Future LLM improvements include:
-
-- Fine-tuned models for specific cultural contexts
-- Multimodal interactions with image generation
-- Memory optimization for deeper conversation history
-
-### Multiplayer Capabilities
-
-A future multiplayer system will add:
-
-- Shared mythological realms
-- Guide-mediated player interactions
-- Collaborative challenges and shared achievements 
+Use adapters for any future live Counterparty data or AI dialogue. Never let a model award a rite, change the graph, certify a proof, or claim token ownership. Network errors must leave offline play intact. Keep pending external requests separate from durable game state, and verify live-data readiness, exact quantities and pagination before displaying results.

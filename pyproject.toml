@@ -4,24 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vortex"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
   { name="Arwyn Hughes" },
 ]
-description = "Vortex of Enlightenment - A text-based adventure game"
+description = "VORTEX - an Egyptian Rare Pepe browser adventure"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
 
 [project.scripts]
-vortex = "vortex.src.main:main"
+vortex = "vortex.web_server:main"
 
 [tool.pytest.ini_options]
-addopts = "--cov=vortex --cov-report=term-missing --cov-report=html"
-testpaths = ["tests"]
+addopts = "-ra"
+testpaths = ["vortex/tests/test_lattice.py", "vortex/tests/test_paths.py", "vortex/tests/test_veils.py", "vortex/tests/test_runtime.py"]
 python_files = ["test_*.py"]
 filterwarnings = [
     "ignore::DeprecationWarning",
@@ -33,7 +33,12 @@ test = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
+    "hypothesis>=6.0",
 ]
+
+[tool.setuptools.packages.find]
+include = ["vortex", "vortex.*"]
+exclude = ["vortex.tests", "vortex.tests.*"]
 
 [tool.coverage.run]
 source = ["vortex"]
@@ -51,4 +56,4 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "pass",
     "raise ImportError",
-] 
+]

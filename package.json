@@ -1,0 +1,30 @@
+{
+  "name": "vortex-lattice",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node --experimental-strip-types --import ./vortex/web/tests/register.mjs --test vortex/web/tests/*.test.ts",
+    "check": "npm test && npm run build && node tools/check_build.mjs",
+    "generate:lattice": "python3 tools/generate_lattice.py",
+    "check:lattice": "python3 tools/generate_lattice.py --check",
+    "format": "prettier --write \"vortex/web/**/*.ts\" vortex/web/style.css vortex/web/index.html vite.config.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "happy-dom": "^20.14.3",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "bip322-js": "^4.0.0",
+    "buffer": "^6.0.3"
+  }
+}
