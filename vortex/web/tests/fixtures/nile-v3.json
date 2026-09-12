@@ -1,0 +1,581 @@
+{
+  "version": 3,
+  "revision": 57,
+  "clock": 56,
+  "activeId": "test-seeker",
+  "seekers": [
+    {
+      "id": "test-seeker",
+      "name": "River Frog",
+      "dialect": "folk",
+      "current": "malkhut",
+      "pillars": {
+        "mercy": 1,
+        "severity": 1,
+        "balance": 1
+      },
+      "visited": [
+        "tiferet",
+        "keter",
+        "chokhmah",
+        "binah",
+        "chesed",
+        "gevurah",
+        "netzach",
+        "hod",
+        "yesod",
+        "malkhut"
+      ],
+      "looked": [
+        "tiferet",
+        "keter",
+        "chokhmah",
+        "binah",
+        "chesed",
+        "gevurah",
+        "netzach",
+        "hod",
+        "yesod",
+        "malkhut"
+      ],
+      "rested": [
+        "tiferet",
+        "keter",
+        "chokhmah",
+        "binah",
+        "chesed",
+        "gevurah",
+        "netzach",
+        "hod",
+        "yesod"
+      ],
+      "rites": {
+        "keter": 1,
+        "chokhmah": 1,
+        "binah": 1,
+        "chesed": 1,
+        "gevurah": 1,
+        "tiferet": 1,
+        "netzach": 1,
+        "hod": 1,
+        "yesod": 1,
+        "malkhut": 1
+      },
+      "crossings": {
+        "keter:tiferet": 1,
+        "chokhmah:keter": 1,
+        "binah:chokhmah": 2,
+        "chesed:chokhmah": 1,
+        "chesed:gevurah": 1,
+        "gevurah:tiferet": 1,
+        "netzach:tiferet": 1,
+        "hod:netzach": 1,
+        "hod:yesod": 1,
+        "malkhut:yesod": 1
+      },
+      "harmony": true,
+      "sigil": "Make room for strange frogs",
+      "rooted": true,
+      "walks": 0,
+      "turns": 56,
+      "conversations": 0,
+      "journal": [
+        {
+          "turn": 1,
+          "office": "tiferet",
+          "kind": "discovery",
+          "text": "Two currents meet without losing themselves. Above the heart, the Crown takes a name."
+        },
+        {
+          "turn": 2,
+          "office": "tiferet",
+          "kind": "world",
+          "text": "Two oars rest across the deck. One alone makes the boat spin. Together they carry it straight toward a sun wearing a deeply unimpressed expression."
+        },
+        {
+          "turn": 3,
+          "office": "tiferet",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 4,
+          "office": "keter",
+          "kind": "discovery",
+          "text": "Gimel · Camel / Moon. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 4,
+          "office": "keter",
+          "kind": "world",
+          "text": "Above the last stair, a winged frog sits on a throne that casts no shadow. A very small scarab is polishing an invisible crown."
+        },
+        {
+          "turn": 4,
+          "office": "keter",
+          "kind": "guide",
+          "text": "You brought Mercy and Severity into one heart. Now see whether you can wear a crown without turning everyone else into a subject.",
+          "speaker": "Thoth"
+        },
+        {
+          "turn": 5,
+          "office": "keter",
+          "kind": "world",
+          "text": "The scarab hands you a receipt for absolutely nothing. It is the first honest receipt you have seen all day. The throne is empty the moment you stop expecting an emperor."
+        },
+        {
+          "turn": 6,
+          "office": "keter",
+          "kind": "discovery",
+          "text": "The invisible crown · Nobody claps. The sun rises anyway. A very promising development."
+        },
+        {
+          "turn": 7,
+          "office": "keter",
+          "kind": "world",
+          "text": "The scarab hands you a receipt for absolutely nothing. It is the first honest receipt you have seen all day. The throne is empty the moment you stop expecting an emperor."
+        },
+        {
+          "turn": 8,
+          "office": "keter",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 9,
+          "office": "chokhmah",
+          "kind": "discovery",
+          "text": "Aleph · Ox / Air. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 9,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "An ibis-beaked frog is arguing with his own footnote. Papyrus scrolls tower over a blue-tiled well; one has escaped and is learning to fly."
+        },
+        {
+          "turn": 9,
+          "office": "chokhmah",
+          "kind": "guide",
+          "text": "Another ancient prophecy with no source. Classic. Bring a question, fren. We have enough confident frogs.",
+          "speaker": "Wise Pepe"
+        },
+        {
+          "turn": 10,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "A margin note reads: SOURCE? The note has its own margin note. Thoth looks delighted. Beyond his desk, a carved THOTHPEPE gazes back from the archive."
+        },
+        {
+          "turn": 11,
+          "office": "chokhmah",
+          "kind": "discovery",
+          "text": "The disputed footnote · A frog from outside the frame pulls up a chair. The record gets better."
+        },
+        {
+          "turn": 12,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "A margin note reads: SOURCE? The note has its own margin note. Thoth looks delighted. Beyond his desk, a carved THOTHPEPE gazes back from the archive."
+        },
+        {
+          "turn": 13,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 14,
+          "office": "binah",
+          "kind": "discovery",
+          "text": "Daleth · Door. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 14,
+          "office": "binah",
+          "kind": "world",
+          "text": "A frog in linen tends a pair of scales. One pan holds a feather. The other holds seventeen opinions nobody asked for."
+        },
+        {
+          "turn": 14,
+          "office": "binah",
+          "kind": "guide",
+          "text": "Seventeen tabs open. One is playing the temple flute. Let us locate it before enlightenment.",
+          "speaker": "Monk Pepe"
+        },
+        {
+          "turn": 15,
+          "office": "binah",
+          "kind": "world",
+          "text": "The feather is winning. A novice quietly removes an eighteenth opinion from his sleeve. The monk pretends not to notice."
+        },
+        {
+          "turn": 16,
+          "office": "binah",
+          "kind": "discovery",
+          "text": "The weighing of the bags · The promise becomes small enough to carry. The monk gives one approving blink."
+        },
+        {
+          "turn": 17,
+          "office": "binah",
+          "kind": "world",
+          "text": "The feather is winning. A novice quietly removes an eighteenth opinion from his sleeve. The monk pretends not to notice."
+        },
+        {
+          "turn": 18,
+          "office": "binah",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 19,
+          "office": "chokhmah",
+          "kind": "discovery",
+          "text": "Daleth reveals its meaning: Flash meets form. A door that only opens one way at a time."
+        },
+        {
+          "turn": 19,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "An ibis-beaked frog is arguing with his own footnote. Papyrus scrolls tower over a blue-tiled well; one has escaped and is learning to fly."
+        },
+        {
+          "turn": 19,
+          "office": "chokhmah",
+          "kind": "guide",
+          "text": "Another ancient prophecy with no source. Classic. Bring a question, fren. We have enough confident frogs.",
+          "speaker": "Wise Pepe"
+        },
+        {
+          "turn": 20,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "A margin note reads: SOURCE? The note has its own margin note. Thoth looks delighted. Beyond his desk, a carved THOTHPEPE gazes back from the archive."
+        },
+        {
+          "turn": 21,
+          "office": "chokhmah",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 22,
+          "office": "chesed",
+          "kind": "discovery",
+          "text": "Vav · Nail. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 22,
+          "office": "chesed",
+          "kind": "world",
+          "text": "Under the wings of a lotus-crowned frog, a temple kitchen is in glorious disorder. Everyone is being fed, including the crocodile who said he was just browsing."
+        },
+        {
+          "turn": 22,
+          "office": "chesed",
+          "kind": "guide",
+          "text": "Welcome, fren. Soup is free. The emotional invoice has been abolished. Yes, you also get bread.",
+          "speaker": "Cozy Pepe"
+        },
+        {
+          "turn": 23,
+          "office": "chesed",
+          "kind": "world",
+          "text": "An enormous soup pot bears three instructions: FEED THE GUEST. FEED THE COOK. DO NOT PUT THE SCARAB IN THE SOUP. The scarab underlines the last one."
+        },
+        {
+          "turn": 24,
+          "office": "chesed",
+          "kind": "discovery",
+          "text": "The sacred soup ledger · A small feast emerges from several very ordinary cupboards."
+        },
+        {
+          "turn": 25,
+          "office": "chesed",
+          "kind": "world",
+          "text": "An enormous soup pot bears three instructions: FEED THE GUEST. FEED THE COOK. DO NOT PUT THE SCARAB IN THE SOUP. The scarab underlines the last one."
+        },
+        {
+          "turn": 26,
+          "office": "chesed",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 27,
+          "office": "gevurah",
+          "kind": "discovery",
+          "text": "Teth · Serpent. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 27,
+          "office": "gevurah",
+          "kind": "world",
+          "text": "A jackal-faced sentinel examines a tiny banhammer beside an unnecessarily enormous one. Somewhere, a frog is attempting to appeal a law of physics."
+        },
+        {
+          "turn": 27,
+          "office": "gevurah",
+          "kind": "guide",
+          "text": "We can set a boundary without summoning the apocalypse. Tiny hammer first. The big one is mostly for the decor.",
+          "speaker": "Giga Pepe"
+        },
+        {
+          "turn": 28,
+          "office": "gevurah",
+          "kind": "world",
+          "text": "The enormous hammer is dusty. The little one has a beautifully worn handle. Someone has scratched JUST ENOUGH into the bench."
+        },
+        {
+          "turn": 29,
+          "office": "gevurah",
+          "kind": "discovery",
+          "text": "The tiny banhammer · The boundary holds. No dynasty needs to fall for this."
+        },
+        {
+          "turn": 30,
+          "office": "gevurah",
+          "kind": "world",
+          "text": "The enormous hammer is dusty. The little one has a beautifully worn handle. Someone has scratched JUST ENOUGH into the bench."
+        },
+        {
+          "turn": 31,
+          "office": "gevurah",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 32,
+          "office": "tiferet",
+          "kind": "discovery",
+          "text": "Lamed · Ox-goad. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 32,
+          "office": "tiferet",
+          "kind": "world",
+          "text": "A solar boat is stuck between two banks. One frog insists on mercy. Another insists on limits. A third has brought a drum machine and no useful advice."
+        },
+        {
+          "turn": 32,
+          "office": "tiferet",
+          "kind": "guide",
+          "text": "Soft heart. Firm oar. Both hands, fren. We are not doing another century of ceremonial doughnuts.",
+          "speaker": "Vibe Pepe"
+        },
+        {
+          "turn": 33,
+          "office": "tiferet",
+          "kind": "world",
+          "text": "Two oars rest across the deck. One alone makes the boat spin. Together they carry it straight toward a sun wearing a deeply unimpressed expression."
+        },
+        {
+          "turn": 34,
+          "office": "tiferet",
+          "kind": "discovery",
+          "text": "Tune the solar boat · One protects the guests. One protects the boat. The disagreement finds its shape."
+        },
+        {
+          "turn": 35,
+          "office": "tiferet",
+          "kind": "world",
+          "text": "Two oars rest across the deck. One alone makes the boat spin. Together they carry it straight toward a sun wearing a deeply unimpressed expression."
+        },
+        {
+          "turn": 36,
+          "office": "tiferet",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 37,
+          "office": "netzach",
+          "kind": "discovery",
+          "text": "Nun · Fish. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 37,
+          "office": "netzach",
+          "kind": "world",
+          "text": "Papyrus reeds surround a gate attended by a crocodile with a clipboard. Every frog on the list has written PLUS ONE in suspiciously similar handwriting."
+        },
+        {
+          "turn": 37,
+          "office": "netzach",
+          "kind": "guide",
+          "text": "A living boundary bends without abandoning its roots. Decide what belongs here and what needs a different shore.",
+          "speaker": "Wadjet"
+        },
+        {
+          "turn": 38,
+          "office": "netzach",
+          "kind": "world",
+          "text": "Behind the gate, you find a narrow channel toward Kingdom. The crocodile has been sitting on the sign. He calls this information management."
+        },
+        {
+          "turn": 38,
+          "office": "netzach",
+          "kind": "discovery",
+          "text": "A descent at your back has become visible. Qoph waits below the reeds."
+        },
+        {
+          "turn": 39,
+          "office": "netzach",
+          "kind": "discovery",
+          "text": "The crocodile’s guest list · The waiting frogs sit down. Urgency loses its ceremonial hat."
+        },
+        {
+          "turn": 40,
+          "office": "netzach",
+          "kind": "world",
+          "text": "Behind the gate, you find a narrow channel toward Kingdom. The crocodile has been sitting on the sign. He calls this information management."
+        },
+        {
+          "turn": 40,
+          "office": "netzach",
+          "kind": "discovery",
+          "text": "A descent at your back has become visible. Qoph waits below the reeds."
+        },
+        {
+          "turn": 41,
+          "office": "netzach",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 42,
+          "office": "hod",
+          "kind": "discovery",
+          "text": "Peh · Mouth. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 42,
+          "office": "hod",
+          "kind": "world",
+          "text": "Brushes rattle in a ceramic jar. An ink-stained frog is carving a sentence into a stamp, then laughing so hard the table moves."
+        },
+        {
+          "turn": 42,
+          "office": "hod",
+          "kind": "guide",
+          "text": "Welcome to the posting temple. We turn thoughts into marks and typos into ancient mysteries. What are we making?",
+          "speaker": "Artist Pepe"
+        },
+        {
+          "turn": 43,
+          "office": "hod",
+          "kind": "world",
+          "text": "The desk is littered with magnificent failed drafts. A THOTHPEPE likeness presides over them. On the wall: THE FIRST DRAFT IS ALLOWED TO BE A FROG."
+        },
+        {
+          "turn": 44,
+          "office": "hod",
+          "kind": "discovery",
+          "text": "The unborrowed post · The sentence drops three impressive words and starts saying something."
+        },
+        {
+          "turn": 45,
+          "office": "hod",
+          "kind": "discovery",
+          "text": "Your sigil takes its shape: “Make room for strange frogs”."
+        },
+        {
+          "turn": 46,
+          "office": "hod",
+          "kind": "world",
+          "text": "The desk is littered with magnificent failed drafts. A THOTHPEPE likeness presides over them. On the wall: THE FIRST DRAFT IS ALLOWED TO BE A FROG."
+        },
+        {
+          "turn": 47,
+          "office": "hod",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 48,
+          "office": "yesod",
+          "kind": "discovery",
+          "text": "Resh · Head / Sun. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 48,
+          "office": "yesod",
+          "kind": "world",
+          "text": "A builder frog presents an ambitious blueprint for a floating pyramid. Its entire foundation is labelled TOMORROW, PROBABLY."
+        },
+        {
+          "turn": 48,
+          "office": "yesod",
+          "kind": "guide",
+          "text": "A dream does not need less imagination. It needs one small agreement with the ground.",
+          "speaker": "Isis"
+        },
+        {
+          "turn": 49,
+          "office": "yesod",
+          "kind": "world",
+          "text": "Below the blueprint lies one plain stone. The builder has finally written TODAY on it. You can almost hear the whole pyramid exhale."
+        },
+        {
+          "turn": 50,
+          "office": "yesod",
+          "kind": "discovery",
+          "text": "One actual brick · The stone fits. No other stone has to apologise for existing."
+        },
+        {
+          "turn": 51,
+          "office": "yesod",
+          "kind": "world",
+          "text": "Below the blueprint lies one plain stone. The builder has finally written TODAY on it. You can almost hear the whole pyramid exhale."
+        },
+        {
+          "turn": 52,
+          "office": "yesod",
+          "kind": "world",
+          "text": "You let a breath arrive without reaching for it. Across the tree, the dark water clears."
+        },
+        {
+          "turn": 53,
+          "office": "malkhut",
+          "kind": "discovery",
+          "text": "Tav · Mark / Saturn. A first crossing. Its meaning has not yet settled."
+        },
+        {
+          "turn": 53,
+          "office": "malkhut",
+          "kind": "world",
+          "text": "The temple opens onto a noisy riverside bazaar. A scribe keeps a ledger beside real Rare Pepe portraits. A boatman refuses to accept enlightenment as exact change."
+        },
+        {
+          "turn": 53,
+          "office": "malkhut",
+          "kind": "guide",
+          "text": "A story carried into matter acquires consequences. Keep the record honest, and your keys where they belong.",
+          "speaker": "Spider Woman"
+        },
+        {
+          "turn": 54,
+          "office": "malkhut",
+          "kind": "world",
+          "text": "The old RAREPEPE portrait has outlived countless grand announcements. Beside it, the ledger records names and marks. The scribe leaves your wallet firmly on your side of the desk."
+        },
+        {
+          "turn": 55,
+          "office": "malkhut",
+          "kind": "discovery",
+          "text": "The honest receipt · Your truth survives contact with another frog. This counts."
+        },
+        {
+          "turn": 56,
+          "office": "malkhut",
+          "kind": "discovery",
+          "text": "ROOTED · Your mark has reached the floor of the world. The journey is complete, and the paths remain open. What comes next belongs to you."
+        }
+      ],
+      "challenge": null,
+      "proof": null,
+      "createdAt": 1700000000000
+    }
+  ],
+  "darkness": {}
+}

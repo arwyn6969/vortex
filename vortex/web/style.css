@@ -2050,3 +2050,271 @@ dialog:has(.original-art) {
     height: 62px;
   }
 }
+
+/* The returning Nile: errands have a place in the world, not an inventory price. */
+.journey-compass {
+  border: 1px solid #49716b;
+  background: linear-gradient(110deg, #173e3a, #102722);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-bottom: 28px;
+}
+.journey-compass > div {
+  flex: 1;
+}
+.journey-compass span,
+.return-memory > span {
+  color: #ebc98e;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+}
+.journey-compass p {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+.journey-compass button {
+  flex-shrink: 0;
+  max-width: 48%;
+}
+.return-memory {
+  padding: 18px 22px;
+  border-left: 3px solid #d6ad68;
+  background: #192921;
+  margin-bottom: 24px;
+}
+.return-memory p {
+  margin: 8px 0 0;
+}
+.story-card,
+.delivery-card,
+.festival-card {
+  margin: 24px 0;
+  border: 1px solid #52624b;
+  background: #12251e;
+  scroll-margin-top: 24px;
+}
+.story-card summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 18px;
+  cursor: pointer;
+  list-style: none;
+}
+.story-card summary::-webkit-details-marker {
+  display: none;
+}
+.story-card summary > span:nth-child(2) {
+  flex: 1;
+}
+.story-card summary img {
+  object-fit: contain;
+  flex-shrink: 0;
+  background: #091312;
+}
+.story-card summary small,
+.story-card summary strong {
+  display: block;
+}
+.story-card summary small {
+  color: #e1c59b;
+  font-size: 0.875rem;
+  letter-spacing: 0.035em;
+  margin-bottom: 8px;
+}
+.story-card summary strong {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 1.5rem;
+}
+.story-body {
+  padding: 0 24px 24px;
+}
+.story-body > p {
+  max-width: 66ch;
+}
+.story-memory,
+.stream-echo {
+  color: #afccc1;
+  border-left: 2px solid #607963;
+  padding-left: 16px;
+}
+.story-choices {
+  margin: 18px 0;
+}
+.story-choices button:last-child {
+  margin-bottom: 0;
+}
+.delivery-card,
+.festival-card {
+  padding: 26px;
+}
+.delivery-card {
+  border-color: #568b85;
+  background: #133330;
+}
+.festival-card {
+  background: linear-gradient(145deg, #283526, #152d2c);
+  border-color: #d6ad68;
+}
+.festival-card h2 {
+  font-size: 2rem;
+  margin: 12px 0 18px;
+}
+.festival-card details {
+  margin: 22px 0;
+}
+.festival-card summary {
+  cursor: pointer;
+  color: #e9d2ad;
+  margin-bottom: 18px;
+}
+.festival-mark {
+  font-family: var(--serif);
+  font-size: 1.8rem;
+  color: #f1d8a6;
+}
+.chapter-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  background: #18352e;
+  border: 1px solid #4a6756;
+  padding: 20px 24px;
+  margin: 0 0 28px;
+}
+.chapter-strip span {
+  color: #b3cabd;
+}
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.story-ledger {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.story-ledger.return,
+.story-ledger.deliver {
+  border-color: #8bae83;
+}
+.story-ledger.complete {
+  border-color: #8c784d;
+  background: #192820;
+}
+.story-ledger-top {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.story-token {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  flex: 0 0 80px;
+}
+.story-token img {
+  display: block;
+  object-fit: contain;
+  background: #091312;
+}
+.story-ledger h2 {
+  font-size: 1.55rem;
+  margin: 8px 0 12px;
+  line-height: 1.2;
+}
+.story-ledger small {
+  font-size: 0.875rem;
+  color: #c5cfaa;
+}
+.story-ledger-top span {
+  font-size: 0.875rem;
+  color: #a3c3b4;
+  overflow-wrap: anywhere;
+}
+.story-route {
+  margin: auto 0 18px;
+  color: #adbbb4;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.story-ledger .small-note {
+  margin-bottom: 0;
+}
+@media (max-width: 1050px) {
+  .journey-compass {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .journey-compass button {
+    max-width: none;
+  }
+}
+@media (max-width: 720px) {
+  .story-grid {
+    grid-template-columns: 1fr;
+  }
+  .chapter-strip {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .story-ledger,
+  .delivery-card,
+  .festival-card {
+    padding: 20px;
+  }
+  .story-card summary {
+    gap: 12px;
+    padding: 14px;
+  }
+  .story-card summary strong {
+    font-size: 1.3rem;
+  }
+  .story-body {
+    padding: 0 18px 20px;
+  }
+  .story-ledger-top {
+    gap: 14px;
+  }
+}
+
+.conversation-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 16px 0;
+}
+.conversation-topics button {
+  font-size: 0.875rem;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 760px) {
+  .topbar nav:has(button) {
+    gap: 18px;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+  .topbar nav button {
+    flex-shrink: 0;
+    font-size: 0.875rem;
+  }
+}
