@@ -45,9 +45,12 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
               address: ADDRESS,
               utxo: null,
               utxo_address: null,
-              asset: "EXAMPLE",
+              asset: "A95428956661682277",
               quantity: 700,
-              asset_info: { divisible: false },
+              asset_info: {
+                divisible: false,
+                asset_longname: "PARENT.MixedCase",
+              },
             },
           ],
           next_cursor: null,
@@ -104,9 +107,34 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
       await settle();
     assert.equal(requests, 3);
     assert(window.document.querySelector(".collection-snapshot"));
-    assert.equal(window.document.querySelectorAll(".holding-row").length, 1);
-    await click('[data-collection-filter="all"]');
     assert.equal(window.document.querySelectorAll(".holding-row").length, 2);
+    assert(
+      window.document.querySelector(
+        'a[href="https://xcp.io/asset/PARENT.MixedCase"]',
+      ),
+    );
+    const search = window.document.querySelector("#collection-search") as any;
+    search.focus();
+    search.value = "mixedcase";
+    search.dispatchEvent(new window.Event("input", { bubbles: true }));
+    assert.equal(window.document.querySelectorAll(".holding-row").length, 1);
+    assert.equal(window.document.activeElement?.id, "collection-search");
+    assert.match(
+      window.document.querySelector(".holding-row")!.textContent,
+      /PARENT.MixedCase/,
+    );
+    await click('[data-collection-filter="world"]');
+    assert.match(
+      window.document.querySelector(".collection-empty")!.textContent,
+      /No assets in this view match/,
+    );
+    const resetSearch = window.document.querySelector(
+      "#collection-search",
+    ) as any;
+    resetSearch.value = "";
+    resetSearch.dispatchEvent(new window.Event("input", { bubbles: true }));
+    assert.equal(window.document.querySelectorAll(".holding-row").length, 1);
+    assert.equal(requests, 3);
     assert.equal(window.localStorage.getItem(SAVE_KEY), original);
     await click('[data-track="chokhmah"]');
     assert(!window.document.querySelector("dialog"));
@@ -142,6 +170,39 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
     await click("[data-close]");
     await click('[data-modal="collection"]');
     assert.equal(address().value, "");
+    await click("[data-close]");
+    await click('[data-modal="stamps"]');
+    assert.match(
+      window.document.querySelector(".stamp-teaching")!.textContent,
+      /KEVIN is still here/,
+    );
+    await click('[data-stamp-office="yesod"]');
+    assert.match(
+      window.document.querySelector(".stamp-teaching")!.textContent,
+      /data-bearing output is spent/,
+    );
+    assert.equal(
+      (window.document.activeElement as any)?.dataset.stampOffice,
+      "yesod",
+    );
+    await click("[data-close]");
+    await click('[data-view="rares"]');
+    assert.match(
+      window.document.querySelector("h1")!.textContent,
+      /Counterparty archive/,
+    );
+    const assetName = window.document.querySelector("#asset-name") as any;
+    assetName.value = "PARENT.MixedCase";
+    assetName.dispatchEvent(new window.Event("input", { bubbles: true }));
+    assert(
+      window.document.querySelector(
+        '#asset-destination a[href="https://xcp.io/asset/PARENT.MixedCase"]',
+      ),
+    );
+    assetName.value = "https://evil.example";
+    assetName.dispatchEvent(new window.Event("input", { bubbles: true }));
+    assert(!window.document.querySelector("#asset-destination a"));
+    assert.equal(requests, 4);
     assert.equal(window.localStorage.getItem(SAVE_KEY), original);
   } finally {
     globalThis.fetch = oldFetch;

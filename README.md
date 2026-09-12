@@ -1,6 +1,6 @@
 # VORTEX · The Nile of Rare Frogs
 
-An Egyptian frog adventure rooted in real Rare Pepe tokens on Counterparty. Consult a questionable ibis, negotiate with a crocodile, tune the solar boat, and carry a mark of your own through ten temples and twenty-two streams.
+An Egyptian frog adventure with a Rare Pepe heart, open to every Counterparty asset. Consult a questionable ibis, negotiate with a crocodile, tune the solar boat, and carry a mark of your own through ten temples and twenty-two streams.
 
 ![The Nile temple, reimagined from existing Rare Pepe artwork](vortex/web/public/nile-world.jpg)
 
@@ -40,7 +40,7 @@ python3 run_game.py --open
 - **Celebrate Chapter II.** Bring three stories home and reveal four streams, then return to Kingdom for a Nile festival. Choose the long table, the river of lanterns, or the unfinished chorus. The guests remember your choices.
 - The **next-step guide** above the scene suggests a useful action or one legal crossing. Select a story in **Stories** to follow its route; you remain free to explore.
 
-The Address Ledger edition (0.4) includes ten branching token-specific stories, persistent return scenes, three festival endings, ten distinct rites, classical and folk voices, a stream Codex, an illustrated Rare archive, a journal, and up to twelve independent seekers on one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
+The Enduring Mark edition (0.5) includes ten branching token-specific stories, persistent return scenes, three festival endings, ten distinct rites, classical and folk voices, a stream Codex, an open Counterparty archive with illustrated Rare Pepe encounters, a journal, and up to twelve independent seekers on one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
 
 ## Real Rare Pepes, honest provenance
 
@@ -50,11 +50,19 @@ The new temple scene and character portraits are interpretations of those existi
 
 ## The address ledger
 
-At **Kingdom**, open **The address ledger** and enter a public Bitcoin mainnet address. Pressing **Look up** sends only that address to the official Counterparty API. No wallet connection, signature or payment is required. The default view shows matching tokens from this game's ten-character archive; **All reported tokens** shows the rest. Matching artwork can lead you back to a character's story without awarding any progress.
+At **Kingdom**, open **The address ledger** and enter a public Bitcoin mainnet address. Pressing **Look up** sends only that address to the official Counterparty API. No wallet connection, signature or payment is required. **All Counterparty assets** is the default, including named tokens, numeric assets and subassets. Search by name or identifier on the device; **Rare Pepe characters** is an optional filter. Asset and address links use **xcp.io**. Matching artwork can lead you back to a character's story without awarding any progress.
 
-The ledger adds address and attached-output quantities using exact integer arithmetic. It follows pagination, checks node readiness before and after loading, rejects incomplete or inconsistent results, and has request, response-size and page limits. Missing divisibility is displayed as unscaled raw units. Errors never become zero balances. The reported data excludes BTC, escrow and unconfirmed changes, can be cached by the public service, and is not a proof of ownership or an atomic block snapshot.
+The ledger adds address and attached-output quantities using exact integer arithmetic. It follows pagination, checks node readiness before and after loading, rejects incomplete or inconsistent results, and has request, response-size and page limits. Missing divisibility is displayed as unscaled raw units. Errors never become zero balances. The reported data excludes BTC, escrow, SRC-20 balances and unconfirmed changes, can be cached by the public service, and is not a proof of ownership or an atomic block snapshot.
 
 Addresses and results stay in memory only. Editing the address cancels the previous lookup; closing the ledger, leaving the page or changing seekers clears it. They are excluded from saves, exports, journals and the browser-agent tools. The ordinary game still works offline. See [the API adapter contract and evidence](docs/COUNTERPARTY_LEDGER.md).
+
+## The enduring mark
+
+After Looking at **Hod, Yesod or Malkhut**, enter the **Chamber of the Enduring Mark**. Three linked readings carry the game’s making → foundation → public-record correspondence into Bitcoin Stamps, immutable data and the KEVIN Stamp Saga. Each reading has a guide’s voice, a sourced factual passage and an optional reflection. The chamber is also available in the Asset archive. It works offline; external sources require a connection.
+
+The archive can prepare an **xcp.io** link for any named or numeric Counterparty asset, including case-sensitive subassets. No lookup occurs until you follow the link. Its existence is checked by the explorer; typing a name does not add an invented asset to the game.
+
+Classic Stamps and SRC-20 are distinguished in the teaching and ledger. The game creates no chain records. See [research, sources and fictional correspondences](docs/BITCOIN_STAMPS.md).
 
 ## Your saves and optional wallet witness
 

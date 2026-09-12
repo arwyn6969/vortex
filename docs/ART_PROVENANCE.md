@@ -10,16 +10,16 @@ On 2026-09-12, each archive entry was checked with the official [Counterparty Co
 
 | Original asset | Counterparty asset ID | Original-art reference |
 | --- | --- | --- |
-| THOTHPEPE | 4028490930754 | [Token record](https://tokenscan.io/asset/THOTHPEPE) |
-| GODDESSISIS | 923667659956618 | [Token record](https://tokenscan.io/asset/GODDESSISIS) |
-| GODANUBIS | 1366340770358 | [Token record](https://tokenscan.io/asset/GODANUBIS) |
-| SPHINXPEPE | 100922331422722 | [Token record](https://tokenscan.io/asset/SPHINXPEPE) |
-| PEPEPHARAON | 2142393699931329 | [Token record](https://tokenscan.io/asset/PEPEPHARAON) |
-| LORDKEK | 3572240994 | [Token record](https://tokenscan.io/asset/LORDKEK) |
-| KEKET | 4646947 | [Token record](https://tokenscan.io/asset/KEKET) |
-| RAREPEPE | 136744851026 | [Token record](https://tokenscan.io/asset/RAREPEPE) |
-| ZAZENPEPE | 5228453241730 | [Token record](https://tokenscan.io/asset/ZAZENPEPE) |
-| PEPEZENMSTR | 2142396759310071 | [Token record](https://tokenscan.io/asset/PEPEZENMSTR) |
+| THOTHPEPE | 4028490930754 | [Token record](https://xcp.io/asset/THOTHPEPE) |
+| GODDESSISIS | 923667659956618 | [Token record](https://xcp.io/asset/GODDESSISIS) |
+| GODANUBIS | 1366340770358 | [Token record](https://xcp.io/asset/GODANUBIS) |
+| SPHINXPEPE | 100922331422722 | [Token record](https://xcp.io/asset/SPHINXPEPE) |
+| PEPEPHARAON | 2142393699931329 | [Token record](https://xcp.io/asset/PEPEPHARAON) |
+| LORDKEK | 3572240994 | [Token record](https://xcp.io/asset/LORDKEK) |
+| KEKET | 4646947 | [Token record](https://xcp.io/asset/KEKET) |
+| RAREPEPE | 136744851026 | [Token record](https://xcp.io/asset/RAREPEPE) |
+| ZAZENPEPE | 5228453241730 | [Token record](https://xcp.io/asset/ZAZENPEPE) |
+| PEPEZENMSTR | 2142396759310071 | [Token record](https://xcp.io/asset/PEPEZENMSTR) |
 
 Original images live under `vortex/web/public/rarepepe/`. Their visible credits and text are preserved. Original artwork and Pepe character rights remain with their respective creators; the code's license does not relicense those works. No artist endorsement is implied. Reliable artist attribution was not returned for every image, so none has been invented.
 

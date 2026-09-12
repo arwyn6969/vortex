@@ -1,6 +1,7 @@
 import { NODES, neighbors, place, isOffice, guideName } from "./lattice.ts";
 import type { Pillar, Dialect, SefirahId, StreamStatus } from "./lattice.ts";
 import { PATH_LETTERS, pathKey, pathBetween } from "./paths.ts";
+import { stampReply } from "./stamps.ts";
 import { CONTENT } from "./content.ts";
 import { safeText } from "./safety.ts";
 import {
@@ -203,8 +204,10 @@ function harmony(s: Seeker) {
 function guideReply(s: Seeker, question: string) {
   const q = question.toLocaleLowerCase();
   const folk = s.dialect === "folk" && !!NODES[s.current].folkGuide;
-  if (/key|seed|wallet|bitcoin|bound|signature/.test(q))
+  if (/key|seed|wallet|bound|signature/.test(q))
     return "An address may be a name on the door. Your wallet keeps its keys. Kingdom can wait; your journey is already yours.";
+  if (/stamp|kevin|immutable|immutability|egregore|bitcoin/.test(q))
+    return stampReply(s.current, folk ? "folk" : "classical");
   if (/changed|remember here|last time/.test(q))
     return (
       returnMemory(s, s.current) ??

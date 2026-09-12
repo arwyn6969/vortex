@@ -2,6 +2,8 @@
 
 The optional Kingdom ledger reads reported Counterparty balances for an explicitly submitted public address. The address is not assumed to belong to the player. Its result does not alter rites, discoveries, story progress, wallet proofs, or either ending.
 
+All returned Counterparty assets are shown by default. Named tokens, numeric assets and subassets share the same pipeline; Rare Pepe is an optional view. Searching names or identifiers filters the loaded result locally, with no additional request. Numeric identifiers are not automatically classified as Stamps. SRC-20 holdings require a separate protocol/indexer and are excluded.
+
 ## Protocol and sources
 
 Implementation checked 12 September 2026 against:
@@ -18,8 +20,8 @@ The public service exposed wildcard CORS but did not expose its custom readiness
 
 - Quantities above JavaScript's safe integer limit are preserved from raw JSON tokens as decimal strings. JSON syntax is checked before transformation. Arithmetic and formatting use BigInt; normalized floating-point quantities are not trusted.
 - Address and UTXO rows are validated against the submitted address and combined by asset. Duplicate asset/location rows, repeated cursors, changed row counts, incomplete pages, conflicting metadata and changed node height reject the result.
-- Missing divisibility displays raw units instead of an assumed decimal scale. Unknown token descriptions and image URLs are not rendered or fetched. Subasset names are escaped as text; asset links use a fixed Tokenscan origin.
-- A lookup has a 30-second overall request deadline, 20-page maximum and a 1 MB decoded limit per response. Large collections can be inspected in Tokenscan; a partial sum is not shown as a complete balance.
+- Missing divisibility displays raw units instead of an assumed decimal scale. Unknown token descriptions and image URLs are not rendered or fetched. Subasset names are escaped as text; asset links use a fixed xcp.io origin.
+- A lookup has a 30-second overall request deadline, 20-page maximum and a 1 MB decoded limit per response. Large collections can be inspected in xcp.io; a partial sum is not shown as a complete balance.
 - The lookup reports address and attached-output token balances. It excludes BTC, escrow and unconfirmed changes. Public-node reports are not proof of address control, market valuations, anti-cheat evidence or guaranteed snapshots of a specific block.
 
 ## Data lifetime

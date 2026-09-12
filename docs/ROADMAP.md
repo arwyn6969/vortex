@@ -22,6 +22,12 @@
 2. **Exact, bounded data.** Cursor pagination includes address and attached-output balances. Raw integer values stay exact, missing metadata stays explicit, and errors, response limits, changing pages and unready nodes never produce a pretend zero or partial total.
 3. **An ephemeral network boundary.** Requests omit cookies/referrer and have a deadline. Editing, closing, cancelling or changing seekers invalidates older responses. Addresses and holdings never enter saved journeys, exports, guide questions or browser-agent snapshots. A live public example confirmed five-page retrieval of 428 entries; automated checks cover failure and privacy boundaries.
 
+## Delivered in Enduring Mark (0.5)
+
+1. **An open Counterparty archive.** All reported assets are visible by default, with local name/identifier/subasset search and an optional Rare Pepe filter. Any asset can be followed into xcp.io from the archive; no ownership is required. All current asset and address links use xcp.io, including source-record links.
+2. **Bitcoin Stamps in the doctrine's own places.** A three-reading chamber at Hod, Yesod and Malkhut links making, foundation and public memory. Classical and folk voices, optional reflections and contextual guide replies preserve the Egyptian frog setting. The chamber is also available from the archive.
+3. **KEVIN with attributed lore and protocol clarity.** The Saga's community narrative is linked and distinguished from technical evidence. Classic Counterparty Stamps and modern SRC-20 holdings stay distinct. Source notes explain the boundaries of immutability and the limits of the current ledger.
+
 ## Next releases, in order
 
 | Priority | Improvement | Acceptance condition |

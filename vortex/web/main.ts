@@ -39,6 +39,10 @@ import { registerJourneyTools } from "./webmcp.ts";
 import type { JourneyContext } from "./webmcp.ts";
 import { storyPanel, storyBook, festivalPanel } from "./story-view.ts";
 import { completedStories, returnMemory } from "./stories.ts";
+import { stampInvitation, stampBody } from "./stamps-view.ts";
+import { isStampOffice } from "./stamps.ts";
+import type { StampOffice } from "./stamps.ts";
+import { assetAtlas, assetDestination } from "./explorer-view.ts";
 import { CollectionLookup } from "./counterparty.ts";
 import { collectionBody, collectionInvitation } from "./collection-view.ts";
 
@@ -51,10 +55,18 @@ let loading = true,
 let tracked: { seeker: string; story: SefirahId } | null = null;
 let view: "tree" | "codex" | "journal" | "rares" | "stories" = "tree";
 let modal:
-  "journeys" | "settings" | "help" | "wallet" | "rare" | "collection" | null =
-  null;
+  | "journeys"
+  | "settings"
+  | "help"
+  | "wallet"
+  | "rare"
+  | "collection"
+  | "stamps"
+  | null = null;
 let modalTrigger: [string, string] | null = null;
-let collectionFilter: "world" | "all" = "world",
+let stampOffice: StampOffice = "hod";
+let collectionSearch = "";
+let collectionFilter: "world" | "all" = "all",
   collectionVisible = 50;
 let collectionSeeker: string | null = null;
 const collection = new CollectionLookup(() => {
@@ -267,7 +279,7 @@ function header(s: Seeker | null) {
                 tree: "The tree",
                 stories: "Stories",
                 codex: "Streams",
-                rares: "Rare archive",
+                rares: "Asset archive",
                 journal: "Journal",
               }[v] +
               "</button>",
@@ -503,6 +515,7 @@ function tree(s: Seeker) {
         (isBound(s) ? "View wallet witness" : "Optional: bind an address") +
         "</button></div></section>"
       : "") +
+    (s.looked.includes(s.current) ? stampInvitation(s.current) : "") +
     festivalPanel(s) +
     (s.current === "malkhut" ? collectionInvitation() : "") +
     (s.looked.includes(s.current)
@@ -591,9 +604,11 @@ function codex(s: Seeker) {
 function rares(s: Seeker) {
   const found = IDS.filter((id) => s.looked.includes(id));
   return (
-    '<main id="main" class="collection rare-page"><div class="collection-title"><div><div class="eyebrow">THE FROGS EXIST. THE PILGRIMAGE IS YOURS.</div><h1>The Rare archive</h1><p>Ten existing Counterparty tokens, encountered along the Nile.<br>Look at a temple to find its connection. Inspect any original below.</p></div><div class="big-stat">' +
+    '<main id="main" class="collection rare-page"><div class="collection-title"><div><div class="eyebrow">THE FROGS EXIST. THE PILGRIMAGE IS YOURS.</div><h1>The Counterparty archive</h1><p>An open river of assets, with a Rare Pepe heart.<br>Meet the temple frogs, or follow any Counterparty name into the ledger.</p></div><div class="big-stat">' +
     found.length +
-    '<span>/ 10 ENCOUNTERED</span></div></div><div class="rare-grid">' +
+    "<span>/ 10 ENCOUNTERED</span></div></div>" +
+    assetAtlas(drafts.asset ?? "") +
+    '<h2 class="archive-section-title">The Rare Pepe temple court</h2><div class="rare-grid">' +
     IDS.map((id) => {
       const r = rareAt(id),
         seen = s.looked.includes(id);
@@ -729,7 +744,11 @@ function dialog(s: Seeker | null) {
       s,
       collectionFilter,
       collectionVisible,
+      collectionSearch,
     );
+  } else if (modal === "stamps" && s) {
+    title = "The chamber of the enduring mark";
+    body = stampBody(stampOffice, s.dialect);
   } else if (modal === "rare") {
     const r = RARES.find((r) => r.name === selectedRare)!;
     title = r.name;
@@ -934,7 +953,24 @@ async function toggleSound() {
 app.addEventListener("input", (event) => {
   const el = event.target as HTMLInputElement;
   if (el.id === "question" || el.id === "sigil") drafts[el.id] = el.value;
+  if (el.id === "asset-name") {
+    drafts.asset = el.value;
+    document.getElementById("asset-destination")!.innerHTML = assetDestination(
+      el.value,
+    );
+  }
+  if (el.id === "collection-search") {
+    const start = el.selectionStart,
+      end = el.selectionEnd;
+    collectionSearch = el.value;
+    collectionVisible = 50;
+    render();
+    document
+      .querySelector<HTMLInputElement>("#collection-search")
+      ?.setSelectionRange(start, end);
+  }
   if (el.id === "collection-address") {
+    collectionSearch = "";
     const start = el.selectionStart,
       end = el.selectionEnd;
     collection.edit(el.value);
@@ -965,13 +1001,24 @@ app.addEventListener("click", async (event) => {
     if (d.modal === "collection") {
       collectionSeeker = s!.id;
       collection.edit("");
-      collectionFilter = "world";
+      collectionFilter = "all";
+      collectionSearch = "";
       collectionVisible = 50;
+    }
+    if (d.modal === "stamps") {
+      if (!s) return;
+      stampOffice = isStampOffice(s.current) ? s.current : "hod";
     }
     modalTrigger = ["data-modal", d.modal!];
     modal = d.modal as typeof modal;
     message = "";
     render();
+  } else if ("stampOffice" in d && modal === "stamps") {
+    const id = d.stampOffice as SefirahId;
+    if (isStampOffice(id)) {
+      stampOffice = id;
+      render();
+    }
   } else if ("view" in d) {
     view = d.view as typeof view;
     render();

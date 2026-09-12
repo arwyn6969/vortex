@@ -15,7 +15,7 @@ test("each temple references a distinct recorded Counterparty asset and original
       r.api,
       "https://api.counterparty.io:4000/v2/assets/" + r.name + "/",
     );
-    assert.equal(r.explorer, "https://tokenscan.io/asset/" + r.name);
+    assert.equal(r.explorer, "https://xcp.io/asset/" + r.name);
     assert(readFileSync("vortex/web/public" + r.image).length > 1000);
   }
 });
