@@ -5,6 +5,9 @@ import { emptyWorld } from "./session.ts";
 import type { World, Seeker, Challenge, Proof, Entry } from "./session.ts";
 import { safeText } from "./safety.ts";
 import { verifyProof } from "./wallet.ts";
+import { STORIES, activeStories, readyForFestival } from "./stories.ts";
+// Keep the deployed storage slot stable. The payload is now schema 4; old schema-3
+// clients reject it instead of discarding story progress they cannot understand.
 export const SAVE_KEY = "vortex-world-v3";
 export const MAX_SAVE_BYTES = 1_000_000;
 export interface StoragePort {
@@ -48,7 +51,7 @@ function parseChallenge(raw: unknown): Challenge | null {
     seekerId: str(c.seekerId, 80),
   };
 }
-function parseSeeker(raw: unknown): Seeker {
+function parseSeeker(raw: unknown, legacy: boolean): Seeker {
   const s = object(raw);
   if (
     !isOffice(s.current) ||
@@ -73,6 +76,20 @@ function parseSeeker(raw: unknown): Seeker {
   for (const [key, value] of Object.entries(object(s.crossings))) {
     if (!PATH_LETTERS.some((p) => p.id === key)) return fail();
     crossings[key] = integer(value);
+  }
+  // The shipped Nile v3 edition had no stories/festival. Only that known schema
+  // gets default values; missing fields in a v4 save are corruption, not a reset.
+  const stories: Seeker["stories"] = {};
+  if (legacy && (s.stories !== undefined || s.festival !== undefined))
+    return fail();
+  for (const [id, value] of Object.entries(object(legacy ? {} : s.stories))) {
+    if (!isOffice(id)) return fail();
+    const p = object(value);
+    stories[id] = {
+      choice: integer(p.choice, 2),
+      delivered: bool(p.delivered),
+      resolution: p.resolution === null ? null : integer(p.resolution, 2),
+    };
   }
   if (!Array.isArray(s.journal) || s.journal.length > 80) return fail();
   const journal = s.journal.map((rawEntry) => {
@@ -112,6 +129,8 @@ function parseSeeker(raw: unknown): Seeker {
     looked: officeList(s.looked),
     rested: officeList(s.rested),
     rites,
+    stories,
+    festival: legacy || s.festival === null ? null : integer(s.festival, 2),
     crossings,
     harmony: bool(s.harmony),
     sigil: s.sigil === "" ? "" : safeText(s.sigil, 80, 3),
@@ -140,6 +159,18 @@ function parseSeeker(raw: unknown): Seeker {
   )
     return fail();
   if (player.sigil && rites.hod === undefined) return fail();
+  if (activeStories(player).length > 3) return fail();
+  for (const id of IDS) {
+    const p = stories[id];
+    if (!p) continue;
+    if (
+      rites[id] === undefined ||
+      (p.delivered && rites[STORIES[id].destination] === undefined) ||
+      (p.resolution !== null && !p.delivered)
+    )
+      return fail();
+  }
+  if (player.festival !== null && !readyForFestival(player)) return fail();
   if (
     player.rooted &&
     (!player.sigil ||
@@ -153,12 +184,12 @@ export function parseWorld(text: string): World {
   if (text.length > MAX_SAVE_BYTES)
     throw new Error("This save is too large. Nothing was changed.");
   const w = object(JSON.parse(text));
-  if (w.version !== 3)
+  if (w.version !== 3 && w.version !== 4)
     throw new Error(
-      "This edition reads version 3 journey files. Other versions are preserved, never guessed or overwritten.",
+      "This edition reads Nile version 3 and Returning Nile version 4 journey files. Other versions are preserved, never guessed or overwritten.",
     );
   if (!Array.isArray(w.seekers) || w.seekers.length > 12) return fail();
-  const seekers = w.seekers.map(parseSeeker);
+  const seekers = w.seekers.map((raw) => parseSeeker(raw, w.version === 3));
   if (
     new Set(seekers.map((s) => s.id)).size !== seekers.length ||
     new Set(seekers.map((s) => s.name.toLowerCase())).size !== seekers.length
@@ -172,7 +203,7 @@ export function parseWorld(text: string): World {
     darkness[key] = integer(value);
   }
   return {
-    version: 3,
+    version: 4,
     revision: integer(w.revision),
     clock: integer(w.clock),
     activeId: w.activeId as string | null,

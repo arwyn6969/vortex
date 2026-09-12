@@ -3,6 +3,17 @@ import type { Pillar, Dialect, SefirahId, StreamStatus } from "./lattice.ts";
 import { PATH_LETTERS, pathKey, pathBetween } from "./paths.ts";
 import { CONTENT } from "./content.ts";
 import { safeText } from "./safety.ts";
+import {
+  STORIES,
+  activeStories,
+  completedStories,
+  returnMemory,
+  readyForFestival,
+  FESTIVAL_ENDINGS,
+  festivalGuests,
+} from "./stories.ts";
+import type { StoryProgress } from "./stories.ts";
+import { rareAt } from "./rares.ts";
 
 export type Entry = {
   turn: number;
@@ -30,6 +41,8 @@ export type Seeker = {
   looked: SefirahId[];
   rested: SefirahId[];
   rites: Partial<Record<SefirahId, number>>;
+  stories: Partial<Record<SefirahId, StoryProgress>>;
+  festival: number | null;
   crossings: Record<string, number>;
   harmony: boolean;
   sigil: string;
@@ -43,7 +56,7 @@ export type Seeker = {
   createdAt: number;
 };
 export type World = {
-  version: 3;
+  version: 4;
   revision: number;
   clock: number;
   activeId: string | null;
@@ -54,11 +67,14 @@ export type Action =
   | { type: "walk"; to: SefirahId }
   | { type: "look" | "sit" | "root" }
   | { type: "rite"; choice: number }
+  | { type: "story-start" | "story-resolve"; story: SefirahId; choice: number }
+  | { type: "story-deliver"; story: SefirahId }
+  | { type: "festival"; choice: number }
   | { type: "sigil"; text: string }
   | { type: "talk"; text: string }
   | { type: "dialect"; dialect: Dialect };
 export const emptyWorld = (): World => ({
-  version: 3,
+  version: 4,
   revision: 0,
   clock: 0,
   activeId: null,
@@ -116,6 +132,8 @@ export function addSeeker(
     looked: [],
     rested: [],
     rites: {},
+    stories: {},
+    festival: null,
     crossings: {},
     harmony: false,
     sigil: "",
@@ -187,6 +205,35 @@ function guideReply(s: Seeker, question: string) {
   const folk = s.dialect === "folk" && !!NODES[s.current].folkGuide;
   if (/key|seed|wallet|bitcoin|bound|signature/.test(q))
     return "An address may be a name on the door. Your wallet keeps its keys. Kingdom can wait; your journey is already yours.";
+  if (/changed|remember here|last time/.test(q))
+    return (
+      returnMemory(s, s.current) ??
+      (s.rites[s.current] !== undefined
+        ? "You chose “" +
+          CONTENT[s.current].rite.choices[s.rites[s.current]!] +
+          "”. " +
+          CONTENT[s.current].rite.outcomes[s.rites[s.current]!]
+        : "Look at this shore, then try its rite. A place begins to change when you give it your attention.")
+    );
+  if (/story|errand|festival|frog|pepe/.test(q)) {
+    const id = activeStories(s)[0];
+    if (id) {
+      const p = s.stories[id]!;
+      return p.delivered
+        ? rareAt(id).name +
+            " is waiting at " +
+            NODES[id].pond +
+            ". The errand is done; the important part is what you make of it together."
+        : "You are carrying " +
+            STORIES[id].cargo[p.choice] +
+            " to " +
+            NODES[STORIES[id].destination].pond +
+            ". Look and complete the local rite, then make the delivery.";
+    }
+    return s.rooted
+      ? "The Nile has another chapter: bring three stories home and reveal four streams, then return to Kingdom for the festival. The guests will remember your decisions."
+      : "After a temple's rite, its Rare Pepe has a piece of unfinished business. Start a story here, or see who is waiting in Stories.";
+  }
   if (/lost|where|help|next|stuck/.test(q)) {
     if (!s.looked.includes(s.current))
       return folk
@@ -245,12 +292,73 @@ export function transition(world: World, action: Action): World {
       "sigil",
       "talk",
       "dialect",
+      "story-start",
+      "story-deliver",
+      "story-resolve",
+      "festival",
     ].includes(action.type)
   )
     throw new Error("Unknown action.");
   const next = structuredClone(world);
   const s = activeSeeker(next);
   if (!s) throw new Error("Choose a seeker first.");
+  if (
+    action.type === "story-start" ||
+    action.type === "story-deliver" ||
+    action.type === "story-resolve"
+  ) {
+    if (!isOffice(action.story))
+      throw new Error("That story does not belong to this tree.");
+    const id = action.story,
+      story = STORIES[id],
+      progress = s.stories[id];
+    if (
+      action.type !== "story-deliver" &&
+      (!Number.isInteger(action.choice) ||
+        action.choice < 0 ||
+        action.choice > 2)
+    )
+      throw new Error("Choose one of the three replies.");
+    if (
+      action.type === "story-start" &&
+      (s.current !== id ||
+        s.rites[id] === undefined ||
+        progress ||
+        activeStories(s).length >= 3)
+    )
+      throw new Error(
+        "Complete this temple's rite first. Carry at most three unfinished stories at a time.",
+      );
+    if (
+      action.type === "story-deliver" &&
+      (!progress ||
+        progress.delivered ||
+        s.current !== story.destination ||
+        s.rites[s.current] === undefined)
+    )
+      throw new Error(
+        "Bring the errand to its destination and complete the local rite before delivering it.",
+      );
+    if (
+      action.type === "story-resolve" &&
+      (!progress?.delivered || progress.resolution !== null || s.current !== id)
+    )
+      throw new Error(
+        "Make the delivery, then return to the frog who asked for your help.",
+      );
+  }
+  if (
+    action.type === "festival" &&
+    (s.current !== "malkhut" ||
+      !readyForFestival(s) ||
+      s.festival !== null ||
+      !Number.isInteger(action.choice) ||
+      action.choice < 0 ||
+      action.choice > 2)
+  )
+    throw new Error(
+      "Root your journey, bring three stories home, and reveal four streams before opening the festival at Kingdom.",
+    );
   if (action.type === "walk") {
     const state = status(world, s, action.to);
     if (state !== "open")
@@ -328,6 +436,8 @@ export function transition(world: World, action: Action): World {
     );
     record(s, "world", CONTENT[s.current].scene);
     record(s, "guide", voice(s));
+    const memory = returnMemory(s, s.current);
+    if (memory) record(s, "world", memory);
     // Silent deterministic referee. A shared edge darkens only if another way remains.
     const choices = neighbors(s.current).filter(
       (n) => status(next, s, n) === "open",
@@ -376,11 +486,56 @@ export function transition(world: World, action: Action): World {
         " · " +
         CONTENT[s.current].rite.outcomes[action.choice],
     );
+  } else if (action.type === "story-start") {
+    s.stories[action.story] = {
+      choice: action.choice,
+      delivered: false,
+      resolution: null,
+    };
+    s.walks = 0;
+    record(
+      s,
+      "discovery",
+      rareAt(action.story).name +
+        " · " +
+        STORIES[action.story].title +
+        ". You take " +
+        STORIES[action.story].cargo[action.choice] +
+        " to " +
+        NODES[STORIES[action.story].destination].pond +
+        ".",
+    );
+  } else if (action.type === "story-deliver") {
+    const p = s.stories[action.story]!;
+    p.delivered = true;
+    s.walks = 0;
+    record(s, "discovery", STORIES[action.story].delivery[p.choice]);
+    record(
+      s,
+      "world",
+      "Your earlier choice here still stands: " +
+        CONTENT[s.current].rite.outcomes[s.rites[s.current]!],
+    );
+  } else if (action.type === "story-resolve") {
+    s.stories[action.story]!.resolution = action.choice;
+    s.walks = 0;
+    record(
+      s,
+      "discovery",
+      STORIES[action.story].title +
+        " · " +
+        STORIES[action.story].aftermath[action.choice],
+    );
+  } else if (action.type === "festival") {
+    s.festival = action.choice;
+    record(s, "discovery", FESTIVAL_ENDINGS[action.choice]);
+    for (const memory of festivalGuests(s)) record(s, "world", memory);
   } else if (action.type === "sigil") {
     if (s.sigil !== text) {
       s.proof = null;
       s.challenge = null;
       s.rooted = false;
+      s.festival = null;
     }
     s.sigil = text;
     record(s, "discovery", "Your sigil takes its shape: “" + text + "”.");
@@ -404,8 +559,16 @@ export const discovered = (s: Seeker) =>
 export const revealed = (s: Seeker) =>
   PATH_LETTERS.filter((p) => (s.crossings[p.id] ?? 0) > 1).length;
 export function objective(s: Seeker): string {
+  if (s.festival !== null)
+    return "The festival lives on. There are more frogs to help and streams to understand.";
   if (s.rooted)
-    return "The path remains open. Return to a stream and let its meaning deepen.";
+    return readyForFestival(s)
+      ? "Bring the celebration to Kingdom. Your guests have stories to tell."
+      : "Prepare the Nile festival: bring three stories home (" +
+          completedStories(s).length +
+          "/3) and reveal four streams (" +
+          revealed(s) +
+          "/4).";
   if (!s.looked.includes(s.current))
     return "Look closely. Every office holds something a passing glance will miss.";
   if (s.rites[s.current] === undefined)

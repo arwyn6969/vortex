@@ -34,6 +34,11 @@ import {
 } from "./storage.ts";
 import { issueChallenge, acceptSignature } from "./wallet.ts";
 import { escapeHtml as e, safeText } from "./safety.ts";
+import { nextStep } from "./navigation.ts";
+import { registerJourneyTools } from "./webmcp.ts";
+import type { JourneyContext } from "./webmcp.ts";
+import { storyPanel, storyBook, festivalPanel } from "./story-view.ts";
+import { completedStories, returnMemory } from "./stories.ts";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let world = emptyWorld();
@@ -41,8 +46,10 @@ let loading = true,
   busy = false,
   damaged = false,
   newJourney = false;
-let view: "tree" | "codex" | "journal" | "rares" = "tree";
+let tracked: { seeker: string; story: SefirahId } | null = null;
+let view: "tree" | "codex" | "journal" | "rares" | "stories" = "tree";
 let modal: "journeys" | "settings" | "help" | "wallet" | "rare" | null = null;
+let modalTrigger: [string, string] | null = null;
 let selectedRare = "THOTHPEPE";
 let message = "",
   messageError = false,
@@ -97,10 +104,46 @@ async function commit(change: (w: World) => World | Promise<World>) {
     render();
   }
 }
+function focusPanel(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === "DETAILS") (el as HTMLDetailsElement).open = true;
+  el.setAttribute("tabindex", "-1");
+  el.focus({ preventScroll: true });
+  el.scrollIntoView?.({
+    block: "nearest",
+    behavior: reduced ? "instant" : "smooth",
+  });
+}
 async function act(action: Action) {
   await commit((w) => transition(w, action));
-  if (!messageError && action.type === "walk")
-    document.getElementById("location-title")?.focus({ preventScroll: true });
+  if (!messageError && action.type === "walk") focusPanel("location-title");
+  if (!messageError && action.type === "look")
+    document
+      .querySelector<HTMLButtonElement>("[data-show-rite]:not(:disabled)")
+      ?.focus({ preventScroll: true });
+  if (!messageError) {
+    const s = activeSeeker(world);
+    const announcement = document.getElementById("journey-announcement");
+    if (s && announcement)
+      announcement.textContent = s.journal
+        .filter((j) => j.turn === s.turns)
+        .map((j) => j.text)
+        .join(" ");
+  }
+}
+function closeDialog() {
+  modal = null;
+  message = "";
+  pendingDelete = "";
+  render();
+  if (modalTrigger) {
+    const [key, value] = modalTrigger;
+    [...document.querySelectorAll<HTMLButtonElement>("button")]
+      .find((el) => el.getAttribute(key) === value)
+      ?.focus({ preventScroll: true });
+  }
+  modalTrigger = null;
 }
 function map(s: Seeker | null) {
   const x = (id: SefirahId) => 74 + NODES[id].x * 4.52;
@@ -201,7 +244,7 @@ function header(s: Seeker | null) {
     "<span>VORTEX<small>THE NILE OF RARE FROGS</small></span></a>" +
     '<nav aria-label="Game views">' +
     (s && !newJourney
-      ? (["tree", "codex", "rares", "journal"] as const)
+      ? (["tree", "stories", "codex", "rares", "journal"] as const)
           .map(
             (v) =>
               '<button data-view="' +
@@ -211,6 +254,7 @@ function header(s: Seeker | null) {
               '">' +
               {
                 tree: "The tree",
+                stories: "Stories",
                 codex: "Streams",
                 rares: "Rare archive",
                 journal: "Journal",
@@ -232,7 +276,7 @@ function gate() {
         (answers.length + 1) +
         ' / 6</span></div><div class="quiz-progress"><span style="width:' +
         (answers.length / 6) * 100 +
-        '%"></span></div><h1>' +
+        '%"></span></div><h1 id="quiz-question" tabindex="-1">' +
         e(QUESTIONS[answers.length].text) +
         '</h1><div class="quiz-options">' +
         QUESTIONS[answers.length].answers
@@ -289,6 +333,9 @@ function tree(s: Seeker) {
   const c = CONTENT[s.current],
     n = NODES[s.current],
     rites = riteCount(s);
+  const following = tracked?.seeker === s.id ? tracked.story : null;
+  const hint = nextStep(world, s, following);
+  const memory = returnMemory(s, s.current);
   const moments = s.journal.filter(
     (j) =>
       j.turn === s.turns &&
@@ -317,6 +364,17 @@ function tree(s: Seeker) {
       )
       .join("") +
     '</div><p class="map-note">Movement follows the streams.<br>Stillness changes what is possible.</p></aside><section class="story-panel">' +
+    '<section class="journey-compass" id="journey-compass" tabindex="-1" aria-label="Suggested next step"><div><span>' +
+    (s.festival !== null
+      ? "THE FESTIVAL LIVES ON"
+      : s.rooted
+        ? "CHAPTER II · THE NILE REMEMBERS"
+        : "CHAPTER I · A MARK CARRIED HOME") +
+    "</span><p>" +
+    e(hint.text) +
+    '</p></div><button class="secondary" data-next>' +
+    e(hint.label) +
+    "</button></section>" +
     '<div class="location-header"><div><div class="eyebrow">' +
     roman[IDS.indexOf(s.current)] +
     " · " +
@@ -336,6 +394,11 @@ function tree(s: Seeker) {
     '<p class="scene-text">' +
     e(s.looked.includes(s.current) ? c.detail : c.scene) +
     "</p>" +
+    (memory
+      ? '<aside class="return-memory"><span>THE NILE REMEMBERS</span><p>' +
+        e(memory) +
+        "</p></aside>"
+      : "") +
     '<div class="guide-quote"><div class="guide-portrait" style="' +
     portraitStyle(s.current) +
     '" role="img" aria-label="VORTEX interpretation of ' +
@@ -359,8 +422,9 @@ function tree(s: Seeker) {
     '><span aria-hidden="true">◇</span> ' +
     (s.rites[s.current] !== undefined ? "Rite complete" : "Perform a rite") +
     "</button></div>" +
+    storyPanel(s, following) +
     (moments.length
-      ? '<section class="moment" role="status" aria-label="What changed">' +
+      ? '<section class="moment" aria-label="What changed">' +
         moments.map((j) => "<p>" + e(j.text) + "</p>").join("") +
         "</section>"
       : "") +
@@ -411,11 +475,11 @@ function tree(s: Seeker) {
         ' Sigil</span><span class="' +
         (s.visited.length >= 6 ? "done" : "") +
         '">' +
-        s.visited.length +
+        Math.min(s.visited.length, 6) +
         '/6 offices</span><span class="' +
         (rites >= 4 ? "done" : "") +
         '">' +
-        rites +
+        Math.min(rites, 4) +
         '/4 rites</span></div><div class="actions">' +
         (!s.rooted
           ? '<button class="primary" data-act="root" ' +
@@ -428,6 +492,7 @@ function tree(s: Seeker) {
         (isBound(s) ? "View wallet witness" : "Optional: bind an address") +
         "</button></div></section>"
       : "") +
+    festivalPanel(s) +
     (s.looked.includes(s.current)
       ? '<button class="rare-encounter" data-rare="' +
         rareAt(s.current).name +
@@ -439,7 +504,7 @@ function tree(s: Seeker) {
       : "") +
     '<details class="ask-guide"><summary>Ask ' +
     e(guideName(n, s.dialect)) +
-    '</summary><form id="talk-form"><label for="question">What’s on your mind?</label><div class="input-row"><input id="question" name="question" maxlength="500" placeholder="Ask about your journey…" value="' +
+    '</summary><div class="conversation-topics"><button class="text-button" data-topic="What changed here?">What changed here?</button><button class="text-button" data-topic="Tell me about the stories">Stories & the festival</button><button class="text-button" data-topic="Help me find my next step">I’m a little lost</button></div><form id="talk-form"><label for="question">What’s on your mind?</label><div class="input-row"><input id="question" name="question" maxlength="500" placeholder="Ask about your journey…" value="' +
     e(drafts.question ?? "") +
     '" required><button class="secondary">Ask</button></div><small>Your question is not saved. Never enter wallet secrets.</small></form></details>' +
     '<section class="exits"><div class="section-label">STREAMS FROM HERE</div><div class="exit-grid">' +
@@ -583,7 +648,7 @@ function dialog(s: Seeker | null) {
   if (modal === "help") {
     title = "Before consulting the crocodile";
     body =
-      '<div class="help-list"><p><strong>Walk.</strong> Choose an available stream. The tree is connected by twenty-two paths; there are no shortcuts between unconnected offices.</p><p><strong>Look.</strong> Notice the shore before performing its rite. Looking at Boundaries reveals a quiet descent.</p><p><strong>Sit.</strong> Slow down. Darkness clears for everyone on this local tree. Your first rest at each office gently strengthens all three pillars.</p><p><strong>Return.</strong> Walk the same stream a second time to reveal its meaning in your Codex.</p><p><strong>Meet.</strong> Bring Mercy and Severity to at least 25% each, then stand in Vibe Temple. Crown opens through that meeting.</p><p><strong>Make.</strong> Complete Hod’s rite and create a short sigil. Carry it through six offices and four rites, then root your journey at Kingdom.</p><p><strong>Continue.</strong> A wallet is optional. Your journey is complete without it. Nothing here requires a payment.</p></div>';
+      '<div class="help-list"><p><strong>Walk.</strong> Choose an available stream. The tree is connected by twenty-two paths; there are no shortcuts between unconnected offices.</p><p><strong>Look.</strong> Notice the shore before performing its rite. Looking at Boundaries reveals a quiet descent.</p><p><strong>Sit.</strong> Slow down. Darkness clears for everyone on this local tree. Your first rest at each office gently strengthens all three pillars.</p><p><strong>Return.</strong> Walk the same stream a second time to reveal its meaning in your Codex.</p><p><strong>Meet.</strong> Bring Mercy and Severity to at least 25% each, then stand in Vibe Temple. Crown opens through that meeting.</p><p><strong>Make.</strong> Complete Hod’s rite and create a short sigil. Carry it through six offices and four rites, then root your journey at Kingdom.</p><p><strong>Stories.</strong> After a temple rite, help its Rare Pepe with an errand. Carry it to another temple, complete that local rite, make the delivery, then return and choose what changes. Three unfinished stories at once.</p><p><strong>Festival.</strong> After Rooted, bring three stories home and reveal four streams. Return to Kingdom to celebrate a second ending shaped by your choices.</p><p><strong>Continue.</strong> A wallet is optional. Your journey is complete without it. Nothing here requires a payment.</p></div>';
   } else if (modal === "journeys") {
     title = "Many seekers. One tree.";
     body =
@@ -712,7 +777,18 @@ function dialog(s: Seeker | null) {
   );
 }
 function render() {
-  const focused = document.activeElement?.id;
+  const previous = document.activeElement;
+  const focused = previous?.id;
+  const focusData = previous
+    ? [...previous.attributes]
+        .filter((a) => a.name.startsWith("data-"))
+        .map((a) => [a.name, a.value])
+    : [];
+  const openDetails = [
+    ...document.querySelectorAll<HTMLDetailsElement>("details[open]"),
+  ].map(
+    (el) => el.id || (el.classList.contains("ask-guide") ? "ask-guide" : ""),
+  );
   const s = activeSeeker(world);
   document.documentElement.dataset.motion = reduced ? "reduced" : "full";
   app.innerHTML =
@@ -731,23 +807,29 @@ function render() {
               ? codex(s)
               : view === "rares"
                 ? rares(s)
-                : journal(s)) +
+                : view === "stories"
+                  ? storyBook(s)
+                  : journal(s)) +
     (s && !newJourney
       ? '<footer class="statusbar"><span>' +
         (isBound(s)
           ? "BOUND"
-          : s.rooted
-            ? "ROOTED"
-            : s.harmony
-              ? "THE CROWN IS OPEN"
-              : "THE WALK CONTINUES") +
+          : s.festival !== null
+            ? "FESTIVAL"
+            : s.rooted
+              ? "ROOTED"
+              : s.harmony
+                ? "THE CROWN IS OPEN"
+                : "THE WALK CONTINUES") +
         "</span><span>" +
         s.visited.length +
         "/10 offices · " +
         discovered(s) +
         "/22 streams · " +
         riteCount(s) +
-        " rites</span><span>Saved on this device</span></footer>"
+        " rites · " +
+        completedStories(s).length +
+        " stories</span><span>Saved on this device</span></footer>"
       : "") +
     (message && !damaged && !modal
       ? '<div class="toast ' +
@@ -762,12 +844,28 @@ function render() {
   const d = document.querySelector("dialog");
   if (d) {
     d.showModal();
-    d.addEventListener("cancel", () => {
-      modal = null;
-      message = "";
+    d.addEventListener("cancel", (event) => {
+      event.preventDefault();
+      closeDialog();
     });
   }
-  if (focused) document.getElementById(focused)?.focus({ preventScroll: true });
+  for (const id of openDetails) {
+    const el =
+      id === "ask-guide"
+        ? document.querySelector<HTMLDetailsElement>(".ask-guide")
+        : (document.getElementById(id) as HTMLDetailsElement | null);
+    if (el?.tagName === "DETAILS") el.open = true;
+  }
+  const restore = focused
+    ? document.getElementById(focused)
+    : focusData.length
+      ? [...document.querySelectorAll<HTMLElement>("button,a,[data-go]")].find(
+          (el) =>
+            focusData.every(([key, value]) => el.getAttribute(key) === value),
+        )
+      : null;
+  if (restore && !restore.matches(":disabled") && (!d || d.contains(restore)))
+    restore.focus({ preventScroll: true });
 }
 function download(name: string, text: string, type = "application/json") {
   const url = URL.createObjectURL(new Blob([text], { type }));
@@ -814,16 +912,15 @@ app.addEventListener("click", async (event) => {
     s = activeSeeker(world);
   if (el.tagName === "A" && "home" in d) event.preventDefault();
   if ("rare" in d && RARES.some((r) => r.name === d.rare)) {
+    modalTrigger = ["data-rare", d.rare!];
     selectedRare = d.rare!;
     modal = "rare";
     message = "";
     render();
   } else if ("close" in d) {
-    modal = null;
-    message = "";
-    pendingDelete = "";
-    render();
+    closeDialog();
   } else if ("modal" in d) {
+    modalTrigger = ["data-modal", d.modal!];
     modal = d.modal as typeof modal;
     message = "";
     render();
@@ -834,6 +931,57 @@ app.addEventListener("click", async (event) => {
     view = "tree";
     newJourney = false;
     render();
+  } else if ("topic" in d) {
+    await act({ type: "talk", text: d.topic! });
+  } else if ("next" in d && s) {
+    const hint = nextStep(
+      world,
+      s,
+      tracked?.seeker === s.id ? tracked.story : null,
+    );
+    if (hint.action) await act(hint.action);
+    else if (hint.panel === "rite") {
+      drafts.rite = s.current;
+      render();
+      focusPanel("rite-area");
+    } else if (hint.panel === "sigil")
+      document.getElementById("sigil")?.focus();
+    else
+      focusPanel(
+        hint.panel === "festival"
+          ? "festival"
+          : "story-" + (hint.target ?? s.current),
+      );
+  } else if ("track" in d && s && IDS.includes(d.track as SefirahId)) {
+    tracked = { seeker: s.id, story: d.track as SefirahId };
+    view = "tree";
+    render();
+    const target = document.getElementById("story-" + d.track);
+    if (target) focusPanel(target.id);
+    else focusPanel("main");
+  } else if ("storyStart" in d) {
+    await act({
+      type: "story-start",
+      story: d.storyStart as SefirahId,
+      choice: Number(d.choice),
+    });
+    if (!messageError && s)
+      tracked = { seeker: s.id, story: d.storyStart as SefirahId };
+    render();
+    focusPanel("story-" + d.storyStart);
+  } else if ("deliver" in d) {
+    await act({ type: "story-deliver", story: d.deliver as SefirahId });
+    focusPanel("journey-compass");
+  } else if ("resolve" in d) {
+    await act({
+      type: "story-resolve",
+      story: d.resolve as SefirahId,
+      choice: Number(d.choice),
+    });
+    focusPanel("story-" + d.resolve);
+  } else if ("festival" in d) {
+    await act({ type: "festival", choice: Number(d.festival) });
+    focusPanel("festival");
   } else if ("act" in d) await act({ type: d.act } as Action);
   else if ("go" in d) {
     drafts.rite = "";
@@ -841,12 +989,10 @@ app.addEventListener("click", async (event) => {
   } else if ("showRite" in d && s) {
     drafts.rite = s.current;
     render();
-    document
-      .querySelector("#rite-area")
-      ?.scrollIntoView({
-        block: "nearest",
-        behavior: reduced ? "instant" : "smooth",
-      });
+    document.querySelector("#rite-area")?.scrollIntoView({
+      block: "nearest",
+      behavior: reduced ? "instant" : "smooth",
+    });
   } else if ("rite" in d) {
     await act({ type: "rite", choice: Number(d.rite) });
     drafts.rite = "";
@@ -865,6 +1011,7 @@ app.addEventListener("click", async (event) => {
         render();
       }
     } else render();
+    focusPanel(asking ? "quiz-question" : "location-title");
   } else if ("backQuestion" in d) {
     if (answers.length) answers.pop();
     else asking = false;
@@ -960,6 +1107,15 @@ app.addEventListener("click", async (event) => {
       "Offices visited: " + s.visited.map((id) => NODES[id].pond).join(", "),
       "Rites completed: " + riteCount(s),
       "Streams revealed: " + revealed(s),
+      "Stories brought home: " + completedStories(s).length,
+      "Festival: " +
+        (s.festival === null
+          ? "Not yet celebrated"
+          : [
+              "The long table",
+              "The river of lanterns",
+              "The unfinished chorus",
+            ][s.festival]),
       "Journey: " +
         (isBound(s) ? "Bound" : s.rooted ? "Rooted" : "In progress"),
       "",
@@ -1107,3 +1263,31 @@ if (import.meta.env?.PROD && "serviceWorker" in navigator) {
     /* Online play and exports remain available. */
   });
 }
+
+const disposeJourneyTools = registerJourneyTools(
+  (document as Document & { modelContext?: JourneyContext }).modelContext,
+  () => {
+    if (loading || damaged)
+      throw new Error(
+        "The journey is not ready. Finish loading or recover the original save first.",
+      );
+    return world;
+  },
+  async (action, expected) => {
+    if (loading || busy || damaged || newJourney)
+      throw new Error("Finish the current interaction first.");
+    if (
+      world.activeId !== expected.seekerId ||
+      world.revision !== expected.revision
+    )
+      throw new Error(
+        "The journey changed. Read the latest state before acting.",
+      );
+    await act(action);
+    if (messageError) throw new Error(message);
+    view = "tree";
+    modal = null;
+    render();
+  },
+);
+import.meta.hot?.dispose(disposeJourneyTools);

@@ -35,9 +35,12 @@ python3 run_game.py --open
 - **Sit** to clear shared darkness. The first rest at each temple strengthens your pillars.
 - **Perform a rite** and choose how your frog responds to a small, strange problem.
 - Bring Mercy and Severity to 25% each at Vibe Temple to reveal Crown. Look at Boundaries to reveal Qoph.
-- At Meme Studio, complete the rite and write a sigil. Visit six temples and complete four rites, then **Root** your journey at Kingdom. You can keep exploring afterward.
+- At Meme Studio, complete the rite and write a sigil. Visit six temples and complete four rites, then **Root** your journey at Kingdom.
+- **Follow a story.** After a temple rite, its Rare Pepe has an errand for you. Carry it to another temple, complete that local rite, make the delivery, then return and decide what changes. Carry up to three unfinished stories.
+- **Celebrate Chapter II.** Bring three stories home and reveal four streams, then return to Kingdom for a Nile festival. Choose the long table, the river of lanterns, or the unfinished chorus. The guests remember your choices.
+- The **next-step guide** above the scene suggests a useful action or one legal crossing. Select a story in **Stories** to follow its route; you remain free to explore.
 
-The game includes ten distinct rites, classical and folk voices, a stream Codex, an illustrated Rare archive, a journal, and up to twelve independent seekers on one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
+The Returning Nile edition (0.3) includes ten branching token-specific stories, persistent return scenes, three festival endings, ten distinct rites, classical and folk voices, a stream Codex, an illustrated Rare archive, a journal, and up to twelve independent seekers on one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
 
 ## Real Rare Pepes, honest provenance
 
@@ -47,7 +50,7 @@ The new temple scene and character portraits are interpretations of those existi
 
 ## Your saves and optional wallet witness
 
-Journeys are saved in this browser, under `vortex-world-v3`. Export them from **Journeys** before clearing browser data or moving devices. Imports validate the file and merge new seekers; conflicting histories require an explicit choice instead of silently replacing progress. Unreadable saves can be downloaded before starting over. Older hosted `vortex-save-v1` files are not automatically migrated.
+Journeys are saved in this browser, in the existing `vortex-world-v3` storage slot with a version-4 payload. Saves from the released Nile version 3 load automatically, preserving the original journey; the next successful action saves the upgraded format. Older copies of the game reject version 4 rather than silently deleting its story history. Close older game tabs when updating. Export them from **Journeys** before clearing browser data or moving devices. Imports validate the file and merge new seekers; conflicting histories require an explicit choice instead of silently replacing progress. Unreadable saves can be downloaded before starting over. Older hosted `vortex-save-v1` files are not automatically migrated.
 
 The production build caches the game and its artwork for return visits offline after the first successful load. Clearing site data removes both saves and offline files. Private hosting may still require an online sign-in. Exporting remains the portable backup.
 
@@ -64,7 +67,7 @@ python3 -m pip install '.[test]'
 python3 -m pytest      # maintained Python kernel and launcher regressions
 ```
 
-The automated game walk covers all **729** questionnaire combinations and a 3,000-turn randomized walk. Signature tests include Bitcoin's published BIP-322 vectors. GitHub Actions runs the maintained checks on pushes and pull requests.
+The automated game walk covers both chapters from all **729** questionnaire combinations, all 90 outward/return story-choice combinations, all three festival endings, and a 3,000-turn randomized walk. A fixture produced by the actual prior release checks the save upgrade; emulated interface tests cover tracking, deliveries, return choices, focus, announcements and the festival. Signature tests include Bitcoin's published BIP-322 vectors. GitHub Actions runs the maintained checks on pushes and pull requests.
 
 - [Architecture and maintenance](docs/architecture.md)
 - [Improvement plan and release status](docs/ROADMAP.md)
