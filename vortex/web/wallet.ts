@@ -7,6 +7,23 @@ async function verifier() {
   (globalThis as unknown as { Buffer: typeof Buffer }).Buffer ??= Buffer;
   return import("bip322-js");
 }
+// Looking at a public address supports more script types than message signing.
+// No signing restriction should prevent a read-only P2SH/P2WSH lookup.
+export async function validateLookupAddress(input: string): Promise<string> {
+  if (typeof input !== "string" || input.length > 90 || looksLikeSecret(input))
+    throw new Error(
+      "Use a public Bitcoin address, never a key or recovery phrase.",
+    );
+  let address = input.trim();
+  if (!/^(1|3|bc1|BC1)[a-zA-Z0-9]+$/.test(address))
+    throw new Error("Enter one Bitcoin mainnet address.");
+  if (address.startsWith("BC1") && address === address.toUpperCase())
+    address = address.toLowerCase();
+  const { Address } = await verifier();
+  if (!Address.isValidBitcoinAddress(address))
+    throw new Error("That address has an invalid format or checksum.");
+  return address;
+}
 // bip322-js verifies the witness. Handle the finalized BIP's human-readable
 // prefix here; full transactions, PSBTs, multisig and script paths are excluded.
 export async function verifyMessage(

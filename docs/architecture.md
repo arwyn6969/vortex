@@ -32,7 +32,7 @@ The storage key stays `vortex-world-v3` to find deployed saves. The parser accep
 
 The verifier dependency is loaded on demand. The adapter understands finalized BIP-322 `smp` prefixes and compatible unprefixed simple signatures; it deliberately excludes full transactions, PSBTs, multisig and Taproot script paths. Legacy recoverable signatures are limited to P2PKH. Known valid/invalid vectors come from the [Bitcoin BIPs repository](https://github.com/bitcoin/bips/blob/master/bip-0322/basic-test-vectors.json). Specification: [BIP 322](https://bips.dev/322/).
 
-A stored proof says a message verified for an address at the recorded time. It does not prove current control of funds, token holdings, real-world identity, or exclusive possession of a key. No blockchain request occurs during play. The real-token gallery uses a documented build-time snapshot; it never guesses a live balance or price.
+A stored proof says a message verified for an address at the recorded time. It does not prove current control of funds, token holdings, real-world identity, or exclusive possession of a key. Ordinary play makes no blockchain requests. The separate optional address ledger queries the official Counterparty API only after the user submits an address. The real-token gallery remains a documented build-time snapshot; it never guesses a current balance or price.
 
 ## Delivery and accessibility
 
@@ -40,9 +40,17 @@ The main game is a small initial JavaScript bundle; signature code loads separat
 
 The interface uses native buttons/forms/dialogs, keyboard-operated map nodes, visible focus, text exits equivalent to the map, a skip link, reduced-motion support, and sound that starts only after a deliberate choice. Focus is restored after routine redraws and dialog dismissal, the questionnaire and arrivals move focus to their heading, and a persistent live region announces the results of game actions. Mobile navigation can scroll horizontally. Tests run reducers, persistence, cryptographic fixtures, and emulated DOM journeys. They are not a claim of a manual accessibility audit or a real-wallet interoperability audit.
 
+## Read-only address ledger
+
+`counterparty.ts` owns a bounded adapter for Counterparty Core v2 and an ephemeral `CollectionLookup` controller. It validates a mainnet address locally, requests root readiness, pages `addresses/{address}/balances?type=all&verbose=true`, and checks readiness again. Fixed-origin GET requests omit credentials and referrer, reject redirects and bypass the browser cache. A 30-second total deadline, 20-page/2,000-entry cap and 1 MB decoded response cap bound the work. Only full, internally consistent results are published to the interface.
+
+Large JSON integer tokens retain their original decimal digits; quantities are added using BigInt. Address and attached-output rows are keyed independently to detect duplicate pages without omitting UTXO balances. Unknown divisibility remains explicit raw units. Root JSON checks work even when CORS hides the custom readiness headers. Node-height changes, count drift, repeats and incomplete pages ask for a fresh lookup. This is not an atomic blockchain snapshot; upstream caches and reorgs remain possible.
+
+`collection-view.ts` renders balances with source-specific wording and only the existing local artwork for known tokens. Remote metadata is treated as text, never fetched as images or HTML. A character link stages the normal route; it does not create a discovery, rite or token claim. Results are cleared on edit, close, seeker change and page exit. Serial request IDs prevent delayed responses from restoring cleared data. No balance state is added to the World or WebMCP snapshots, and no save-schema migration is needed for 0.4.
+
 ## Boundaries for further development
 
-Use adapters for any future live Counterparty data or AI dialogue. Never let a model award a rite, change the graph, certify a proof, or claim token ownership. Network errors must leave offline play intact. Keep pending external requests separate from durable game state, and verify live-data readiness, exact quantities and pagination before displaying results.
+Extend the existing bounded Counterparty adapter for any further chain data; use a separate adapter for future AI dialogue. Never let a model award a rite, change the graph, certify a proof, or claim token ownership. Network errors must leave offline play intact. Keep pending external requests separate from durable game state, and verify live-data readiness, exact quantities and pagination before displaying results.
 
 ## Optional browser agent surface
 
