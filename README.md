@@ -40,7 +40,15 @@ python3 run_game.py --open
 - **Celebrate Chapter II.** Bring three stories home and reveal four streams, then return to Kingdom for a Nile festival. Choose the long table, the river of lanterns, or the unfinished chorus. The guests remember your choices.
 - The **next-step guide** above the scene suggests a useful action or one legal crossing. Select a story in **Stories** to follow its route; you remain free to explore.
 
-The Enduring Mark edition (0.5) includes ten branching token-specific stories, persistent return scenes, three festival endings, ten distinct rites, classical and folk voices, a stream Codex, an open Counterparty archive with illustrated Rare Pepe encounters, a journal, and up to twelve independent seekers on one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
+The Living Atlas edition (0.6) adds a connected mythology notebook and two new encounters to the ten branching token-specific stories, persistent return scenes, three festival endings, ten distinct rites, classical and folk voices, stream Codex and open Counterparty archive. Up to twelve independent seekers share one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
+
+## The Living Atlas
+
+Explore **45 entries and 51 connections** across Egyptian and Sumerian figures, six tarot lenses, six narrative archetypes, contextualized Maya material, a small Dogon reading room, Bitcoin Stamps and real Counterparty assets. Search aliases, filter by tradition or theme, compare three entries, inspect the evidence behind a connection and remember it in your seeker's notebook. Source accounts, disputed accounts and VORTEX interpretations have separate labels.
+
+Bring those ideas back into the game. At **Hod**, help a scribe with **The Disputed Tablet**: preserve both accounts, seek a witness at Yesod or publish a provisional reading. At **Netzach**, try **The Gate That Remembers**: negotiate, cooperate or ask a friend whose help you have earned. Follow buttons suggest legal steps through the existing map. Your choices change later scenes and Kingdom's gathering, and survive reloads and journal rollover.
+
+These are new frog stories informed by contextualized reading. Cultural traditions retain their differences; the atlas does not claim a shared historical origin. Broader Maya and Dogon adaptations still need specialist review. See [the implementation and editorial record](docs/LIVING_ATLAS.md).
 
 ## Real Rare Pepes, honest provenance
 
@@ -66,9 +74,11 @@ Classic Stamps and SRC-20 are distinguished in the teaching and ledger. The game
 
 ## Your saves and optional wallet witness
 
-Journeys are saved in this browser, in the existing `vortex-world-v3` storage slot with a version-4 payload. Saves from the released Nile version 3 load automatically, preserving the original journey; the next successful action saves the upgraded format. Older copies of the game reject version 4 rather than silently deleting its story history. Close older game tabs when updating. Export them from **Journeys** before clearing browser data or moving devices. Imports validate the file and merge new seekers; conflicting histories require an explicit choice instead of silently replacing progress. Unreadable saves can be downloaded before starting over. Older hosted `vortex-save-v1` files are not automatically migrated.
+Journeys are saved in this browser, in the existing `vortex-world-v3` storage slot with a version-5 payload. Released version-3 and version-4 saves load automatically, preserving the original journey; the next successful action saves the upgraded format. Earlier clients reject the new format instead of discarding its history. Export from **Journeys** before clearing browser data or moving devices. Imports validate the file and merge new seekers; conflicting histories require an explicit choice.
 
-The production build caches the game and its artwork for return visits offline after the first successful load. Clearing site data removes both saves and offline files. Private hosting may still require an online sign-in. Exporting remains the portable backup.
+Each successful replacement of a valid save keeps its previous version as a recovery copy. **Journeys** can download or explicitly restore that copy, preserving the replaced original. Restore rejects changes made since confirmation and cannot downgrade an unknown future format. Web Locks coordinate writes across tabs; browsers without that capability allow reading and export only. Unreadable saves remain downloadable, and unrelated older `vortex-save-v1` files are not automatically migrated.
+
+The production build caches the game and its artwork for return visits offline after the first successful load. An available update waits until you choose **Update and return** or close the older tabs. Clearing site data removes both saves and offline files. Private hosting may still require an online sign-in. Exporting remains the portable backup.
 
 A wallet is optional. At Kingdom, a completed seeker may sign a ten-minute, seeker-specific message in their own wallet and paste back its signature. Verification happens locally. Supported proofs are BIP-322 simple for native SegWit and Taproot key paths, and legacy message signatures for P2PKH. Multisig, script paths, full transactions, and PSBTs are excluded. No keys, seed phrases, payments, minting or transactions are part of this release. The separate address ledger makes read-only balance queries only after an explicit lookup.
 
@@ -83,10 +93,11 @@ python3 -m pip install '.[test]'
 python3 -m pytest      # maintained Python kernel and launcher regressions
 ```
 
-The automated game walk covers both chapters from all **729** questionnaire combinations, all 90 outward/return story-choice combinations, all three festival endings, and a 3,000-turn randomized walk. A fixture produced by the actual prior release checks the save upgrade; emulated interface tests cover tracking, deliveries, return choices, focus, announcements and the festival. Signature tests include Bitcoin's published BIP-322 vectors. GitHub Actions runs the maintained checks on pushes and pull requests.
+The automated game walk covers both chapters from all **729** questionnaire combinations, all 90 outward/return story-choice combinations, all nine atlas encounter pairs, all three festival endings, and a 3,000-turn randomized walk. Actual released v3/v4 fixtures check migration. Tests cover recovery failures, source integrity, emulated interface journeys and typed browser-agent actions; signature tests include Bitcoin's published BIP-322 vectors. Native in-app Chromium checks also exercised the atlas, consequential choices, reload, recovery, two-tab conflicts and small-screen reflow. These checks do not replace broader browser, assistive-technology or cultural review. GitHub Actions runs the maintained checks on pushes and pull requests.
 
 - [Architecture and maintenance](docs/architecture.md)
 - [Improvement plan and release status](docs/ROADMAP.md)
+- [Living Atlas sources, encounters and verification](docs/LIVING_ATLAS.md)
 - [The lattice doctrine](docs/doctrine/THE_LATTICE.md)
 - [Session doctrine](docs/doctrine/PLAY.md)
 - [Original development backlog](docs/doctrine/NEXT.md)

@@ -1,3 +1,10 @@
+import {
+  emptyInquiries,
+  applyInquiry,
+  inquiryError,
+  inquiryMemory,
+} from "./inquiries.ts";
+import type { InquiryProgress, InquiryAction } from "./inquiries.ts";
 import { NODES, neighbors, place, isOffice, guideName } from "./lattice.ts";
 import type { Pillar, Dialect, SefirahId, StreamStatus } from "./lattice.ts";
 import { PATH_LETTERS, pathKey, pathBetween } from "./paths.ts";
@@ -44,6 +51,7 @@ export type Seeker = {
   rites: Partial<Record<SefirahId, number>>;
   stories: Partial<Record<SefirahId, StoryProgress>>;
   festival: number | null;
+  inquiries: InquiryProgress;
   crossings: Record<string, number>;
   harmony: boolean;
   sigil: string;
@@ -57,7 +65,7 @@ export type Seeker = {
   createdAt: number;
 };
 export type World = {
-  version: 4;
+  version: 5;
   revision: number;
   clock: number;
   activeId: string | null;
@@ -65,6 +73,7 @@ export type World = {
   darkness: Record<string, number>;
 };
 export type Action =
+  | InquiryAction
   | { type: "walk"; to: SefirahId }
   | { type: "look" | "sit" | "root" }
   | { type: "rite"; choice: number }
@@ -75,7 +84,7 @@ export type Action =
   | { type: "talk"; text: string }
   | { type: "dialect"; dialect: Dialect };
 export const emptyWorld = (): World => ({
-  version: 4,
+  version: 5,
   revision: 0,
   clock: 0,
   activeId: null,
@@ -135,6 +144,7 @@ export function addSeeker(
     rites: {},
     stories: {},
     festival: null,
+    inquiries: emptyInquiries(),
     crossings: {},
     harmony: false,
     sigil: "",
@@ -208,8 +218,11 @@ function guideReply(s: Seeker, question: string) {
     return "An address may be a name on the door. Your wallet keeps its keys. Kingdom can wait; your journey is already yours.";
   if (/stamp|kevin|immutable|immutability|egregore|bitcoin/.test(q))
     return stampReply(s.current, folk ? "folk" : "classical");
-  if (/changed|remember here|last time/.test(q))
+  if (/atlas|myth|tarot|sumer|maya|dogon|archetype/.test(q))
+    return "Open the Living Atlas to compare stories, figures and real assets. Each connection explains its sources. At Hod the scribe has two accounts to weigh; at Netzach a guardian needs a different way of thinking.";
+  if (/tablet|guardian|witness|changed|remember here|last time/.test(q))
     return (
+      inquiryMemory(s, s.current) ??
       returnMemory(s, s.current) ??
       (s.rites[s.current] !== undefined
         ? "You chose “" +
@@ -299,12 +312,26 @@ export function transition(world: World, action: Action): World {
       "story-deliver",
       "story-resolve",
       "festival",
+      "study",
+      "inquiry",
     ].includes(action.type)
   )
     throw new Error("Unknown action.");
   const next = structuredClone(world);
   const s = activeSeeker(next);
   if (!s) throw new Error("Choose a seeker first.");
+  if (action.type === "study" || action.type === "inquiry") {
+    const error = inquiryError(s, action);
+    if (error) throw new Error(error);
+    next.revision++;
+    if (action.type === "inquiry") {
+      next.clock++;
+      s.turns++;
+      s.walks = 0;
+    }
+    record(s, "discovery", applyInquiry(s, action));
+    return next;
+  }
   if (
     action.type === "story-start" ||
     action.type === "story-deliver" ||
@@ -441,6 +468,8 @@ export function transition(world: World, action: Action): World {
     record(s, "guide", voice(s));
     const memory = returnMemory(s, s.current);
     if (memory) record(s, "world", memory);
+    const inquiry = inquiryMemory(s, s.current);
+    if (inquiry) record(s, "world", inquiry);
     // Silent deterministic referee. A shared edge darkens only if another way remains.
     const choices = neighbors(s.current).filter(
       (n) => status(next, s, n) === "open",
@@ -533,6 +562,8 @@ export function transition(world: World, action: Action): World {
     s.festival = action.choice;
     record(s, "discovery", FESTIVAL_ENDINGS[action.choice]);
     for (const memory of festivalGuests(s)) record(s, "world", memory);
+    const inquiry = inquiryMemory(s, "malkhut");
+    if (inquiry) record(s, "world", inquiry);
   } else if (action.type === "sigil") {
     if (s.sigil !== text) {
       s.proof = null;

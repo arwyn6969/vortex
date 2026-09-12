@@ -23,6 +23,11 @@ test("interface supports first and second seekers, rites, journal, switching and
       value: key === "window" ? window : (window as any)[key],
     });
   }
+  // Happy DOM has no Web Locks; emulate the supported browser contract here.
+  Object.defineProperty(window.navigator, "locks", {
+    configurable: true,
+    value: { request: async (_name: string, work: () => unknown) => work() },
+  });
   await import("../main.ts");
   const settle = async () => {
     for (let i = 0; i < 8; i++)

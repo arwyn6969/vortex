@@ -1,5 +1,7 @@
 # Improvement plan and release status
 
+The current forward plan is [VORTEX: hardening, the Living Atlas, and a larger mythic world](NEXT_PHASE_PLAN.md), reviewed against Enduring Mark on 12 September 2026. It includes code findings, research sources, cultural-pack scope and release gates.
+
 ## Delivered in the Nile edition
 
 1. **A complete playable release.** Browser entry, six-question placement, connected movement, ten authored rites, named/revealed streams, Harmony, Qoph, sigil creation, wallet-free completion, continued exploration.
@@ -28,14 +30,24 @@
 2. **Bitcoin Stamps in the doctrine's own places.** A three-reading chamber at Hod, Yesod and Malkhut links making, foundation and public memory. Classical and folk voices, optional reflections and contextual guide replies preserve the Egyptian frog setting. The chamber is also available from the archive.
 3. **KEVIN with attributed lore and protocol clarity.** The Saga's community narrative is linked and distinguished from technical evidence. Classic Counterparty Stamps and modern SRC-20 holdings stay distinct. Source notes explain the boundaries of immutability and the limits of the current ledger.
 
-## Next releases, in order
+## Delivered in Living Atlas (0.6)
+
+1. **A connected mythology atlas.** Forty-five sourced or explicitly interpretive entries, fifty-one relationships, name/alias search, tradition/theme filters, three-way comparison, source explanations and a saved personal notebook. Includes six archetypes, six tarot lenses, Egyptian and Sumerian material, specifically contextualized Maya entries, a bounded Dogon reading room and authentic Counterparty references.
+2. **Two consequential encounters.** The Disputed Tablet and The Gate That Remembers offer different routes, conditional help and lasting scenes at other temples and Kingdom. Choices survive reload and journal rollover while the ten-office/twenty-two-stream movement rules stay stable.
+3. **Recovery and migration.** Schema 5 preserves released v3/v4 journeys. A previous-save copy, explicit restore, retained damaged originals and write serialization improve resilience. Unsupported browsers are read/export-only instead of risking concurrent writes.
+4. **Specific hardening.** Benign prose no longer fails word-count-only secret checks. Production document policy, explicit update activation, pinned CI actions and dependency-review configuration tighten delivery boundaries.
+5. **Native checks.** In-app Chromium exercised the new encounters, reload, recovery, small-screen reflow and same-revision two-tab actions. Native atlas reading and valid/stale action handling were verified. See [the implementation and editorial record](LIVING_ATLAS.md) for exact scope and remaining checks.
+
+## Next work, informed by this release
 
 | Priority | Improvement | Acceptance condition |
 | --- | --- | --- |
-| 1 | Observed player and accessibility sessions | Watch fresh players on phone and desktop, including keyboard and screen-reader users. Record where they hesitate, verify the new focus and announcement behavior in real browsers, and adjust pacing using those observations. Automated interface coverage is not a substitute for these sessions. |
-| 2 | More involved story consequences | Build on the current authored errands with two or three interdependent problems, distinct destination decisions, and a choice-history viewer. Preserve reachable endings and migration from released v4 fixtures. Test combinations rather than relying on one happy path. |
-| 3 | Deeper guide conversations | If a server-side model is introduced, require a clear privacy choice, budget/timeout limits, an authored fallback, and evaluations against invented ownership, secret handling, rule manipulation and repetition. Keep game authority in the reducer. |
-| 4 | Archive expansion and credits | Add new verified assets only with recorded IDs, source art and verified attribution. Expand the world through encounters inside the ten-office/twenty-two-stream canon. Never guess an artist credit. |
-| 5 | Native browser-agent verification | Validate the optional WebMCP registration and action tools in a browser that supports the API. Current tests cover the integration contract in an emulated context only. |
+| 1 | Observed play and broader browser/accessibility evidence | Watch fresh players and test assistive technology, Safari/Firefox/Android, interrupted writes and an update from an open released client. Preserve released v5 progress. |
+| 2 | Consequence clarity and cultural review | Test whether players notice the new later scenes and understand source/interpretation labels. Obtain specialist feedback for broader Maya/Dogon adaptation; the current reference notes explicitly lack that review. |
+| 3 | Deeper culture packs and tarot | Expand the contextualized Sumerian/Maya encounters and tarot toward twenty-two entries after feedback. Keep disputed claims attributed and the ten-office/twenty-two-stream travel map stable. |
+| 4 | Open asset curation and world response | Any Counterparty asset remains eligible. Distinguish balance discovery, reviewed atlas membership and authored stories. Keep xcp.io links, verified identifiers and art provenance; add selected props and reactions that make choices visible. |
+| 5 | Delivery verification | Native reading and mutation/conflict handling are verified in the in-app browser. Broaden browser coverage and inspect effective hosting headers; test update/rollback behavior without downgrading newer saves. |
 
-Minting, trading, shared online worlds and external AI calls remain outside the release. The archive is a recorded mainnet snapshot, not a market feed. Genuine older `vortex-save-v1` examples are still needed before that unrelated schema can be migrated safely.
+Deeper authored guide memory comes before external AI dialogue. If a model is later introduced, require explicit privacy choices, bounded cost/time, an authored fallback and evaluations; the reducer retains game authority.
+
+Minting, trading, shared online worlds and external AI calls remain outside the release. Curated token references are a recorded mainnet snapshot; the optional address ledger reads balances, not a market feed. Genuine older `vortex-save-v1` examples are still needed before that unrelated schema can be migrated safely.

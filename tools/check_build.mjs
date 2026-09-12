@@ -1,12 +1,36 @@
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import vm from "node:vm";
+import { Window } from "happy-dom";
 
 // Exercise the generated offline worker without an agent browser.
 const source = readFileSync("dist/sw.js", "utf8");
+const html = readFileSync("dist/index.html", "utf8");
+const window = new Window({
+  settings: {
+    disableJavaScriptEvaluation: true,
+    disableJavaScriptFileLoading: true,
+  },
+});
+window.document.write(html);
+const policy = window.document
+  .querySelector('meta[http-equiv="Content-Security-Policy"]')
+  ?.getAttribute("content");
+await window.happyDOM.close();
+assert(policy, "Production HTML must include its document policy");
+for (const rule of [
+  "script-src 'self'",
+  "connect-src 'self' https://api.counterparty.io:4000",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'self'",
+])
+  assert(policy.includes(rule), rule);
+assert(!policy.includes("'unsafe-eval'"));
 const handlers = {},
   cachesByName = new Map();
-let networkCalls = 0;
+let networkCalls = 0,
+  activations = 0;
 const caches = {
   keys: async () => [...cachesByName.keys()],
   delete: async (key) => cachesByName.delete(key),
@@ -32,6 +56,9 @@ vm.runInNewContext(source, {
   self: {
     location: { origin: "https://game.example" },
     addEventListener: (type, fn) => (handlers[type] = fn),
+    skipWaiting: () => {
+      activations++;
+    },
   },
   fetch: async () => {
     networkCalls++;
@@ -41,6 +68,11 @@ vm.runInNewContext(source, {
 let pending;
 handlers.install({ waitUntil: (promise) => (pending = promise) });
 await pending;
+assert.equal(activations, 0, "An update must wait by default");
+handlers.message({ data: { type: "unrelated" } });
+assert.equal(activations, 0);
+handlers.message({ data: { type: "ACTIVATE_UPDATE" } });
+assert.equal(activations, 1, "Explicit update activates the waiting worker");
 assert(cachesByName.size === 1);
 const cache = [...cachesByName.values()][0];
 for (const path of [

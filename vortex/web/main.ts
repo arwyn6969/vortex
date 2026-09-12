@@ -1,3 +1,12 @@
+import {
+  atlasView,
+  emptyAtlasView,
+  inquiryPanel,
+  atlasTravel,
+} from "./atlas-view.ts";
+import { atlasEntry, searchAtlas } from "./atlas.ts";
+import { inquiryMemory } from "./inquiries.ts";
+import { withJourneyLock } from "./journey-lock.ts";
 import "./style.css";
 import { NODES, IDS, neighbors, guideName, shortPond } from "./lattice.ts";
 import type { Dialect, SefirahId } from "./lattice.ts";
@@ -31,6 +40,10 @@ import {
   importWorld,
   SAVE_KEY,
   MAX_SAVE_BYTES,
+  BACKUP_KEY,
+  RECOVERY_KEY,
+  recoveryWorld,
+  restoreBackup,
 } from "./storage.ts";
 import { issueChallenge, acceptSignature } from "./wallet.ts";
 import { escapeHtml as e, safeText } from "./safety.ts";
@@ -52,8 +65,18 @@ let loading = true,
   busy = false,
   damaged = false,
   newJourney = false;
+let atlasState = emptyAtlasView();
+let atlasTarget: SefirahId | null = null;
+let backup: World | null = null;
+let pendingRestore = false;
+let restoreSnapshot: { raw: string | null; backup: string | null } | null =
+  null;
+let preservedAvailable = false;
+let damagedOriginal: string | null = null;
+let waitingWorker: ServiceWorker | null = null;
+let updating = false;
 let tracked: { seeker: string; story: SefirahId } | null = null;
-let view: "tree" | "codex" | "journal" | "rares" | "stories" = "tree";
+let view: "tree" | "codex" | "journal" | "rares" | "stories" | "atlas" = "tree";
 let modal:
   | "journeys"
   | "settings"
@@ -111,11 +134,11 @@ async function commit(change: (w: World) => World | Promise<World>) {
     }
     const next = await change(current);
     saveWorld(localStorage, next, expected);
+    backup = current;
     world = next;
   };
   try {
-    if (navigator.locks) await navigator.locks.request(SAVE_KEY, task);
-    else await task();
+    await withJourneyLock(task);
     message = "";
     messageError = false;
   } catch (error) {
@@ -155,6 +178,8 @@ async function act(action: Action) {
   }
 }
 function closeDialog() {
+  pendingRestore = false;
+  restoreSnapshot = null;
   if (modal === "collection") collection.edit("");
   modal = null;
   message = "";
@@ -267,7 +292,7 @@ function header(s: Seeker | null) {
     "<span>VORTEX<small>THE NILE OF RARE FROGS</small></span></a>" +
     '<nav aria-label="Game views">' +
     (s && !newJourney
-      ? (["tree", "stories", "codex", "rares", "journal"] as const)
+      ? (["tree", "stories", "atlas", "codex", "rares", "journal"] as const)
           .map(
             (v) =>
               '<button data-view="' +
@@ -278,6 +303,7 @@ function header(s: Seeker | null) {
               {
                 tree: "The tree",
                 stories: "Stories",
+                atlas: "Living Atlas",
                 codex: "Streams",
                 rares: "Asset archive",
                 journal: "Journal",
@@ -358,7 +384,10 @@ function tree(s: Seeker) {
     rites = riteCount(s);
   const following = tracked?.seeker === s.id ? tracked.story : null;
   const hint = nextStep(world, s, following);
-  const memory = returnMemory(s, s.current);
+  const memory = [returnMemory(s, s.current), inquiryMemory(s, s.current)]
+    .filter(Boolean)
+    .join(" ");
+  const atlasStep = atlasTarget ? atlasTravel(world, s, atlasTarget) : null;
   const moments = s.journal.filter(
     (j) =>
       j.turn === s.turns &&
@@ -387,6 +416,13 @@ function tree(s: Seeker) {
       )
       .join("") +
     '</div><p class="map-note">Movement follows the streams.<br>Stillness changes what is possible.</p></aside><section class="story-panel">' +
+    (atlasTarget
+      ? '<section class="atlas-route" role="region" aria-label="Following an encounter"><div><strong>Following an encounter · ' +
+        e(NODES[atlasTarget].pond) +
+        '</strong><p>Each crossing follows the existing streams.</p></div><button class="secondary" data-atlas-step>' +
+        e(atlasStep?.label ?? "Build Harmony to open this route") +
+        '</button><button class="text-button" data-atlas-stop>Stop following</button></section>'
+      : "") +
     '<section class="journey-compass" id="journey-compass" tabindex="-1" aria-label="Suggested next step"><div><span>' +
     (s.festival !== null
       ? "THE FESTIVAL LIVES ON"
@@ -446,6 +482,7 @@ function tree(s: Seeker) {
     (s.rites[s.current] !== undefined ? "Rite complete" : "Perform a rite") +
     "</button></div>" +
     storyPanel(s, following) +
+    inquiryPanel(s) +
     (moments.length
       ? '<section class="moment" aria-label="What changed">' +
         moments.map((j) => "<p>" + e(j.text) + "</p>").join("") +
@@ -711,6 +748,20 @@ function dialog(s: Seeker | null) {
           e(pendingDelete) +
           '">Remove seeker</button><button class="text-button" data-cancel-remove>Keep them</button></div>'
         : "") +
+      (preservedAvailable
+        ? '<button class="text-button" data-export-preserved>Download preserved original</button>'
+        : "") +
+      (backup
+        ? '<section class="recovery-option"><h2>Last recovery copy</h2><p>' +
+          backup.seekers.length +
+          " seekers · revision " +
+          backup.revision +
+          '. Restoring replaces the current tree. Download the current tree first; its original is also preserved locally.</p><button class="secondary" data-restore-backup>' +
+          (pendingRestore
+            ? "Confirm: restore recovery copy"
+            : "Restore recovery copy") +
+          '</button><button class="text-button" data-export-backup>Download recovery copy</button></section>'
+        : "") +
       '<button class="primary" data-new>Welcome another seeker ↗</button><div class="actions"><button class="secondary" data-export>Export all</button><label class="secondary file-button">Import journeys<input type="file" id="import-file" accept=".json,application/json"></label></div>' +
       (s
         ? '<form id="rename-form"><label for="rename">Rename ' +
@@ -844,23 +895,36 @@ function render() {
   document.documentElement.dataset.motion = reduced ? "reduced" : "full";
   app.innerHTML =
     header(s) +
+    (!loading && !navigator.locks
+      ? '<aside class="update-notice" role="status">This browser can read and export journeys, but cannot save them safely. Use a current browser to continue playing.</aside>'
+      : "") +
     (loading
       ? '<main id="main" class="loading">Returning to the water…</main>'
       : damaged
         ? '<main id="main" class="recovery"><div class="eyebrow">YOUR ORIGINAL SAVE IS SAFE</div><h1>We couldn’t read this journey.</h1><p>' +
           e(message) +
-          '</p><button class="secondary" data-export-raw>Download the original save</button><button class="text-button" data-reset-damaged>Start a new tree on this device</button></main>'
+          '</p><button class="secondary" data-export-raw>Download the original save</button>' +
+          (backup
+            ? '<button class="secondary" data-restore-backup>' +
+              (pendingRestore
+                ? "Confirm: restore recovery copy"
+                : "Restore last recovery copy") +
+              '</button><button class="text-button" data-export-backup>Download recovery copy</button>'
+            : "") +
+          '<button class="text-button" data-reset-damaged>Start a new tree on this device</button></main>'
         : !s || newJourney
           ? gate()
           : view === "tree"
             ? tree(s)
-            : view === "codex"
-              ? codex(s)
-              : view === "rares"
-                ? rares(s)
-                : view === "stories"
-                  ? storyBook(s)
-                  : journal(s)) +
+            : view === "atlas"
+              ? atlasView(s, atlasState)
+              : view === "codex"
+                ? codex(s)
+                : view === "rares"
+                  ? rares(s)
+                  : view === "stories"
+                    ? storyBook(s)
+                    : journal(s)) +
     (s && !newJourney
       ? '<footer class="statusbar"><span>' +
         (isBound(s)
@@ -890,6 +954,9 @@ function render() {
         '">' +
         e(message) +
         '<button data-dismiss aria-label="Dismiss">×</button></div>'
+      : "") +
+    (waitingWorker
+      ? '<aside class="update-notice" role="status"><span>A fresh edition is ready. Your journey is saved on this device.</span><button class="secondary" data-update>Update and return</button></aside>'
       : "") +
     dialog(s);
   const d = document.querySelector("dialog");
@@ -988,7 +1055,140 @@ app.addEventListener("click", async (event) => {
   const d = el.dataset,
     s = activeSeeker(world);
   if (el.tagName === "A" && "home" in d) event.preventDefault();
-  if ("rare" in d && RARES.some((r) => r.name === d.rare)) {
+  if ("atlasEntry" in d && s && atlasEntry(d.atlasEntry!)) {
+    atlasState.selected = d.atlasEntry!;
+    view = "atlas";
+    render();
+    focusPanel("entry-" + d.atlasEntry);
+  } else if ("cluster" in d) {
+    atlasState.group = d.cluster!;
+    atlasState.selected = d.cluster!;
+    view = "atlas";
+    render();
+    focusPanel("entry-" + d.cluster);
+  } else if ("atlasClear" in d) {
+    atlasState.query = "";
+    atlasState.tradition = "all";
+    atlasState.group = "all";
+    atlasState.notebook = false;
+    render();
+  } else if ("notebook" in d) {
+    atlasState.notebook = !atlasState.notebook;
+    render();
+  } else if ("compare" in d && atlasEntry(d.compare!)) {
+    if (atlasState.compare.includes(d.compare!))
+      atlasState.compare = atlasState.compare.filter((id) => id !== d.compare);
+    else if (atlasState.compare.length < 3) atlasState.compare.push(d.compare!);
+    else {
+      notice("Compare up to three entries. Remove one before adding another.");
+      return;
+    }
+    render();
+  } else if ("compareClear" in d) {
+    atlasState.compare = [];
+    render();
+  } else if ("study" in d) {
+    await act({ type: "study", entry: d.study! });
+    if (!messageError) focusPanel("entry-" + d.study);
+  } else if ("inquiry" in d) {
+    await act({
+      type: "inquiry",
+      task: d.inquiry as "tablet" | "gate" | "testimony",
+      choice: Number(d.choice),
+    });
+    focusPanel("inquiry-panel");
+  } else if ("atlasRoute" in d && IDS.includes(d.atlasRoute as SefirahId)) {
+    atlasTarget = d.atlasRoute as SefirahId;
+    view = "tree";
+    render();
+    focusPanel("main");
+  } else if ("atlasStep" in d && s && atlasTarget) {
+    const step = atlasTravel(world, s, atlasTarget);
+    if (step?.action) await act(step.action);
+    else if (step) focusPanel("inquiry-panel");
+  } else if ("atlasStop" in d) {
+    atlasTarget = null;
+    render();
+  } else if ("restoreBackup" in d) {
+    if (!pendingRestore) {
+      try {
+        const snapshot = {
+          raw: localStorage.getItem(SAVE_KEY),
+          backup: localStorage.getItem(BACKUP_KEY),
+        };
+        const recovered = await recoveryWorld(localStorage);
+        if (
+          !recovered ||
+          snapshot.raw !== localStorage.getItem(SAVE_KEY) ||
+          snapshot.backup !== localStorage.getItem(BACKUP_KEY)
+        )
+          throw new Error(
+            "The recovery copy changed. Open Journeys again before restoring.",
+          );
+        backup = recovered;
+        restoreSnapshot = snapshot;
+        pendingRestore = true;
+        notice(
+          "Restoring returns to the previous recovery copy. The current original is preserved locally. Press Confirm to continue.",
+        );
+      } catch (err) {
+        notice(errorText(err), true);
+      }
+      return;
+    }
+    if (!restoreSnapshot) return;
+    const expected = restoreSnapshot;
+    try {
+      await withJourneyLock(async () => {
+        world = await restoreBackup(
+          localStorage,
+          expected.raw,
+          expected.backup,
+        );
+      });
+      preservedAvailable = expected.raw !== null;
+      restoreSnapshot = null;
+      damaged = false;
+      pendingRestore = false;
+      modal = null;
+      newJourney = false;
+      view = "tree";
+      notice(
+        "Recovery copy restored. The replaced original can be downloaded from Journeys.",
+      );
+    } catch (err) {
+      pendingRestore = false;
+      restoreSnapshot = null;
+      notice(errorText(err), true);
+    }
+  } else if ("exportBackup" in d)
+    download(
+      "vortex-recovery-copy.json",
+      localStorage.getItem(BACKUP_KEY) ?? "",
+    );
+  else if ("exportPreserved" in d)
+    download(
+      "vortex-preserved-original.json",
+      localStorage.getItem(RECOVERY_KEY) ?? "",
+    );
+  else if ("update" in d && waitingWorker) {
+    // Completed actions are already saved. Updating must remain possible when
+    // this client cannot parse a save written by a newer edition.
+    try {
+      const worker = waitingWorker;
+      updating = true;
+      // An initially uncontrolled page may not receive controllerchange.
+      // Observe activation itself so its next navigation uses the new worker.
+      const returnToGame = () => {
+        if (updating && worker.state === "activated") location.reload();
+      };
+      worker.addEventListener("statechange", returnToGame);
+      returnToGame();
+      worker.postMessage({ type: "ACTIVATE_UPDATE" });
+    } catch (err) {
+      notice(errorText(err), true);
+    }
+  } else if ("rare" in d && RARES.some((r) => r.name === d.rare)) {
     modalTrigger = ["data-rare", d.rare!];
     selectedRare = d.rare!;
     modal = "rare";
@@ -1172,6 +1372,7 @@ app.addEventListener("click", async (event) => {
       };
     });
     pendingDelete = "";
+    atlasTarget = null;
     render();
   } else if ("export" in d)
     download(
@@ -1193,13 +1394,23 @@ app.addEventListener("click", async (event) => {
   } else if ("resetDamaged" in d) {
     if (!pendingDelete) {
       pendingDelete = "damaged";
+      damagedOriginal = localStorage.getItem(SAVE_KEY);
       notice(
         "Download the original first. Press “Start a new tree” again to replace this device’s unreadable save.",
         true,
       );
     } else {
       try {
-        localStorage.removeItem(SAVE_KEY);
+        await withJourneyLock(async () => {
+          const original = localStorage.getItem(SAVE_KEY);
+          if (original !== damagedOriginal)
+            throw new Error(
+              "The journey changed. Reload before starting a new tree.",
+            );
+          if (original) localStorage.setItem(RECOVERY_KEY, original);
+          localStorage.removeItem(SAVE_KEY);
+          preservedAvailable = original !== null;
+        });
         world = emptyWorld();
         damaged = false;
         message = "";
@@ -1323,6 +1534,22 @@ app.addEventListener("submit", async (event) => {
         n.revision++;
         return n;
       });
+    if (form.id === "atlas-search") {
+      atlasState.query = String(f.get("query") ?? "").slice(0, 100);
+      atlasState.tradition = String(f.get("tradition") ?? "all");
+      const matches = searchAtlas(
+        atlasState.query,
+        atlasState.tradition,
+        atlasState.group,
+      ).filter(
+        (x) =>
+          !atlasState.notebook ||
+          activeSeeker(world)?.inquiries.seen.includes(x.id),
+      );
+      if (matches.length && !matches.some((x) => x.id === atlasState.selected))
+        atlasState.selected = matches[0].id;
+      render();
+    }
     if (form.id === "address-form")
       await commit((w) => issueChallenge(w, String(f.get("address"))));
     if (form.id === "proof-form") {
@@ -1348,8 +1575,8 @@ app.addEventListener("change", async (event) => {
     const work = async () => {
       world = await importWorld(localStorage, text);
     };
-    if (navigator.locks) await navigator.locks.request(SAVE_KEY, work);
-    else await work();
+    await withJourneyLock(work);
+    backup = await recoveryWorld(localStorage);
     notice("Journeys imported. Existing progress was preserved.");
   } catch (error) {
     notice(errorText(error), true);
@@ -1359,6 +1586,13 @@ window.addEventListener("storage", async (event) => {
   if (event.key !== SAVE_KEY || busy) return;
   try {
     world = await loadWorld(localStorage);
+    try {
+      backup = await recoveryWorld(localStorage);
+    } catch {
+      backup = null;
+    }
+    pendingRestore = false;
+    restoreSnapshot = null;
     notice(
       "This tree changed in another tab. You are seeing its latest state.",
     );
@@ -1373,15 +1607,40 @@ async function start() {
     damaged = true;
     message = errorText(error);
   }
+  try {
+    backup = await recoveryWorld(localStorage);
+  } catch {
+    backup = null;
+  }
+  try {
+    preservedAvailable = localStorage.getItem(RECOVERY_KEY) !== null;
+  } catch {
+    preservedAvailable = false;
+  }
   loading = false;
   render();
 }
 render();
 void start();
 if (import.meta.env?.PROD && "serviceWorker" in navigator) {
-  void navigator.serviceWorker.register("/sw.js").catch(() => {
-    /* Online play and exports remain available. */
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (updating) location.reload();
   });
+  void navigator.serviceWorker
+    .register("/sw.js")
+    .then((registration) => {
+      const check = () => {
+        waitingWorker = registration.waiting;
+        render();
+      };
+      check();
+      registration.addEventListener("updatefound", () =>
+        registration.installing?.addEventListener("statechange", check),
+      );
+    })
+    .catch(() => {
+      /* Online play and exports remain available. */
+    });
 }
 
 const disposeJourneyTools = registerJourneyTools(

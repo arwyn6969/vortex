@@ -1,3 +1,5 @@
+import { emptyInquiries, validInquiries } from "./inquiries.ts";
+import type { InquiryProgress } from "./inquiries.ts";
 import { IDS, isOffice } from "./lattice.ts";
 import type { Pillar, SefirahId } from "./lattice.ts";
 import { PATH_LETTERS } from "./paths.ts";
@@ -6,9 +8,11 @@ import type { World, Seeker, Challenge, Proof, Entry } from "./session.ts";
 import { safeText } from "./safety.ts";
 import { verifyProof } from "./wallet.ts";
 import { STORIES, activeStories, readyForFestival } from "./stories.ts";
-// Keep the deployed storage slot stable. The payload is now schema 4; old schema-3
+// Keep the deployed storage slot stable. The payload is now schema 5; older
 // clients reject it instead of discarding story progress they cannot understand.
 export const SAVE_KEY = "vortex-world-v3";
+export const BACKUP_KEY = "vortex-last-good";
+export const RECOVERY_KEY = "vortex-preserved-original";
 export const MAX_SAVE_BYTES = 1_000_000;
 export interface StoragePort {
   getItem(key: string): string | null;
@@ -51,7 +55,8 @@ function parseChallenge(raw: unknown): Challenge | null {
     seekerId: str(c.seekerId, 80),
   };
 }
-function parseSeeker(raw: unknown, legacy: boolean): Seeker {
+function parseSeeker(raw: unknown, version: number): Seeker {
+  const legacy = version === 3;
   const s = object(raw);
   if (
     !isOffice(s.current) ||
@@ -130,6 +135,8 @@ function parseSeeker(raw: unknown, legacy: boolean): Seeker {
     rested: officeList(s.rested),
     rites,
     stories,
+    inquiries:
+      version < 5 ? emptyInquiries() : (object(s.inquiries) as InquiryProgress),
     festival: legacy || s.festival === null ? null : integer(s.festival, 2),
     crossings,
     harmony: bool(s.harmony),
@@ -170,6 +177,14 @@ function parseSeeker(raw: unknown, legacy: boolean): Seeker {
     )
       return fail();
   }
+  if (version < 5 && s.inquiries !== undefined) return fail();
+  if (!validInquiries(player.inquiries, player)) return fail();
+  player.inquiries = {
+    seen: [...player.inquiries.seen],
+    testimony: player.inquiries.testimony,
+    tablet: player.inquiries.tablet,
+    gate: player.inquiries.gate,
+  };
   if (player.festival !== null && !readyForFestival(player)) return fail();
   if (
     player.rooted &&
@@ -184,12 +199,12 @@ export function parseWorld(text: string): World {
   if (text.length > MAX_SAVE_BYTES)
     throw new Error("This save is too large. Nothing was changed.");
   const w = object(JSON.parse(text));
-  if (w.version !== 3 && w.version !== 4)
+  if (w.version !== 3 && w.version !== 4 && w.version !== 5)
     throw new Error(
-      "This edition reads Nile version 3 and Returning Nile version 4 journey files. Other versions are preserved, never guessed or overwritten.",
+      "This edition reads Nile version 3, Returning Nile version 4 and Living Atlas version 5 journey files. Other versions are preserved, never guessed or overwritten.",
     );
   if (!Array.isArray(w.seekers) || w.seekers.length > 12) return fail();
-  const seekers = w.seekers.map((raw) => parseSeeker(raw, w.version === 3));
+  const seekers = w.seekers.map((raw) => parseSeeker(raw, w.version as number));
   if (
     new Set(seekers.map((s) => s.id)).size !== seekers.length ||
     new Set(seekers.map((s) => s.name.toLowerCase())).size !== seekers.length
@@ -203,7 +218,7 @@ export function parseWorld(text: string): World {
     darkness[key] = integer(value);
   }
   return {
-    version: 4,
+    version: 5,
     revision: integer(w.revision),
     clock: integer(w.clock),
     activeId: w.activeId as string | null,
@@ -241,7 +256,63 @@ export function saveWorld(
     throw new Error(
       "This tree is full. Export your journeys before continuing.",
     );
+  // Back up before replacing: if either write fails, the old primary survives.
+  // Reading the previous save above validated its structure. Proofs are checked
+  // by the load/commit path, and checked again before a recovery is offered.
+  if (raw) storage.setItem(BACKUP_KEY, raw);
   storage.setItem(SAVE_KEY, serialized);
+}
+export async function recoveryWorld(
+  storage: StoragePort,
+): Promise<World | null> {
+  const raw = storage.getItem(BACKUP_KEY);
+  return raw ? validateProofs(parseWorld(raw)) : null;
+}
+export async function restoreBackup(
+  storage: StoragePort,
+  expectedRaw: string | null,
+  expectedBackup?: string | null,
+): Promise<World> {
+  const backupRaw = storage.getItem(BACKUP_KEY);
+  if (expectedBackup !== undefined && backupRaw !== expectedBackup)
+    throw new Error(
+      "The recovery copy changed. Review it again before restoring.",
+    );
+  if (!backupRaw) throw new Error("There is no recovery copy on this device.");
+  const restored = await validateProofs(parseWorld(backupRaw));
+  if (
+    storage.getItem(SAVE_KEY) !== expectedRaw ||
+    storage.getItem(BACKUP_KEY) !== backupRaw
+  )
+    throw new Error(
+      "This tree changed. Reload before restoring a recovery copy.",
+    );
+  // Never downgrade a future save, even through recovery.
+  if (expectedRaw) {
+    let version: unknown;
+    try {
+      version = JSON.parse(expectedRaw).version;
+    } catch {
+      /* damaged JSON */
+    }
+    if (typeof version === "number" && version > 5)
+      throw new Error(
+        "A newer edition wrote this save. Update the game instead of restoring an older copy.",
+      );
+    storage.setItem(RECOVERY_KEY, expectedRaw);
+  }
+  let revision = restored.revision;
+  try {
+    revision = Math.max(revision, parseWorld(expectedRaw ?? "").revision);
+  } catch {
+    /* preserve unreadable original */
+  }
+  restored.revision = revision + 1;
+  const serialized = JSON.stringify(restored);
+  if (serialized.length > MAX_SAVE_BYTES)
+    throw new Error("Recovery copy is too large.");
+  storage.setItem(SAVE_KEY, serialized);
+  return restored;
 }
 export async function importWorld(
   storage: StoragePort,
