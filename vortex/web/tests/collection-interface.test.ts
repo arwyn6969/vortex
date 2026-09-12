@@ -73,6 +73,15 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
     for (let i = 0; i < 12; i++)
       await new Promise((resolve) => setImmediate(resolve));
   };
+  // A lazy verifier import may still be waiting on filesystem I/O in CI.
+  // Observe the UI result with a deadline rather than counting event-loop ticks.
+  const waitFor = async (selector: string) => {
+    const deadline = Date.now() + 5000;
+    while (!window.document.querySelector(selector)) {
+      assert(Date.now() < deadline, "Timed out waiting for " + selector);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  };
   const click = async (selector: string) => {
     const el = window.document.querySelector(selector) as any;
     assert(el, selector);
@@ -104,12 +113,7 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
     address().dispatchEvent(new window.Event("input", { bubbles: true }));
     assert.equal(requests, 0);
     await submit();
-    for (
-      let i = 0;
-      i < 100 && !window.document.querySelector(".collection-snapshot");
-      i++
-    )
-      await settle();
+    await waitFor(".collection-snapshot, .collection-error");
     assert.equal(requests, 3);
     assert(window.document.querySelector(".collection-snapshot"));
     assert.equal(window.document.querySelectorAll(".holding-row").length, 2);
@@ -161,12 +165,7 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
     address().value = ADDRESS;
     offline = true;
     await submit();
-    for (
-      let i = 0;
-      i < 200 && !window.document.querySelector(".collection-error");
-      i++
-    )
-      await new Promise((resolve) => setTimeout(resolve, 1));
+    await waitFor(".collection-error");
     assert.match(
       window.document.querySelector(".collection-error")!.textContent,
       /connection|Counterparty/,
