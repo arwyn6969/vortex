@@ -7,6 +7,7 @@ hard-coding Hub / Grove / Library or asking Crown for a WIF.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from typing import Dict, List, Optional, Tuple, Union
 
 from ..mythology.correspondences import (
@@ -60,7 +61,9 @@ class Lattice:
 
     def place(self, profile: ProfileMap, prefer_folk: bool = False) -> Placement:
         scores = self.pillar_scores(profile)
-        dominant = max(scores, key=scores.get)
+        highest = max(scores.values())
+        leaders = [pillar for pillar, score in scores.items() if math.isclose(score, highest)]
+        dominant = leaders[0] if len(leaders) == 1 else "balance"
         entry = {
             "mercy": "chokhmah",
             "severity": "binah",
@@ -183,7 +186,9 @@ def _normalize_profile(profile: ProfileMap) -> Dict[str, float]:
     for key, value in (profile or {}).items():
         name = getattr(key, "value", key)
         try:
-            out[str(name).lower()] = float(value)
+            number = float(value)
+            if math.isfinite(number):
+                out[str(name).lower()] = max(0.0, min(1.0, number))
         except (TypeError, ValueError):
             continue
     return out
@@ -192,6 +197,8 @@ def _normalize_profile(profile: ProfileMap) -> Dict[str, float]:
 def _coerce_node(current: str) -> SefirahNode:
     raw = current.strip()
     lowered = raw.lower()
+    if lowered in {"central hub", "reflection pool", "sacred grove"}:
+        return get_node("tiferet")
     if lowered in NODES:
         return get_node(lowered)
     by_pond = get_node_by_pond(raw)

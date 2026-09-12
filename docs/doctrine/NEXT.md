@@ -1,5 +1,7 @@
 # Next — suggestions, not doctrine
 
+**Release update (2026-09-12):** the maintained browser implementation now lives in this repository. See [the delivered changes and current roadmap](../ROADMAP.md). The layer table below records the earlier review baseline; the old Grok-hosted session and `vortex-save-v1` are not the current runtime.
+
 Doctrine stays in [THE_LATTICE.md](THE_LATTICE.md).
 How a session walks is [PLAY.md](PLAY.md).
 How the old CLI climbs is [STAIRCASE.md](STAIRCASE.md).

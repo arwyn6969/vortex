@@ -1,0 +1,293 @@
+{
+  "version": 1,
+  "nodes": {
+    "keter": {
+      "id": "keter",
+      "pond": "Crown Pond",
+      "pillar": "balance",
+      "classicalGuide": "Thoth",
+      "folkGuide": null,
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 50,
+      "y": 9
+    },
+    "chokhmah": {
+      "id": "chokhmah",
+      "pond": "Wisdom Pond",
+      "pillar": "mercy",
+      "classicalGuide": "Thoth",
+      "folkGuide": "Wise Pepe",
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 79,
+      "y": 23
+    },
+    "binah": {
+      "id": "binah",
+      "pond": "Zen Zone",
+      "pillar": "severity",
+      "classicalGuide": "Ma’at",
+      "folkGuide": "Monk Pepe",
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 21,
+      "y": 23
+    },
+    "chesed": {
+      "id": "chesed",
+      "pond": "Mercy Pond",
+      "pillar": "mercy",
+      "classicalGuide": "Isis",
+      "folkGuide": "Cozy Pepe",
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 79,
+      "y": 41
+    },
+    "gevurah": {
+      "id": "gevurah",
+      "pond": "Severity Pond",
+      "pillar": "severity",
+      "classicalGuide": "Set",
+      "folkGuide": "Giga Pepe",
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 21,
+      "y": 41
+    },
+    "tiferet": {
+      "id": "tiferet",
+      "pond": "Vibe Temple",
+      "pillar": "balance",
+      "classicalGuide": "Horus",
+      "folkGuide": "Vibe Pepe",
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 50,
+      "y": 50
+    },
+    "netzach": {
+      "id": "netzach",
+      "pond": "Boundaries Pond",
+      "pillar": "mercy",
+      "classicalGuide": "Wadjet",
+      "folkGuide": null,
+      "ledgerFloor": false,
+      "creationUnlock": false,
+      "x": 79,
+      "y": 66
+    },
+    "hod": {
+      "id": "hod",
+      "pond": "Meme Studio",
+      "pillar": "severity",
+      "classicalGuide": "Thoth",
+      "folkGuide": "Artist Pepe",
+      "ledgerFloor": false,
+      "creationUnlock": true,
+      "x": 21,
+      "y": 66
+    },
+    "yesod": {
+      "id": "yesod",
+      "pond": "Harmony Pond",
+      "pillar": "balance",
+      "classicalGuide": "Isis",
+      "folkGuide": null,
+      "ledgerFloor": false,
+      "creationUnlock": true,
+      "x": 50,
+      "y": 79
+    },
+    "malkhut": {
+      "id": "malkhut",
+      "pond": "Kingdom Pond",
+      "pillar": "balance",
+      "classicalGuide": "Spider Woman",
+      "folkGuide": null,
+      "ledgerFloor": true,
+      "creationUnlock": true,
+      "x": 50,
+      "y": 94
+    }
+  },
+  "paths": [
+    {
+      "id": "chokhmah:keter",
+      "from": "keter",
+      "to": "chokhmah",
+      "letter": "Aleph",
+      "title": "Ox / Air",
+      "meaning": "Breath before a name. The ox pulls what has no words yet."
+    },
+    {
+      "id": "binah:keter",
+      "from": "keter",
+      "to": "binah",
+      "letter": "Beth",
+      "title": "House",
+      "meaning": "A house is a boundary you live in. Form begins as a roof."
+    },
+    {
+      "id": "keter:tiferet",
+      "from": "keter",
+      "to": "tiferet",
+      "letter": "Gimel",
+      "title": "Camel / Moon",
+      "meaning": "The camel crosses the empty stretch. Crown and heart do not touch without a journey."
+    },
+    {
+      "id": "binah:chokhmah",
+      "from": "chokhmah",
+      "to": "binah",
+      "letter": "Daleth",
+      "title": "Door",
+      "meaning": "Flash meets form. A door that only opens one way at a time."
+    },
+    {
+      "id": "chokhmah:tiferet",
+      "from": "chokhmah",
+      "to": "tiferet",
+      "letter": "Heh",
+      "title": "Window",
+      "meaning": "Insight looking at beauty. Do not climb through. Look."
+    },
+    {
+      "id": "chesed:chokhmah",
+      "from": "chokhmah",
+      "to": "chesed",
+      "letter": "Vav",
+      "title": "Nail",
+      "meaning": "A nail joins. Wisdom that cannot hold is only weather."
+    },
+    {
+      "id": "binah:tiferet",
+      "from": "binah",
+      "to": "tiferet",
+      "letter": "Zain",
+      "title": "Sword",
+      "meaning": "Understanding cuts. Beauty survives the honest blade."
+    },
+    {
+      "id": "binah:gevurah",
+      "from": "binah",
+      "to": "gevurah",
+      "letter": "Cheth",
+      "title": "Fence",
+      "meaning": "Discipline is a fence, not a wall. Severity lives inside it."
+    },
+    {
+      "id": "chesed:gevurah",
+      "from": "chesed",
+      "to": "gevurah",
+      "letter": "Teth",
+      "title": "Serpent",
+      "meaning": "Mercy and severity coil. Neither eats the other if the spine is true."
+    },
+    {
+      "id": "chesed:tiferet",
+      "from": "chesed",
+      "to": "tiferet",
+      "letter": "Yod",
+      "title": "Hand",
+      "meaning": "Kindness offered as a hand, not a flood."
+    },
+    {
+      "id": "chesed:netzach",
+      "from": "chesed",
+      "to": "netzach",
+      "letter": "Kaph",
+      "title": "Palm",
+      "meaning": "The open palm that can still close. Endurance begins as a gift."
+    },
+    {
+      "id": "gevurah:tiferet",
+      "from": "gevurah",
+      "to": "tiferet",
+      "letter": "Lamed",
+      "title": "Ox-goad",
+      "meaning": "A goad teaches the heart to walk straight."
+    },
+    {
+      "id": "gevurah:hod",
+      "from": "gevurah",
+      "to": "hod",
+      "letter": "Mem",
+      "title": "Water",
+      "meaning": "Severity poured into language. Water takes the shape of the vessel."
+    },
+    {
+      "id": "netzach:tiferet",
+      "from": "tiferet",
+      "to": "netzach",
+      "letter": "Nun",
+      "title": "Fish",
+      "meaning": "Beauty that swims. Victory is not a pose."
+    },
+    {
+      "id": "hod:tiferet",
+      "from": "tiferet",
+      "to": "hod",
+      "letter": "Samekh",
+      "title": "Prop",
+      "meaning": "The heart props the mouth. Speech that cannot stand falls."
+    },
+    {
+      "id": "tiferet:yesod",
+      "from": "tiferet",
+      "to": "yesod",
+      "letter": "Ayin",
+      "title": "Eye",
+      "meaning": "The eye of the tree. Foundation is what the heart is willing to see."
+    },
+    {
+      "id": "hod:netzach",
+      "from": "netzach",
+      "to": "hod",
+      "letter": "Peh",
+      "title": "Mouth",
+      "meaning": "Endurance speaking. A mouth without a fence is a flood."
+    },
+    {
+      "id": "netzach:yesod",
+      "from": "netzach",
+      "to": "yesod",
+      "letter": "Tzaddi",
+      "title": "Fish-hook",
+      "meaning": "Victory hooks the foundation. Do not land every fish."
+    },
+    {
+      "id": "malkhut:netzach",
+      "from": "netzach",
+      "to": "malkhut",
+      "letter": "Qoph",
+      "title": "Back of head",
+      "meaning": "The unconscious descent. Kingdom can be reached without looking forward."
+    },
+    {
+      "id": "hod:yesod",
+      "from": "hod",
+      "to": "yesod",
+      "letter": "Resh",
+      "title": "Head / Sun",
+      "meaning": "Language becoming ground. The sun of the mouth sets into the moon."
+    },
+    {
+      "id": "hod:malkhut",
+      "from": "hod",
+      "to": "malkhut",
+      "letter": "Shin",
+      "title": "Tooth / Fire",
+      "meaning": "A word that can burn into the floor of the world."
+    },
+    {
+      "id": "malkhut:yesod",
+      "from": "yesod",
+      "to": "malkhut",
+      "letter": "Tav",
+      "title": "Mark / Saturn",
+      "meaning": "The mark. Foundation writes itself into form."
+    }
+  ]
+}
