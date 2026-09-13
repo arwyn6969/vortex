@@ -1,5 +1,7 @@
 # Repository and Grok handoff review — 13 September 2026
 
+**Follow-up:** PR #13 is merged and all outstanding PRs are resolved. The owner subsequently provided the current Grok URL; [the live-site check](GROK_LIVE_REVIEW_2026-09-13.md) verifies that it still serves an older schema-4 build and supplies the focused publishing handoff. The initial inspection below is retained as a dated record.
+
 The project is on a sound track: the ten-office game already supports two complete chapters, meaningful return scenes, a solar crossing puzzle, a sourced Atlas and resilient local saves. Grok's smaller changes to movement, sound and water feedback strengthen that game. The immediate completion problem is keeping the GitHub and hosted copies aligned, then observing real players before expanding the scope.
 
 This review inspected the repository, all remote branches, open pull requests and their available discussion, GitHub Actions, and the Sites deployment record. Native Chromium exercised the integrated local build. Grok's private wrapper, server functions and temple stills were unavailable; statements about those files below come from Grok's checked-in handoff, not independent inspection of that running app.

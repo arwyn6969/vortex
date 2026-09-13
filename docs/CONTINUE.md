@@ -1,6 +1,6 @@
 # Handoff — shared game and Grok host
 
-Updated 13 September 2026. The repository review and integration are in `codex/grok-handoff`; see [the findings and verification](REPOSITORY_REVIEW_2026-09-13.md). Grok's four `feel/three-verbs` commits, the three `docs/grok-host` commits and Dependabot PRs 9–11 are integrated with audio, feedback and lifecycle fixes. This handoff supersedes the earlier request to create a PR for `feel/three-verbs`.
+Updated 13 September 2026. The repository review and integration were merged into `main` through PR #13 (`315738d`); see [the findings and verification](REPOSITORY_REVIEW_2026-09-13.md). Grok's four `feel/three-verbs` commits, the three `docs/grok-host` commits and Dependabot PRs 9–11 are integrated with audio, feedback and lifecycle fixes. This handoff supersedes the earlier request to create a PR for `feel/three-verbs`.
 
 ## Current shared code
 
@@ -36,7 +36,7 @@ The current core has no hosted voice/enum settings. Before replacing the host's 
 
 ## Grok-only work still unavailable here
 
-The following were reported complete by Grok, but neither these files nor a Grok project URL were in GitHub at review time. Retrieve the source/export before claiming they are reviewed or backed up:
+The following were reported complete by Grok but were not exported to GitHub. The owner subsequently provided [the live site](https://pepevortex.grok.me); [inspection](GROK_LIVE_REVIEW_2026-09-13.md) found an older schema-4 build without the reported new features, and all ten documented temple image paths returned 404. Retrieve these files from the unpublished project workspace before claiming they are reviewed or backed up:
 
 | Host path | Reported behavior and follow-up |
 | --- | --- |
@@ -50,7 +50,7 @@ Do not recreate missing art and pass it off as recovered Grok work. No Grok-only
 
 ## Hosting and deployment
 
-The verified Sites deployment is [VORTEX](https://vortex-living-lattice.azzybee.chatgpt.site), restricted to its owner, with a version-5 build from `519098a`. It predates this integration. The separate Grok deployment's URL/version remain unknown. No deployment or access changes were made during this pass.
+The verified Sites deployment is [VORTEX](https://vortex-living-lattice.azzybee.chatgpt.site), restricted to its owner, with a version-5 build from `519098a`. It predates this integration. The owner's current player site is [pepevortex.grok.me](https://pepevortex.grok.me), hosted through Grok App Builder. Its inspected public build still creates schema-4 saves and lacks the Atlas and new feedback; the exact deployed source commit is unknown. No deployment or access changes were made during this pass. See [the live-site findings](GROK_LIVE_REVIEW_2026-09-13.md) and [the ready-to-send Grok message](GROK_FINISH_MESSAGE.md).
 
 Before using Grok to put this live, synchronize the reviewed GitHub source and recovered host files; run the host's typecheck, tests, browser smoke and production build. Export a real save, check both chapters, sound Off/On/Off, guide opt-ins, 320px dialogs and refresh/remount. Exercise the actual platform update with an existing schema-5 save. Moving between hosting domains requires export/import; localStorage is not shared.
 
