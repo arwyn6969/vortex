@@ -22,6 +22,8 @@ import {
 } from "./stories.ts";
 import type { StoryProgress } from "./stories.ts";
 import { rareAt } from "./rares.ts";
+import { boardingError } from "./boarding.ts";
+import type { BoardingPlan } from "./boarding.ts";
 
 export type Entry = {
   turn: number;
@@ -78,7 +80,7 @@ export type Action =
   | { type: "look" | "sit" | "root" }
   | { type: "rite"; choice: number }
   | { type: "story-start" | "story-resolve"; story: SefirahId; choice: number }
-  | { type: "story-deliver"; story: SefirahId }
+  | { type: "story-deliver"; story: SefirahId; boarding?: BoardingPlan }
   | { type: "festival"; choice: number }
   | { type: "sigil"; text: string }
   | { type: "talk"; text: string }
@@ -376,6 +378,14 @@ export function transition(world: World, action: Action): World {
       throw new Error(
         "Make the delivery, then return to the frog who asked for your help.",
       );
+    if (action.type === "story-deliver" && Object.hasOwn(action, "boarding")) {
+      if (id !== "tiferet")
+        throw new Error(
+          "The boarding plan belongs to the solar boat’s errand.",
+        );
+      const error = boardingError(action.boarding, progress!.choice);
+      if (error) throw new Error(error);
+    }
   }
   if (
     action.type === "festival" &&
@@ -542,6 +552,12 @@ export function transition(world: World, action: Action): World {
     p.delivered = true;
     s.walks = 0;
     record(s, "discovery", STORIES[action.story].delivery[p.choice]);
+    if (action.boarding)
+      record(
+        s,
+        "discovery",
+        "Your boarding plan gives each sailing three places. The novices cross beside their apprentice. The crocodile checks the arithmetic twice and reluctantly waves you through.",
+      );
     record(
       s,
       "world",

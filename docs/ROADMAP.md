@@ -2,6 +2,14 @@
 
 The current forward plan is [VORTEX: hardening, the Living Atlas, and a larger mythic world](NEXT_PHASE_PLAN.md), reviewed against Enduring Mark on 12 September 2026. It includes code findings, research sources, cultural-pack scope and release gates.
 
+The subsequent [game/UI review](GAME_REVIEW_2026-09-12.md) compares the implemented Living Atlas release with the original plans, records new defects and local fixes, and orders the remaining completion work. Its changes are verified locally and await release.
+
+## Local review improvements awaiting release
+
+Chapter progress beside the next action; temple-specific scene framing and original cards; visible choice inscriptions; earlier rite controls; optional encounter disclosure; reduced duplicate aftermath; seeker draft isolation; complete/consistent Atlas results; onboarding and keyboard-focus repairs; tablet/narrow-screen reflow; and content-sensitive offline cache versions. Verification reached both chapters in Chromium, passed 55 browser/game and 22 Python tests, checked 48 view/width combinations and exercised production offline save/resume. See the review for limits and acceptance criteria.
+
+The follow-on [gameplay pass](GAMEPLAY_PASS_2026-09-12.md) adds the solar boarding puzzle, a returning cook's help, saved-choice scene props, one compass route, persistent session reading places and a compact sticky navigation. Verification now passes 62 browser/game tests, all 48 boarding arrangements, released-v5 compatibility in both directions and an offline production puzzle journey. A [five-player worksheet](PLAYTEST_WORKSHEET.md) is ready; human observations and the remaining browser/release checks are still pending.
+
 ## Delivered in the Nile edition
 
 1. **A complete playable release.** Browser entry, six-question placement, connected movement, ten authored rites, named/revealed streams, Harmony, Qoph, sigil creation, wallet-free completion, continued exploration.

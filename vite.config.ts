@@ -1,5 +1,5 @@
 import { defineConfig } from "vite";
-import { createHash } from "node:crypto";
+import { offlineCacheName } from "./tools/offline-cache.ts";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 function publicFiles(directory: string, prefix = ""): string[] {
@@ -34,13 +34,13 @@ export default defineConfig({
     {
       name: "vortex-offline",
       generateBundle(_options, bundle) {
-        const assets = publicFiles("vortex/web/public");
-        const fingerprint = createHash("sha256").update(
-          JSON.stringify(Object.keys(bundle).sort()),
-        );
+        const assets = publicFiles("vortex/web/public").sort();
+        const files: Record<string, string | Uint8Array> = {};
+        for (const [name, output] of Object.entries(bundle))
+          files[name] = output.type === "chunk" ? output.code : output.source;
         for (const name of assets)
-          fingerprint.update(readFileSync(join("vortex/web/public", name)));
-        const cache = "vortex-" + fingerprint.digest("hex").slice(0, 16);
+          files[name] = readFileSync(join("vortex/web/public", name));
+        const cache = offlineCacheName(files);
         const urls = [
           ...new Set([
             "/",

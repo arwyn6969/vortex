@@ -15,7 +15,7 @@ export type NextStep = {
   text: string;
   label: string;
   action?: Action;
-  panel?: "rite" | "story" | "sigil" | "festival";
+  panel?: "rite" | "story" | "sigil" | "festival" | "inquiry";
   target?: SefirahId;
 };
 // Route suggestions respect permanent veils. A temporary dark stream offers Sit,
@@ -113,7 +113,40 @@ export function nextStep(
   w: World,
   s: Seeker,
   tracked?: SefirahId | null,
+  encounter?: SefirahId | null,
 ): NextStep {
+  if (encounter) {
+    if (s.current !== encounter)
+      return toward(
+        w,
+        s,
+        encounter,
+        "Follow the encounter at " + NODES[encounter].pond,
+      );
+    if (!s.looked.includes(encounter))
+      return {
+        text: "You have reached the encounter. Look at the shore before speaking to its keeper.",
+        label: "Look around",
+        action: { type: "look" },
+        target: encounter,
+      };
+    if (
+      (encounter === "hod" || encounter === "netzach") &&
+      s.rites[encounter] === undefined
+    )
+      return {
+        text: "The encounter begins with this temple’s rite. Your route has brought you to the right place.",
+        label: "Choose your rite",
+        panel: "rite",
+        target: encounter,
+      };
+    return {
+      text: "You have arrived. Open the encounter to follow its clues or revisit your decision.",
+      label: "Read the encounter here",
+      panel: "inquiry",
+      target: encounter,
+    };
+  }
   if (!s.looked.includes(s.current))
     return {
       text: "Start with the shore beneath your feet. Looking reveals its rite and its Rare Pepe.",

@@ -2,8 +2,11 @@ import { ATLAS, ATLAS_SOURCES, atlasEntry, RELATIONS } from "./atlas.ts";
 import { inquiryError, TABLET_CHOICES, GATE_CHOICES } from "./inquiries.ts";
 import { isOffice, NODES, neighbors } from "./lattice.ts";
 import { activeSeeker, status, readyToRoot } from "./session.ts";
-import type { World, Action } from "./session.ts";
+import type { World, Action, Seeker } from "./session.ts";
 import { nextStep } from "./navigation.ts";
+import type { NextStep } from "./navigation.ts";
+import { PASSENGERS, boardingError, boardingHelper } from "./boarding.ts";
+import type { BoardingPlan } from "./boarding.ts";
 import {
   STORIES,
   storyStage,
@@ -39,7 +42,8 @@ const actions = [
   "study",
   "inquiry",
 ] as const;
-export function journeySnapshot(w: World) {
+type GuidanceReader = (w: World, s: Seeker) => NextStep;
+export function journeySnapshot(w: World, guidance: GuidanceReader = nextStep) {
   const s = activeSeeker(w);
   if (!s)
     return {
@@ -64,7 +68,21 @@ export function journeySnapshot(w: World) {
       ),
     })),
     festival: s.festival,
-    next: nextStep(w, s),
+    next: guidance(w, s),
+    boarding:
+      s.current === "netzach" &&
+      s.rites.netzach !== undefined &&
+      s.stories.tiferet &&
+      !s.stories.tiferet.delivered
+        ? {
+            passengers: PASSENGERS,
+            placesPerSailing: 3,
+            novicesTravelWithApprentice: true,
+            novicesFirst: s.stories.tiferet.choice === 0,
+            cookOffersHelp: boardingHelper(s),
+            canDelegate: true,
+          }
+        : null,
     exits: neighbors(s.current).map((id) => ({
       id,
       name: NODES[id].pond,
@@ -114,6 +132,7 @@ function parseAction(raw: unknown): {
     "seekerId",
     "revision",
     "action",
+    ...(p.action === "story-deliver" ? ["boarding"] : []),
     ...(p.action === "study"
       ? ["entry"]
       : p.action === "inquiry"
@@ -174,8 +193,18 @@ function parseAction(raw: unknown): {
     if (!isOffice(p.story)) throw new Error("Unknown story.");
     action =
       p.action === "story-deliver"
-        ? { type: p.action, story: p.story }
+        ? {
+            type: p.action,
+            story: p.story,
+            ...(Object.hasOwn(p, "boarding")
+              ? { boarding: p.boarding as BoardingPlan }
+              : {}),
+          }
         : { type: p.action, story: p.story, choice: Number(p.choice) };
+    if (Object.hasOwn(p, "boarding")) {
+      const error = boardingError(p.boarding, 1);
+      if (error) throw new Error(error);
+    }
   } else if (p.action === "rite" || p.action === "festival")
     action = { type: p.action, choice: Number(p.choice) };
   else action = { type: p.action as "look" | "sit" | "root" };
@@ -189,6 +218,7 @@ export function registerJourneyTools(
     expected: { seekerId: string; revision: number },
   ) => Promise<void>,
   report: (error: unknown) => void = () => {},
+  guidance?: GuidanceReader,
 ) {
   const lifecycle = new AbortController();
   if (!context?.registerTool) return () => lifecycle.abort();
@@ -241,13 +271,13 @@ export function registerJourneyTools(
           Object.keys(input).length
         )
           throw new Error("No input fields are accepted.");
-        return journeySnapshot(getWorld());
+        return journeySnapshot(getWorld(), guidance);
       },
     },
     {
       name: "take_journey_action",
       description:
-        "Perform one visible game action and save it: walk, look, sit, rite, root, start/deliver/resolve a story, celebrate the festival, remember an atlas entry, or resolve an inquiry. Read atlas entries with read_atlas_entry before studying them. Testimony is at Yesod and uses choice 0. Read the current state first. Choice indexes are 0–2. Sigils, identity changes and wallet operations stay in the interface.",
+        "Perform one visible game action and save it: walk, look, sit, rite, root, start/deliver/resolve a story, celebrate the festival, remember an atlas entry, or resolve an inquiry. For the solar boat delivery, optionally supply a boarding object assigning every passenger ticket to sailing 0 or 1; omitting it delegates boarding to the sphinx. Read atlas entries before studying them. Testimony is at Yesod and uses choice 0. Read the current state first. Choice indexes are 0–2. Sigils, identity changes and wallet operations stay in the interface.",
       inputSchema: {
         type: "object",
         properties: {
@@ -259,6 +289,14 @@ export function registerJourneyTools(
           entry: { type: "string", enum: ATLAS.map((x) => x.id) },
           task: { type: "string", enum: ["testimony", "tablet", "gate"] },
           choice: { type: "integer", minimum: 0, maximum: 2 },
+          boarding: {
+            type: "object",
+            properties: Object.fromEntries(
+              PASSENGERS.map((p) => [p.id, { type: "integer", enum: [0, 1] }]),
+            ),
+            required: PASSENGERS.map((p) => p.id),
+            additionalProperties: false,
+          },
         },
         required: ["seekerId", "revision", "action"],
         additionalProperties: false,
@@ -267,7 +305,7 @@ export function registerJourneyTools(
       async execute(input) {
         const p = parseAction(input);
         await apply(p.action, { seekerId: p.seekerId, revision: p.revision });
-        return journeySnapshot(getWorld());
+        return journeySnapshot(getWorld(), guidance);
       },
     },
   ];

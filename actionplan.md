@@ -1,6 +1,8 @@
 # Vortex Action Plan
 
-## Current Status
+> **Current release:** use [the roadmap](docs/ROADMAP.md) and [the game review](docs/GAME_REVIEW_2026-09-12.md). This earlier work order is retained as history; wallet witness, local seekers and the browser/CLI decision have shipped. Minting and a model-driven Watcher remain deferred.
+
+## Historical status
 
 The engine is the Tree of Life. Doctrine, 22 named streams, Crown/Qoph
 veils, and a playable web session exist. The CLI `Game.start()` path is

@@ -16,7 +16,14 @@ import {
   festivalGuests,
 } from "./stories.ts";
 import { escapeHtml as e } from "./safety.ts";
-export function storyPanel(s: Seeker, tracked?: SefirahId | null): string {
+import { boardingView } from "./boarding-view.ts";
+import type { BoardingDraft } from "./boarding.ts";
+export function storyPanel(
+  s: Seeker,
+  tracked?: SefirahId | null,
+  aftermathInScene = false,
+  boarding: BoardingDraft = {},
+): string {
   const local = s.current,
     r = rareAt(local),
     p = s.stories[local],
@@ -28,7 +35,7 @@ export function storyPanel(s: Seeker, tracked?: SefirahId | null): string {
     .map((id) => {
       const from = rareAt(id),
         progress = s.stories[id]!;
-      return `<section class="delivery-card" id="story-${id}" tabindex="-1"><div class="eyebrow">AN ERRAND FOR ${from.name}</div><h2>${e(STORIES[id].title)}</h2><p>You brought ${e(STORIES[id].cargo[progress.choice])}.</p><p>${s.rites[local] === undefined ? "Look around and complete this temple's rite, then make the delivery." : "The temple remembers your choice: “" + e(CONTENT[local].rite.choices[s.rites[local]!]) + "”. Bring that experience to this meeting."}</p><button class="primary" data-deliver="${id}" ${s.rites[local] === undefined ? "disabled" : ""}>Make the delivery</button></section>`;
+      return `<section class="delivery-card" id="story-${id}" tabindex="-1"><div class="eyebrow">AN ERRAND FOR ${from.name}</div><h2>${e(STORIES[id].title)}</h2><p>You brought ${e(STORIES[id].cargo[progress.choice])}.</p><p>${s.rites[local] === undefined ? "Look around and complete this temple's rite, then make the delivery." : "The temple remembers your choice: “" + e(CONTENT[local].rite.choices[s.rites[local]!]) + "”. Bring that experience to this meeting."}</p>${id === "tiferet" && s.rites[local] !== undefined ? boardingView(s, boarding) : `<button class="primary" data-deliver="${id}" ${s.rites[local] === undefined ? "disabled" : ""}>Make the delivery</button>`}</section>`;
     })
     .join("");
   if (!s.looked.includes(local)) return incoming;
@@ -38,7 +45,7 @@ export function storyPanel(s: Seeker, tracked?: SefirahId | null): string {
   );
   let body = "";
   if (stage === "complete")
-    body = `<p class="story-aftermath">${e(story.aftermath[p!.resolution!])}</p><p class="small-note">Your choice: ${e(story.endings[p!.resolution!])}. This stays in Stories even after older journal entries fade.</p>`;
+    body = `${aftermathInScene ? "" : `<p class="story-aftermath">${e(story.aftermath[p!.resolution!])}</p>`}<p class="small-note">Your choice: ${e(story.endings[p!.resolution!])}. This stays in Stories even after older journal entries fade.</p>`;
   else if (stage === "deliver")
     body = `<p>You are carrying ${e(story.cargo[p!.choice])}.</p><p>Next stop: <strong>${e(NODES[story.destination].pond)}</strong>. Complete its rite and make the delivery, then return here.</p><button class="secondary" data-track="${local}">Follow this story</button>`;
   else if (stage === "return")

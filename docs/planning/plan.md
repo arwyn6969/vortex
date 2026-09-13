@@ -1,5 +1,7 @@
 # Development Plan 2024
 
+> Historical plan. These checkboxes describe an earlier implementation, not the current release. Use [the current roadmap](../ROADMAP.md) for delivered work and completion priorities. The September 2026 review checks the maintained browser game against both the original intent and the current scope.
+
 A comprehensive roadmap for implementing the Vortex of Enlightenment game, detailing core concepts, gameplay mechanics, and development phases.
 
 ## Core Concepts

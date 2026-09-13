@@ -7,19 +7,9 @@ import {
   searchAtlas,
 } from "./atlas.ts";
 import type { AtlasEntry } from "./atlas.ts";
-import type { Seeker, World } from "./session.ts";
+import type { Seeker } from "./session.ts";
 import { escapeHtml as e } from "./safety.ts";
-import { NODES } from "./lattice.ts";
-import type { SefirahId } from "./lattice.ts";
-import {
-  inquiryError,
-  inquiryMemory,
-  TABLET_CHOICES,
-  GATE_CHOICES,
-} from "./inquiries.ts";
-import type { InquiryAction } from "./inquiries.ts";
-import { route } from "./navigation.ts";
-import { status } from "./session.ts";
+import { inquiryError, TABLET_CHOICES, GATE_CHOICES } from "./inquiries.ts";
 
 export type AtlasView = {
   query: string;
@@ -28,6 +18,7 @@ export type AtlasView = {
   selected: string;
   compare: string[];
   notebook: boolean;
+  expandedConnections?: string;
 };
 export const emptyAtlasView = (): AtlasView => ({
   query: "",
@@ -58,9 +49,9 @@ export function atlasView(s: Seeker, state: AtlasView): string {
   const entries = searchAtlas(state.query, state.tradition, state.group).filter(
     (x) => !state.notebook || s.inquiries.seen.includes(x.id),
   );
-  const selected = atlasEntry(state.selected) ?? ATLAS[0];
+  const selected = entries.find((x) => x.id === state.selected) ?? entries[0];
   const related = RELATIONS.filter(
-    (r) => r.from === selected.id || r.to === selected.id,
+    (r) => r.from === selected?.id || r.to === selected?.id,
   );
   const compare = state.compare
     .map(atlasEntry)
@@ -85,17 +76,24 @@ export function atlasView(s: Seeker, state: AtlasView): string {
       )}</select></label><button class="secondary" id="atlas-search-submit">Search</button><button type="button" class="text-button" data-atlas-clear>Clear filters</button></form>
     <div class="actions"><button class="text-button" data-notebook aria-pressed="${state.notebook}">${state.notebook ? "Show every entry" : "My remembered connections"}</button><span role="status">${entries.length} ${entries.length === 1 ? "entry" : "entries"}${state.group !== "all" ? " · " + e(CLUSTERS.find((c) => c.id === state.group)?.name) : ""}</span></div>
     ${compare.length ? `<section class="atlas-comparison" aria-label="Comparison"><div class="actions"><h2>Read them side by side</h2><button class="text-button" data-compare-clear>Clear comparison</button></div><p>${common.length ? "Shared exploration theme: " + common.map((c) => e(c.name)).join(" · ") + ". Membership is an editorial comparison, not common origin." : "These entries have different contexts. A useful comparison can reveal a difference."}</p><div class="atlas-compare-grid">${compare.map((x) => `<article><h3>${e(x.name)}</h3><p>${e(x.tradition)} · ${e(x.kind)}</p><p>${e(x.summary)}</p><p>${e(x.distinction)}</p>${source(x)}<button class="text-button" data-compare="${e(x.id)}">Remove ${e(x.name)}</button></article>`).join("")}</div></section>` : ""}
-    <div class="atlas-layout"><nav class="atlas-index" aria-label="Atlas entries">${entries.length ? entries.map((x) => `<button data-atlas-entry="${e(x.id)}" aria-current="${selected.id === x.id ? "true" : "false"}"><span>${e(x.kind)}${s.inquiries.seen.includes(x.id) ? " · remembered" : ""}</span><strong>${e(x.name)}</strong><small>${e(x.tradition)}</small></button>`).join("") : "<p>No entries match. Try a different name or clear the filters.</p>"}</nav><div>
-    ${detail(selected, s, state.compare.includes(selected.id))}
-    <section class="atlas-connections"><h2>Why are these connected?</h2>${related
-      .slice(0, 12)
-      .map((r) => {
-        const other = atlasEntry(r.from === selected.id ? r.to : r.from)!;
-        return `<details id="atlas-relation-${e(r.id)}"><summary>${e(other.name)} · ${e(r.evidence)}</summary><p>${e(r.why)}</p><p class="small-note">${e(r.locator)}</p><a href="${e(ATLAS_SOURCES[r.source].url)}" target="_blank" rel="noopener noreferrer">Read this connection’s source ↗</a><br><button class="text-button" data-atlas-entry="${e(other.id)}">Explore ${e(other.name)}</button></details>`;
-      })
-      .join(
-        "",
-      )}${related.length > 12 ? "<p class='small-note'>More members appear in the cluster list. This view shows twelve connections at a time.</p>" : ""}</section>
+    <div class="atlas-layout"><nav class="atlas-index" aria-label="Atlas entries">${entries.length ? entries.map((x) => `<button data-atlas-entry="${e(x.id)}" aria-current="${selected?.id === x.id ? "true" : "false"}"><span>${e(x.kind)}${s.inquiries.seen.includes(x.id) ? " · remembered" : ""}</span><strong>${e(x.name)}</strong><small>${e(x.tradition)}</small></button>`).join("") : "<p>No entries match. Try a different name or clear the filters.</p>"}</nav><div>
+    ${selected ? detail(selected, s, state.compare.includes(selected.id)) : '<section class="atlas-empty"><h2>No matching entries</h2><p>Try another name, clear the filters, or switch off the remembered-only view.</p><button class="secondary" data-atlas-clear>Show every entry</button></section>'}
+    ${
+      selected
+        ? `<section class="atlas-connections"><h2>Why are these connected?</h2>${related
+            .slice(
+              0,
+              state.expandedConnections === selected.id ? related.length : 12,
+            )
+            .map((r) => {
+              const other = atlasEntry(r.from === selected.id ? r.to : r.from)!;
+              return `<details id="atlas-relation-${e(r.id)}"><summary>${e(other.name)} · ${e(r.evidence)}</summary><p>${e(r.why)}</p><p class="small-note">${e(r.locator)}</p><a href="${e(ATLAS_SOURCES[r.source].url)}" target="_blank" rel="noopener noreferrer">Read this connection’s source ↗</a><br><button class="text-button" data-atlas-entry="${e(other.id)}">Explore ${e(other.name)}</button></details>`;
+            })
+            .join(
+              "",
+            )}${related.length > 12 ? `<button class="secondary" data-atlas-connections="${e(selected.id)}" aria-expanded="${state.expandedConnections === selected.id}">${state.expandedConnections === selected.id ? "Show fewer connections" : `Show all ${related.length} connections`}</button>` : ""}${!related.length ? "<p>No connections have been published for this entry yet.</p>" : ""}</section>`
+        : ""
+    }
     <aside class="atlas-callout"><h3>Bring an idea back to the water</h3><p>The scribe at Hod needs help with two accounts. The guardian at Netzach has a gate that one person cannot open.</p><button class="secondary" data-atlas-route="hod">Follow the tablet</button> <button class="secondary" data-atlas-route="netzach">Follow the gate</button></aside></div></div>
   </main>`;
 }
@@ -111,11 +109,13 @@ export function inquiryPanel(s: Seeker): string {
   const p = s.inquiries,
     here = s.current;
   if (here === "hod")
-    return `<section class="inquiry-panel" id="inquiry-panel" tabindex="-1"><span class="eyebrow">AN ENCOUNTER · CLAY AND THE WORD</span><h2>The Disputed Tablet</h2>${p.tablet !== null ? `<p>${e(inquiryMemory(s, here))}</p><p class="small-note">Your decision is remembered at Yesod and Kingdom.</p>` : `<p>Two frogs insist the flood reached different steps. Both accounts have survived. The scribe asks whether a durable record is enough to settle the argument. Nisaba’s writing traditions and the Stamps chamber offer different ways into the question.</p><blockquote>“The tablet is permanent, fren. The argument has also applied for permanence.”</blockquote><div class="actions">${read("nisaba")}${read("stamps")}</div>${TABLET_CHOICES.map((x, i) => choice(s, "tablet", x, i)).join("")}<button class="text-button" data-atlas-route="yesod">Consult the waterline witness at Yesod</button>`}<p class="small-note">An authored VORTEX problem. Historical and protocol sources remain separate in the atlas.</p></section>`;
+    return `<details class="inquiry-panel" id="inquiry-panel"><summary>The Disputed Tablet<span>${p.tablet === null ? "Optional encounter · two accounts, one lasting decision" : "Decision remembered · Yesod and Kingdom"}</span></summary>${p.tablet !== null ? `<p>Your decision: ${e(TABLET_CHOICES[p.tablet])}.</p><p class="small-note">See how it changes Yesod and Kingdom on your next visit.</p>` : `<p>Two frogs insist the flood reached different steps. Both accounts have survived. The scribe asks whether a durable record is enough to settle the argument. Nisaba’s writing traditions and the Stamps chamber offer different ways into the question.</p><blockquote>“The tablet is permanent, fren. The argument has also applied for permanence.”</blockquote><div class="actions">${read("nisaba")}${read("stamps")}</div>${TABLET_CHOICES.map((x, i) => choice(s, "tablet", x, i)).join("")}<button class="text-button" data-atlas-route="yesod">Consult the waterline witness at Yesod</button>`}<p class="small-note">An authored VORTEX problem. Historical and protocol sources remain separate in the atlas.</p></details>`;
   if (here === "netzach")
-    return `<section class="inquiry-panel" id="inquiry-panel" tabindex="-1"><span class="eyebrow">AN ENCOUNTER · THRESHOLDS AND REVERSALS</span><h2>The Gate That Remembers</h2>${p.gate !== null ? `<p>${e(inquiryMemory(s, here))}</p><p class="small-note">Kingdom will remember how you opened the gate.</p>` : `<p>The gate has two latches, too far apart for one frog. Its guardian is standing beside the other latch, firmly explaining that nobody can pass alone.</p><blockquote>${s.rites.netzach === 0 ? "“You wanted a firm boundary. Here it is. Very firm. Slightly lonely.”" : s.rites.netzach === 1 ? "“You made room at this threshold before. Show me what that means now.”" : "“A test can change without the doorway falling down. Probably.”"}</blockquote><div class="actions">${read("hero-twins")}${read("neti")}</div>${GATE_CHOICES.map((x, i) => choice(s, "gate", x, i)).join("")}`}<p class="small-note">This frog encounter is VORTEX fiction. It compares questions about cooperation and rules; it does not reenact the Popol Vuh.</p></section>`;
+    return `<details class="inquiry-panel" id="inquiry-panel"><summary>The Gate That Remembers<span>${p.gate === null ? "Optional encounter · find another way through" : "Decision remembered · Kingdom"}</span></summary>${p.gate !== null ? `<p>Your decision: ${e(GATE_CHOICES[p.gate])}.</p><p class="small-note">Kingdom will remember how you opened the gate.</p>` : `<p>The gate has two latches, too far apart for one frog. Its guardian is standing beside the other latch, firmly explaining that nobody can pass alone.</p><blockquote>${s.rites.netzach === 0 ? "“You wanted a firm boundary. Here it is. Very firm. Slightly lonely.”" : s.rites.netzach === 1 ? "“You made room at this threshold before. Show me what that means now.”" : "“A test can change without the doorway falling down. Probably.”"}</blockquote><div class="actions">${read("hero-twins")}${read("neti")}</div>${GATE_CHOICES.map((x, i) => choice(s, "gate", x, i)).join("")}`}<p class="small-note">This frog encounter is VORTEX fiction. It compares questions about cooperation and rules; it does not reenact the Popol Vuh.</p></details>`;
   if (here === "yesod" && p.testimony && p.tablet === null)
     return `<section class="inquiry-panel" id="inquiry-panel" tabindex="-1"><h2>The witness has been heard</h2><p>One account was made before the flood, the other after. You can now take this context to Hod before choosing what the tablet should say.</p><button class="secondary" data-atlas-route="hod">Return to the scribe</button></section>`;
+  if (here === "yesod" && p.tablet !== null)
+    return `<section class="inquiry-panel" id="inquiry-panel" tabindex="-1"><h2>The account has reached the archive</h2><p>Your decision at Hod now has a place beside the waterline. The witness keeps the context available for the next reader.</p><button class="secondary" data-atlas-route="hod">Revisit the scribe’s desk</button></section>`;
   if (here === "yesod" && !p.testimony && p.tablet === null) {
     const error = inquiryError(s, {
       type: "inquiry",
@@ -127,20 +127,4 @@ export function inquiryPanel(s: Seeker): string {
   if (here === "binah")
     return `<aside class="atlas-callout"><h2>The room of several readings</h2><p>The librarian has left space between the accounts. A museum object, a community’s knowledge and a researcher’s interpretation are different kinds of evidence.</p>${read("kanaga")}${read("dogon-restudy")}</aside>`;
   return "";
-}
-export function atlasTravel(w: World, s: Seeker, to: SefirahId) {
-  const steps = route(s, to);
-  if (!steps) return null;
-  if (steps.length < 2)
-    return { label: "Read the encounter here", action: null };
-  const next = steps[1];
-  return status(w, s, next) === "dark"
-    ? {
-        label: "Sit to clear the next stream",
-        action: { type: "sit" as const },
-      }
-    : {
-        label: "Walk to " + NODES[next].pond,
-        action: { type: "walk" as const, to: next },
-      };
 }

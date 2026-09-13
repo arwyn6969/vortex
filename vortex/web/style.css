@@ -14,6 +14,14 @@
   --serif: Georgia, "Times New Roman", serif;
 }
 
+main,
+main [id],
+main button,
+main input,
+main summary {
+  scroll-margin-top: calc(var(--navigation-height, 96px) + 16px);
+}
+
 /* The atlas extends the Nile's dark ink, mint and clay palette. */
 .atlas-page {
   max-width: 1440px;
@@ -213,23 +221,8 @@ select:focus-visible {
   white-space: normal;
   line-height: 1.5;
 }
-.atlas-route {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  border: 1px solid #806b42;
-  padding: 18px;
-  margin-bottom: 16px;
-}
-.atlas-route p {
-  font-size: 0.875rem;
-  color: var(--muted);
-  margin: 8px 0 0;
-}
-.atlas-route > div {
-  flex: 1;
-  min-width: 180px;
+.journey-compass.atlas-route {
+  border-color: #b49e69;
 }
 .atlas-comparison {
   border: 1px solid var(--copper);
@@ -440,6 +433,10 @@ svg {
 }
 .topbar {
   max-width: 1600px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0c1920;
   margin: auto;
   min-height: 96px;
   border-bottom: 1px solid var(--line);
@@ -733,7 +730,7 @@ svg {
 .map-panel {
   align-self: start;
   position: sticky;
-  top: 20px;
+  top: calc(var(--navigation-height, 96px) + 20px);
   border: 1px solid #263c31;
   background: linear-gradient(155deg, #12241c88, #0b171280);
   padding: 23px 20px 24px;
@@ -929,35 +926,6 @@ g[aria-disabled="true"] {
   place-items: center;
   flex-shrink: 0;
   margin-left: 20px;
-}
-.location-art {
-  position: relative;
-  height: 200px;
-  overflow: hidden;
-  background: #101d17;
-  border: 1px solid #314638;
-}
-.location-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 53%;
-  filter: saturate(0.6);
-  display: block;
-}
-.location-art:after {
-  content: "";
-  position: absolute;
-  inset: 50% 0 0;
-  background: linear-gradient(transparent, #0b1713dd);
-}
-.art-caption {
-  position: absolute;
-  bottom: 13px;
-  left: 18px;
-  color: #c1cdbf;
-  z-index: 1;
-  font-size: 0.75rem;
 }
 .scene-text {
   font-family: var(--serif);
@@ -1519,16 +1487,27 @@ dialog .primary {
   .play-layout {
     gap: 82px;
   }
-  .location-art {
-    height: 235px;
-  }
 }
 @media (max-width: 1100px) {
   .topbar {
     padding: 18px 25px;
+    flex-wrap: wrap;
   }
   .topbar nav {
     gap: 22px;
+  }
+  .topbar nav:has(button) {
+    order: 3;
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    justify-content: flex-start;
+  }
+  .topbar nav button {
+    flex-shrink: 0;
+  }
+  .topbar nav button[aria-current="page"]:after {
+    bottom: 0;
   }
   .edition {
     display: none;
@@ -1572,16 +1551,18 @@ dialog .primary {
   }
   .brand {
     min-width: 0;
+    gap: 8px;
   }
   .brand svg {
-    width: 27px;
-    height: 34px;
+    width: 24px;
+    height: 30px;
   }
   .brand > span {
-    font-size: 1rem;
+    font-size: 0.9375rem;
+    letter-spacing: 0.12em;
   }
   .brand small {
-    font-size: 0.75rem;
+    display: none;
   }
   .header-tools {
     gap: 10px;
@@ -1605,7 +1586,7 @@ dialog .primary {
     padding: 10px 0;
   }
   .topbar nav button[aria-current="page"]:after {
-    bottom: -15px;
+    bottom: 0;
   }
   .gate {
     display: block;
@@ -1650,9 +1631,6 @@ dialog .primary {
   }
   .location-header h1 {
     font-size: 2.5rem;
-  }
-  .location-art {
-    height: 185px;
   }
   .map-panel .tree-svg {
     max-height: 580px;
@@ -1976,15 +1954,6 @@ body {
 .current .node {
   fill: #d0e998;
 }
-.location-art {
-  height: 240px;
-  border-color: #777b52;
-  border-radius: 4px 25px 4px 25px;
-}
-.location-art img {
-  filter: none;
-  object-position: 50% 52%;
-}
 .location-header h1 {
   color: #eee1b8;
 }
@@ -2035,7 +2004,7 @@ body {
 .rite-choice {
   border-color: #a8a07a;
 }
-.rite-choice:hover {
+.rite-card .rite-choice:hover {
   color: #375b35;
 }
 .moment {
@@ -2043,48 +2012,6 @@ body {
   color: #dce8c5;
   background: #23392366;
   padding: 8px 17px;
-}
-.rare-encounter {
-  display: flex;
-  width: 100%;
-  text-align: left;
-  align-items: center;
-  gap: 20px;
-  background: #203c3a;
-  border: 1px solid #788363;
-  margin: 26px 0;
-  padding: 15px;
-  border-radius: 4px;
-  transition: border-color 0.2s;
-}
-.rare-encounter:hover {
-  border-color: #d0c99b;
-}
-.rare-encounter > img {
-  width: 68px;
-  height: 95px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-.rare-encounter > span {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-.rare-encounter small {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: #bbcbab;
-}
-.rare-encounter strong {
-  font-size: 1.1rem;
-  letter-spacing: 0.06em;
-  color: #f1dfb0;
-  overflow-wrap: anywhere;
-}
-.rare-encounter span > span {
-  font-size: 0.875rem;
-  color: #becebd;
 }
 .rare-grid {
   display: grid;
@@ -2253,9 +2180,6 @@ dialog:has(.original-art) {
     padding-top: 24px;
     gap: 14px;
   }
-  .location-art {
-    height: 200px;
-  }
   .rare-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
@@ -2351,12 +2275,14 @@ dialog:has(.original-art) {
   background: linear-gradient(110deg, #173e3a, #102722);
   padding: 18px 20px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 22px;
   margin-bottom: 28px;
 }
 .journey-compass > div {
   flex: 1;
+  min-width: 160px;
 }
 .journey-compass span,
 .return-memory > span {
@@ -2371,6 +2297,168 @@ dialog:has(.original-art) {
 .journey-compass button {
   flex-shrink: 0;
   max-width: 48%;
+}
+.chapter-progress {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  flex-basis: 100%;
+  padding: 14px 0 0;
+  margin: 0;
+  border-top: 1px solid #42615a;
+}
+.chapter-progress li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #bdccc2;
+  font-size: 0.8rem;
+}
+.journey-compass .chapter-progress span {
+  font-size: inherit;
+  color: inherit;
+  letter-spacing: 0;
+}
+.chapter-progress strong {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.chapter-progress .done {
+  color: #d0e998;
+}
+.temple-scene {
+  position: relative;
+  isolation: isolate;
+  min-height: 235px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  overflow: hidden;
+  border: 1px solid var(--shore-accent);
+  border-radius: 4px 30px 4px 4px;
+  background: #132923;
+}
+.scene-panorama {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--shore-position);
+  transform: scale(1.5);
+  transform-origin: var(--shore-position);
+  z-index: -2;
+}
+.temple-scene:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, #081a18b3, transparent 75%),
+    linear-gradient(0deg, #081a18fa, #081a18b3 50%, #081a181a);
+}
+.scene-inscription {
+  max-width: 33ch;
+}
+.scene-inscription > span,
+.scene-inscription > small {
+  display: block;
+  color: var(--shore-accent);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.scene-inscription > span {
+  letter-spacing: 0.08em;
+}
+.scene-inscription > strong {
+  display: block;
+  font: 1.55rem/1.2 var(--serif);
+  color: #f3ecd7;
+  margin: 12px 0;
+}
+.scene-token {
+  flex: 0 0 128px;
+  min-width: 0;
+  background: #0c201ee8;
+  border: 1px solid #acc5a485;
+  padding: 7px;
+  transform: rotate(3deg);
+  transition: transform 0.2s;
+}
+.scene-token:hover,
+.scene-token:focus-visible {
+  transform: rotate(0) translateY(-3px);
+}
+.scene-token img {
+  display: block;
+  width: 100%;
+  height: 132px;
+  object-fit: contain;
+}
+.scene-token span,
+.scene-token small {
+  display: block;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+  color: #ece4bc;
+  font-size: 0.7rem;
+  margin-top: 5px;
+}
+.scene-token small {
+  font-size: 0.6rem;
+  color: #b8cdb9;
+}
+.atlas-empty {
+  padding: 32px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.inquiry-panel > summary {
+  cursor: pointer;
+  color: #ebd3a2;
+  line-height: 1.5;
+}
+.inquiry-panel > summary > span {
+  display: block;
+  color: #afc5b7;
+  font-size: 0.8rem;
+  margin: 8px 0 0 18px;
+}
+.inquiry-panel[open] > summary {
+  border-bottom: 1px solid #514733;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+@media (max-width: 520px) {
+  .collection-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .big-stat {
+    text-align: left;
+  }
+  .temple-scene {
+    padding: 18px;
+    gap: 12px;
+    min-height: 210px;
+  }
+  .scene-inscription > strong {
+    font-size: 1.2rem;
+  }
+  .scene-token {
+    flex-basis: 88px;
+  }
+  .scene-token img {
+    height: 105px;
+  }
+  .chapter-progress {
+    gap: 10px 16px;
+  }
 }
 .return-memory {
   padding: 18px 22px;
@@ -2906,5 +2994,192 @@ dialog:has(#collection-form) {
   }
   #collection-form .input-row {
     flex-direction: column;
+  }
+}
+
+/* Props and passage: visible consequences within the existing Nile. */
+.world-vignette {
+  margin: 18px 0 24px;
+  border: 1px solid #405e50;
+  border-radius: 4px;
+  background:
+    radial-gradient(ellipse at 50% 100%, #28504766, transparent 75%), #11251f;
+  overflow: hidden;
+}
+.world-vignette svg {
+  width: 100%;
+  height: auto;
+  max-height: 175px;
+  display: block;
+}
+.world-vignette figcaption {
+  display: grid;
+  gap: 7px;
+  padding: 0 22px 18px;
+}
+.world-vignette figcaption strong {
+  color: #ebd2a0;
+  font: 1.15rem/1.4 var(--serif);
+}
+.world-vignette figcaption span {
+  color: #b6c9bb;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+.boarding-puzzle {
+  margin-top: 24px;
+  border-top: 1px solid #56857a;
+  padding-top: 24px;
+}
+.boarding-puzzle h3 {
+  font: 1.5rem/1.25 var(--serif);
+  color: #eee0b7;
+  margin: 14px 0;
+}
+.boarding-rules {
+  padding-left: 20px;
+  color: #c0d4c5;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.boarding-rules li + li {
+  margin-top: 6px;
+}
+.boarding-boats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.boarding-boat {
+  padding: 16px 12px;
+  display: grid;
+  gap: 10px;
+  background: #102924;
+  border: 1px solid #6c9680;
+}
+.boarding-boat strong {
+  font-size: 0.95rem;
+  color: #ebd0a4;
+}
+.boarding-boat > span {
+  font-size: 0.85rem;
+  color: #b7d1c3;
+}
+.boarding-boat.overfull {
+  border-color: #e4a082;
+}
+.boarding-boat.overfull > span {
+  color: #f0bc9f;
+}
+.boat-places {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 5px;
+  border-bottom: 7px solid #b89a6a;
+  border-radius: 0 0 30px 30px;
+}
+.boat-places i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #86b399;
+}
+.boat-places .occupied {
+  background: #b7d99b;
+}
+.boarding-tickets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.boarding-ticket {
+  min-width: 0;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #6a8773;
+  background: #183a30;
+}
+.boarding-ticket legend {
+  padding: 0 6px;
+  color: #e5d2a7;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.boarding-ticket legend span {
+  color: #c5d3b7;
+  white-space: nowrap;
+}
+.boarding-ticket p {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.boarding-ticket > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.boarding-ticket label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px;
+  font-size: 0.85rem;
+  border: 1px solid #6c8e79;
+  cursor: pointer;
+}
+.boarding-ticket label:has(:checked) {
+  background: #c1dba4;
+  color: #17352b;
+  border-color: #c1dba4;
+}
+.boarding-ticket input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: #284a31;
+}
+.boarding-friend {
+  border-left: 3px solid #d6b778;
+  padding: 16px 20px;
+  background: #293f2b;
+  margin: 20px 0;
+}
+.boarding-friend strong {
+  color: #e3cc96;
+}
+.boarding-friend p {
+  margin: 8px 0 16px;
+}
+#boarding-hint {
+  margin: 22px 0;
+}
+#boarding-hint summary {
+  padding: 10px 0;
+  cursor: pointer;
+  color: #dfcd9b;
+}
+.boarding-puzzle .actions {
+  margin-top: 24px;
+}
+@media (max-width: 600px) {
+  .boarding-tickets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .boarding-boats {
+    gap: 10px;
+  }
+  .boarding-boat {
+    padding: 14px 8px;
+  }
+  .boat-places {
+    gap: 8px;
+  }
+  .world-vignette figcaption {
+    padding: 0 16px 16px;
   }
 }

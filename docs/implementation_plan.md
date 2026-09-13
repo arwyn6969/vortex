@@ -1,5 +1,7 @@
 # VORTEX Implementation Plan
 
+> Historical plan. These checkboxes describe an earlier implementation, not the current release. Use [the current roadmap](ROADMAP.md) for delivered work and completion priorities. The September 2026 review checks the maintained browser game against both the original intent and the current scope.
+
 ## Phase 1: Documentation Enhancement (Week 1)
 
 ### 1.1 Core System Documentation

@@ -1,9 +1,4 @@
-import {
-  atlasView,
-  emptyAtlasView,
-  inquiryPanel,
-  atlasTravel,
-} from "./atlas-view.ts";
+import { atlasView, emptyAtlasView, inquiryPanel } from "./atlas-view.ts";
 import { atlasEntry, searchAtlas } from "./atlas.ts";
 import { inquiryMemory } from "./inquiries.ts";
 import { withJourneyLock } from "./journey-lock.ts";
@@ -26,12 +21,12 @@ import {
   addSeeker,
   transition,
   status,
-  objective,
   riteCount,
   discovered,
   revealed,
   readyToRoot,
   isBound,
+  voice,
 } from "./session.ts";
 import type { World, Action, Seeker } from "./session.ts";
 import {
@@ -58,6 +53,10 @@ import type { StampOffice } from "./stamps.ts";
 import { assetAtlas, assetDestination } from "./explorer-view.ts";
 import { CollectionLookup } from "./counterparty.ts";
 import { collectionBody, collectionInvitation } from "./collection-view.ts";
+import { chapterProgress, templeScene } from "./journey-view.ts";
+import { worldVignette } from "./world-view.ts";
+import { suggestedBoarding, boardingHelper, PASSENGERS } from "./boarding.ts";
+import type { BoardingDraft, BoardingPlan, PassengerId } from "./boarding.ts";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let world = emptyWorld();
@@ -66,6 +65,9 @@ let loading = true,
   damaged = false,
   newJourney = false;
 let atlasState = emptyAtlasView();
+let renderedSeekerId: string | null = null;
+let boardingDraft: BoardingDraft = {};
+let boardingScope = "";
 let atlasTarget: SefirahId | null = null;
 let backup: World | null = null;
 let pendingRestore = false;
@@ -77,6 +79,20 @@ let waitingWorker: ServiceWorker | null = null;
 let updating = false;
 let tracked: { seeker: string; story: SefirahId } | null = null;
 let view: "tree" | "codex" | "journal" | "rares" | "stories" | "atlas" = "tree";
+let renderedPageKey = "";
+const readingPlaces = new Map<string, { scrollY: number; details: string[] }>();
+function measureNavigation() {
+  const height =
+    document.querySelector(".topbar")?.getBoundingClientRect().height ?? 0;
+  document.documentElement.style.setProperty(
+    "--navigation-height",
+    `${Math.ceil(height)}px`,
+  );
+}
+const navigationObserver =
+  typeof window.ResizeObserver === "function"
+    ? new window.ResizeObserver(measureNavigation)
+    : null;
 let modal:
   | "journeys"
   | "settings"
@@ -159,6 +175,14 @@ function focusPanel(id: string) {
     block: "nearest",
     behavior: reduced ? "instant" : "smooth",
   });
+}
+function focusView() {
+  const place = readingPlaces.get(renderedPageKey);
+  if (!place) return focusPanel("main");
+  const main = document.getElementById("main");
+  main?.setAttribute("tabindex", "-1");
+  main?.focus({ preventScroll: true });
+  window.scrollTo({ top: place.scrollY, behavior: "instant" });
 }
 async function act(action: Action) {
   await commit((w) => transition(w, action));
@@ -383,17 +407,19 @@ function tree(s: Seeker) {
     n = NODES[s.current],
     rites = riteCount(s);
   const following = tracked?.seeker === s.id ? tracked.story : null;
-  const hint = nextStep(world, s, following);
-  const memory = [returnMemory(s, s.current), inquiryMemory(s, s.current)]
-    .filter(Boolean)
-    .join(" ");
-  const atlasStep = atlasTarget ? atlasTravel(world, s, atlasTarget) : null;
+  const hint = nextStep(world, s, following, atlasTarget);
+  const memories = [
+    returnMemory(s, s.current),
+    inquiryMemory(s, s.current),
+  ].filter((text): text is string => !!text);
+  const memory = memories.join(" ");
   const moments = s.journal.filter(
     (j) =>
       j.turn === s.turns &&
       j.kind !== "guide" &&
       j.text !== c.scene &&
-      j.text !== c.detail,
+      j.text !== c.detail &&
+      !memories.some((text) => j.text.includes(text)),
   );
   return (
     '<main id="main" class="play-layout"><aside class="map-panel"><div class="panel-kicker"><span>THE LATTICE</span><span>' +
@@ -416,24 +442,31 @@ function tree(s: Seeker) {
       )
       .join("") +
     '</div><p class="map-note">Movement follows the streams.<br>Stillness changes what is possible.</p></aside><section class="story-panel">' +
-    (atlasTarget
-      ? '<section class="atlas-route" role="region" aria-label="Following an encounter"><div><strong>Following an encounter · ' +
-        e(NODES[atlasTarget].pond) +
-        '</strong><p>Each crossing follows the existing streams.</p></div><button class="secondary" data-atlas-step>' +
-        e(atlasStep?.label ?? "Build Harmony to open this route") +
-        '</button><button class="text-button" data-atlas-stop>Stop following</button></section>'
-      : "") +
-    '<section class="journey-compass" id="journey-compass" tabindex="-1" aria-label="Suggested next step"><div><span>' +
+    '<section class="journey-compass' +
+    (atlasTarget ? " atlas-route" : "") +
+    '" id="journey-compass" tabindex="-1" aria-label="Suggested next step"><div><span>' +
     (s.festival !== null
       ? "THE FESTIVAL LIVES ON"
       : s.rooted
         ? "CHAPTER II · THE NILE REMEMBERS"
         : "CHAPTER I · A MARK CARRIED HOME") +
     "</span><p>" +
+    (atlasTarget
+      ? "<strong>Following " + e(NODES[atlasTarget].pond) + "</strong><br>"
+      : following && s.stories[following]?.resolution == null
+        ? "<strong>Following " + e(rareAt(following).name) + "</strong><br>"
+        : "") +
     e(hint.text) +
-    '</p></div><button class="secondary" data-next>' +
+    '</p></div><button class="secondary" data-next' +
+    (atlasTarget ? " data-atlas-step" : "") +
+    ">" +
     e(hint.label) +
-    "</button></section>" +
+    "</button>" +
+    (atlasTarget || following
+      ? '<button class="text-button" data-atlas-stop>Stop following</button>'
+      : "") +
+    chapterProgress(s) +
+    "</section>" +
     '<div class="location-header"><div><div class="eyebrow">' +
     roman[IDS.indexOf(s.current)] +
     " · " +
@@ -447,9 +480,8 @@ function tree(s: Seeker) {
     '</p></div><span class="location-seal" aria-hidden="true">' +
     roman[IDS.indexOf(s.current)] +
     "</span></div>" +
-    '<div class="location-art"><img src="/nile-world.jpg" alt="An illustrated Nile temple inspired by original Egyptian Rare Pepe tokens" width="1672" height="941"><div class="art-caption">' +
-    e(c.subtitle.toUpperCase()) +
-    "</div></div>" +
+    templeScene(s) +
+    worldVignette(s) +
     '<p class="scene-text">' +
     e(s.looked.includes(s.current) ? c.detail : c.scene) +
     "</p>" +
@@ -471,7 +503,7 @@ function tree(s: Seeker) {
       [...s.journal]
         .reverse()
         .find((j) => j.kind === "guide" && j.office === s.current)?.text ??
-        c.classical,
+        voice(s),
     ) +
     "</p></div></div>" +
     '<div class="actions"><button class="primary" data-act="look"><span aria-hidden="true">◉</span> Look</button><button class="secondary" data-act="sit"><span aria-hidden="true">◌</span> Sit</button><button class="secondary" data-show-rite ' +
@@ -481,13 +513,6 @@ function tree(s: Seeker) {
     '><span aria-hidden="true">◇</span> ' +
     (s.rites[s.current] !== undefined ? "Rite complete" : "Perform a rite") +
     "</button></div>" +
-    storyPanel(s, following) +
-    inquiryPanel(s) +
-    (moments.length
-      ? '<section class="moment" aria-label="What changed">' +
-        moments.map((j) => "<p>" + e(j.text) + "</p>").join("") +
-        "</section>"
-      : "") +
     '<div id="rite-area">' +
     (drafts.rite === s.current &&
     s.rites[s.current] === undefined &&
@@ -510,6 +535,11 @@ function tree(s: Seeker) {
         "</section>"
       : "") +
     "</div>" +
+    (moments.length
+      ? '<section class="moment" aria-label="What changed">' +
+        moments.map((j) => "<p>" + e(j.text) + "</p>").join("") +
+        "</section>"
+      : "") +
     (s.current === "hod" && s.rites.hod !== undefined
       ? '<form id="sigil-form" class="sigil-form"><label for="sigil">Give your journey a mark</label><p>A short phrase you want to carry. Changing it renews your work and any wallet proof.</p><div class="input-row"><input id="sigil" name="sigil" maxlength="80" minlength="3" placeholder="e.g. Make room for the light" value="' +
         e(drafts.sigil ?? s.sigil) +
@@ -552,18 +582,11 @@ function tree(s: Seeker) {
         (isBound(s) ? "View wallet witness" : "Optional: bind an address") +
         "</button></div></section>"
       : "") +
+    storyPanel(s, following, true, boardingDraft) +
+    inquiryPanel(s) +
     (s.looked.includes(s.current) ? stampInvitation(s.current) : "") +
     festivalPanel(s) +
     (s.current === "malkhut" ? collectionInvitation() : "") +
-    (s.looked.includes(s.current)
-      ? '<button class="rare-encounter" data-rare="' +
-        rareAt(s.current).name +
-        '"><img src="' +
-        rareAt(s.current).image +
-        '" alt="" width="400" height="560"><span><small>FROM THE REAL RARE PEPE ARCHIVE</small><strong>' +
-        rareAt(s.current).name +
-        "</strong><span>Inspect the original artwork & token record ↗</span></span></button>"
-      : "") +
     '<details class="ask-guide"><summary>Ask ' +
     e(guideName(n, s.dialect)) +
     '</summary><div class="conversation-topics"><button class="text-button" data-topic="What changed here?">What changed here?</button><button class="text-button" data-topic="Tell me about the stories">Stories & the festival</button><button class="text-button" data-topic="Help me find my next step">I’m a little lost</button></div><form id="talk-form"><label for="question">What’s on your mind?</label><div class="input-row"><input id="question" name="question" maxlength="500" placeholder="Ask about your journey…" value="' +
@@ -580,7 +603,7 @@ function tree(s: Seeker) {
           '" class="exit ' +
           st +
           '"><span class="exit-letter">' +
-          (st === "veiled" ? "—" : p.letter) +
+          (st === "veiled" || !s.crossings[p.id] ? "—" : p.letter) +
           "</span><strong>" +
           e(
             id === "keter" && !s.harmony ? "The unnamed shore" : NODES[id].pond,
@@ -595,9 +618,7 @@ function tree(s: Seeker) {
         );
       })
       .join("") +
-    '</div></section><div class="next-step"><span>YOUR NEXT THREAD</span><p>' +
-    e(objective(s)) +
-    "</p></div></section></main>"
+    "</div></section></section></main>"
   );
 }
 function codex(s: Seeker) {
@@ -867,6 +888,23 @@ function dialog(s: Seeker | null) {
   );
 }
 function render() {
+  const s = activeSeeker(world);
+  const nextBoardingScope = `${s?.id}/${s?.current}/${s?.stories.tiferet?.choice}/${s?.stories.tiferet?.delivered}`;
+  if (boardingScope !== nextBoardingScope) {
+    boardingDraft = {};
+    boardingScope = nextBoardingScope;
+  }
+  const seekerChanged = renderedSeekerId !== (s?.id ?? null);
+  if (seekerChanged) {
+    for (const key of Object.keys(drafts)) delete drafts[key];
+    boardingDraft = {};
+    atlasState = emptyAtlasView();
+    atlasTarget = null;
+    tracked = null;
+    readingPlaces.clear();
+    renderedPageKey = "";
+    renderedSeekerId = s?.id ?? null;
+  }
   const previous = document.activeElement;
   const focused = previous?.id;
   const focusData = previous
@@ -874,12 +912,26 @@ function render() {
         .filter((a) => a.name.startsWith("data-"))
         .map((a) => [a.name, a.value])
     : [];
-  const openDetails = [
-    ...document.querySelectorAll<HTMLDetailsElement>("details[open]"),
-  ].map(
-    (el) => el.id || (el.classList.contains("ask-guide") ? "ask-guide" : ""),
-  );
-  const s = activeSeeker(world);
+  const openDetails = seekerChanged
+    ? []
+    : [...document.querySelectorAll<HTMLDetailsElement>("details[open]")].map(
+        (el) =>
+          el.id || (el.classList.contains("ask-guide") ? "ask-guide" : ""),
+      );
+  const pageKey =
+    s && !newJourney && !loading && !damaged
+      ? `${s.id}:${view}${view === "tree" ? ":" + s.current : ""}`
+      : "";
+  const pageChanged = pageKey !== renderedPageKey;
+  if (pageChanged && renderedPageKey)
+    readingPlaces.set(renderedPageKey, {
+      scrollY: window.scrollY,
+      details: openDetails,
+    });
+  const rememberedDetails = pageChanged
+    ? (readingPlaces.get(pageKey)?.details ?? [])
+    : openDetails;
+  renderedPageKey = pageKey;
   if (
     modal !== "collection" &&
     (collection.state.status !== "idle" || collection.state.input)
@@ -959,6 +1011,10 @@ function render() {
       ? '<aside class="update-notice" role="status"><span>A fresh edition is ready. Your journey is saved on this device.</span><button class="secondary" data-update>Update and return</button></aside>'
       : "") +
     dialog(s);
+  measureNavigation();
+  navigationObserver?.disconnect();
+  const topbar = document.querySelector(".topbar");
+  if (topbar) navigationObserver?.observe(topbar);
   const d = document.querySelector("dialog");
   if (d) {
     d.showModal();
@@ -967,7 +1023,7 @@ function render() {
       closeDialog();
     });
   }
-  for (const id of openDetails) {
+  for (const id of rememberedDetails) {
     const el =
       id === "ask-guide"
         ? document.querySelector<HTMLDetailsElement>(".ask-guide")
@@ -1019,6 +1075,7 @@ async function toggleSound() {
 }
 app.addEventListener("input", (event) => {
   const el = event.target as HTMLInputElement;
+  if (el.id === "seeker-name") name = el.value;
   if (el.id === "question" || el.id === "sigil") drafts[el.id] = el.value;
   if (el.id === "asset-name") {
     drafts.asset = el.value;
@@ -1056,11 +1113,32 @@ app.addEventListener("click", async (event) => {
     s = activeSeeker(world);
   if (el.tagName === "A" && "home" in d) event.preventDefault();
   if ("atlasEntry" in d && s && atlasEntry(d.atlasEntry!)) {
+    // A link from an encounter or another entry must remain readable even if
+    // an earlier search or notebook filter excluded its destination.
+    if (
+      !searchAtlas(
+        atlasState.query,
+        atlasState.tradition,
+        atlasState.group,
+      ).some(
+        (x) =>
+          x.id === d.atlasEntry &&
+          (!atlasState.notebook || s.inquiries.seen.includes(x.id)),
+      )
+    ) {
+      atlasState.query = "";
+      atlasState.tradition = "all";
+      atlasState.group = "all";
+      atlasState.notebook = false;
+    }
     atlasState.selected = d.atlasEntry!;
     view = "atlas";
     render();
     focusPanel("entry-" + d.atlasEntry);
   } else if ("cluster" in d) {
+    atlasState.query = "";
+    atlasState.tradition = "all";
+    atlasState.notebook = false;
     atlasState.group = d.cluster!;
     atlasState.selected = d.cluster!;
     view = "atlas";
@@ -1074,6 +1152,12 @@ app.addEventListener("click", async (event) => {
     render();
   } else if ("notebook" in d) {
     atlasState.notebook = !atlasState.notebook;
+    render();
+  } else if ("atlasConnections" in d) {
+    atlasState.expandedConnections =
+      atlasState.expandedConnections === d.atlasConnections
+        ? undefined
+        : d.atlasConnections;
     render();
   } else if ("compare" in d && atlasEntry(d.compare!)) {
     if (atlasState.compare.includes(d.compare!))
@@ -1099,15 +1183,13 @@ app.addEventListener("click", async (event) => {
     focusPanel("inquiry-panel");
   } else if ("atlasRoute" in d && IDS.includes(d.atlasRoute as SefirahId)) {
     atlasTarget = d.atlasRoute as SefirahId;
+    tracked = null;
     view = "tree";
     render();
     focusPanel("main");
-  } else if ("atlasStep" in d && s && atlasTarget) {
-    const step = atlasTravel(world, s, atlasTarget);
-    if (step?.action) await act(step.action);
-    else if (step) focusPanel("inquiry-panel");
   } else if ("atlasStop" in d) {
     atlasTarget = null;
+    tracked = null;
     render();
   } else if ("restoreBackup" in d) {
     if (!pendingRestore) {
@@ -1147,6 +1229,7 @@ app.addEventListener("click", async (event) => {
         );
       });
       preservedAvailable = expected.raw !== null;
+      renderedSeekerId = null;
       restoreSnapshot = null;
       damaged = false;
       pendingRestore = false;
@@ -1222,6 +1305,7 @@ app.addEventListener("click", async (event) => {
   } else if ("view" in d) {
     view = d.view as typeof view;
     render();
+    focusView();
   } else if ("home" in d) {
     view = "tree";
     newJourney = false;
@@ -1248,6 +1332,7 @@ app.addEventListener("click", async (event) => {
       world,
       s,
       tracked?.seeker === s.id ? tracked.story : null,
+      atlasTarget,
     );
     if (hint.action) await act(hint.action);
     else if (hint.panel === "rite") {
@@ -1258,9 +1343,11 @@ app.addEventListener("click", async (event) => {
       document.getElementById("sigil")?.focus();
     else
       focusPanel(
-        hint.panel === "festival"
-          ? "festival"
-          : "story-" + (hint.target ?? s.current),
+        hint.panel === "inquiry"
+          ? "inquiry-panel"
+          : hint.panel === "festival"
+            ? "festival"
+            : "story-" + (hint.target ?? s.current),
       );
   } else if ("track" in d && s && IDS.includes(d.track as SefirahId)) {
     if (modal === "collection") {
@@ -1269,6 +1356,7 @@ app.addEventListener("click", async (event) => {
       modalTrigger = null;
     }
     tracked = { seeker: s.id, story: d.track as SefirahId };
+    atlasTarget = null;
     view = "tree";
     render();
     const target = document.getElementById("story-" + d.track);
@@ -1280,10 +1368,20 @@ app.addEventListener("click", async (event) => {
       story: d.storyStart as SefirahId,
       choice: Number(d.choice),
     });
-    if (!messageError && s)
+    if (!messageError && s) {
       tracked = { seeker: s.id, story: d.storyStart as SefirahId };
+      atlasTarget = null;
+    }
     render();
     focusPanel("story-" + d.storyStart);
+  } else if ("boardingHelp" in d && s && boardingHelper(s)) {
+    boardingDraft = suggestedBoarding();
+    render();
+    focusPanel("boarding-title");
+  } else if ("boardingReset" in d) {
+    boardingDraft = {};
+    render();
+    focusPanel("boarding-title");
   } else if ("deliver" in d) {
     await act({ type: "story-deliver", story: d.deliver as SefirahId });
     focusPanel("journey-compass");
@@ -1304,10 +1402,7 @@ app.addEventListener("click", async (event) => {
   } else if ("showRite" in d && s) {
     drafts.rite = s.current;
     render();
-    document.querySelector("#rite-area")?.scrollIntoView({
-      block: "nearest",
-      behavior: reduced ? "instant" : "smooth",
-    });
+    focusPanel("rite-area");
   } else if ("rite" in d) {
     await act({ type: "rite", choice: Number(d.rite) });
     drafts.rite = "";
@@ -1509,9 +1604,19 @@ app.addEventListener("submit", async (event) => {
       dialect = f.get("dialect") as Dialect;
       asking = true;
       render();
+      focusPanel("quiz-question");
     }
-    if (form.id === "sigil-form")
+    if (form.id === "sigil-form") {
       await act({ type: "sigil", text: String(f.get("sigil")) });
+      if (!messageError) delete drafts.sigil;
+    }
+    if (form.id === "boarding-form") {
+      const boarding = Object.fromEntries(
+        PASSENGERS.map(({ id }) => [id, Number(f.get(id) ?? -1)]),
+      ) as BoardingPlan;
+      await act({ type: "story-deliver", story: "tiferet", boarding });
+      if (!messageError) focusPanel("journey-compass");
+    }
     if (form.id === "talk-form") {
       await act({ type: "talk", text: String(f.get("question")) });
       if (!messageError) {
@@ -1564,6 +1669,18 @@ app.addEventListener("submit", async (event) => {
 });
 app.addEventListener("change", async (event) => {
   const input = event.target as HTMLInputElement;
+  if (
+    input.dataset.passenger &&
+    PASSENGERS.some((p) => p.id === input.dataset.passenger) &&
+    (input.value === "0" || input.value === "1")
+  ) {
+    boardingDraft[input.dataset.passenger as PassengerId] = Number(
+      input.value,
+    ) as 0 | 1;
+    render();
+  }
+  if (input.name === "dialect" && input.closest("#gate-form"))
+    dialect = input.value as Dialect;
   if (input.id !== "import-file" || !input.files?.[0]) return;
   const file = input.files[0];
   if (file.size > MAX_SAVE_BYTES) {
@@ -1668,6 +1785,14 @@ const disposeJourneyTools = registerJourneyTools(
     modal = null;
     render();
   },
+  undefined,
+  (w, s) =>
+    nextStep(
+      w,
+      s,
+      tracked?.seeker === s.id ? tracked.story : null,
+      atlasTarget,
+    ),
 );
 import.meta.hot?.dispose(() => {
   disposeJourneyTools();

@@ -37,6 +37,7 @@ python3 run_game.py --open
 - Bring Mercy and Severity to 25% each at Vibe Temple to reveal Crown. Look at Boundaries to reveal Qoph.
 - At Meme Studio, complete the rite and write a sigil. Visit six temples and complete four rites, then **Root** your journey at Kingdom.
 - **Follow a story.** After a temple rite, its Rare Pepe has an errand for you. Carry it to another temple, complete that local rite, make the delivery, then return and decide what changes. Carry up to three unfinished stories.
+- **Arrange the solar crossing.** PEPEPHARAON's errand now has passenger clues and two small sailings. A kindness at Mercy can bring help from the cook; you can also let the sphinx handle the crossing. Earlier choices leave visible props at the tablet desk, courtyard and Kingdom gathering.
 - **Celebrate Chapter II.** Bring three stories home and reveal four streams, then return to Kingdom for a Nile festival. Choose the long table, the river of lanterns, or the unfinished chorus. The guests remember your choices.
 - The **next-step guide** above the scene suggests a useful action or one legal crossing. Select a story in **Stories** to follow its route; you remain free to explore.
 
@@ -97,6 +98,9 @@ The automated game walk covers both chapters from all **729** questionnaire comb
 
 - [Architecture and maintenance](docs/architecture.md)
 - [Improvement plan and release status](docs/ROADMAP.md)
+- [Game review, UI fixes and completion priorities](docs/GAME_REVIEW_2026-09-12.md)
+- [Gameplay improvements and verification](docs/GAMEPLAY_PASS_2026-09-12.md)
+- [Five-player playtest worksheet](docs/PLAYTEST_WORKSHEET.md)
 - [Living Atlas sources, encounters and verification](docs/LIVING_ATLAS.md)
 - [The lattice doctrine](docs/doctrine/THE_LATTICE.md)
 - [Session doctrine](docs/doctrine/PLAY.md)
