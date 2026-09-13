@@ -61,7 +61,7 @@ test("boarding drafts, cooperative help, route selection and Atlas bookmarks sta
   };
   const saved = () => window.localStorage.getItem(SAVE_KEY)!;
   try {
-    await import("../main.ts");
+    await import("../bootstrap.ts");
     await settle();
     const before = saved();
     for (const id of ["novices", "apprentice", "cook", "drummer"])

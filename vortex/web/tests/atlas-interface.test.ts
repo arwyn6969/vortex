@@ -31,7 +31,7 @@ test("atlas search, comparison, remembered sources and tablet resolution use the
       writable: true,
       value: key === "window" ? window : (window as any)[key],
     });
-  await import("../main.ts");
+  await import("../bootstrap.ts");
   const settle = async () => {
     for (let i = 0; i < 8; i++) await new Promise((r) => setImmediate(r));
   };

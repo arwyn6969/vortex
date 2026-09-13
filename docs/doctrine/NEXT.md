@@ -2,9 +2,19 @@
 
 **Release update (2026-09-12):** the maintained browser implementation now lives in this repository. See [the delivered changes and current roadmap](../ROADMAP.md). The layer table below records the earlier review baseline; the old Grok-hosted session and `vortex-save-v1` are not the current runtime.
 
+**Grok-host review (2026-09-13):** scores and jobs live in [GROK_HOST.md](../GROK_HOST.md). Handoff for the next agent is [CONTINUE.md](../CONTINUE.md). Five jobs that still obey doctrine, and the PRs that illustrate them:
+
+1. **Feel the three verbs** — map labels only on the current office and legal neighbours; name the stream just walked; Web Audio drone that leans with pillars plus Walk / Look / Sit / reveal tones, off by default. PR: `feel/three-verbs`.
+2. **Silent Watcher felt as water** — authored `haste | tilt | thin | still`, never named in the UI. Optional hosted enum after a player opt-in, capped, never on page load, never prose. Gameplay darkness stays authored.
+3. **Spoken dialects** — opt-in TTS of already-authored folk/classical lines in `content.ts`. Silence is the fallback. Grok-host only (`speakGuide`).
+4. **Ten office stills** — referenced from the ten verified Rare Pepe cards. No invented tokens. Illustrated in the Grok host at `public/temples/<id>.jpg`; binaries not yet in this repo.
+5. **One tree** — do not grow a second correspondence map. The Grok wrap deleted the unused React lattice. GitHub kernel remains `vortex/web`.
+
+Bound, stamps, and local multi-seeker remain the earlier backlog below. They are already playable in the web kernel; deepen, do not replace.
+
 Doctrine stays in [THE_LATTICE.md](THE_LATTICE.md).
 How a session walks is [PLAY.md](PLAY.md).
-How the old CLI climbs is [STAIRCASE.md](STAIRCASE.md).
+The historical CLI proposals and resolved freeze are in [STAIRCASE.md](STAIRCASE.md).
 
 This file is the living backlog after the 2026 lattice review.
 Items here are suggestions. They must still obey the four stacked worlds
@@ -18,8 +28,8 @@ and the ten offices do more work.
 | Doctrine | Written. Correspondences, veils, Watcher silence, Malkhut floor. |
 | Kernel (Python) | 22 letters in `paths.py`. Crown / Qoph / haste in `veils.py`. `Lattice` is topological. |
 | Kernel (web) | `vortex/web/paths.ts` + `lattice.ts` must stay twins of the Python tables. |
-| Playable face | Grok-hosted web session: Gate, seating quiz, 22-letter walk, Codex, crossing overlay, silent Watcher. Save `vortex-save-v1` in localStorage. |
-| CLI `Game.start()` | Still a different temple. Wire it to the lattice or freeze it. Do not let it invent a third map. |
+| Playable face | `vortex/web` on GitHub (save `vortex-world-v3`, schema 5). Grok App Builder mounts the same kernel. |
+| CLI `Game.start()` | Frozen legacy experiment. Supported Python commands serve the browser game; see [LEGACY.md](../LEGACY.md). |
 
 The greatest game in this project is not more rooms. It is the
 **correspondence engine**: the same ten offices spoken in two dialects,

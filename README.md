@@ -43,6 +43,8 @@ python3 run_game.py --open
 
 The Living Atlas edition (0.6) adds a connected mythology notebook and two new encounters to the ten branching token-specific stories, persistent return scenes, three festival endings, ten distinct rites, classical and folk voices, stream Codex and open Counterparty archive. Up to twelve independent seekers share one local tree. The Watcher changes the water silently; each seeker's rites and Harmony remain their own.
 
+The map names your latest crossing and keeps labels focused on your current temple and available neighbours. Settings can enable a quiet chord that follows your pillars and small tones for Walk, Look and Sit. Sound starts off and remains off until you choose it.
+
 ## The Living Atlas
 
 Explore **45 entries and 51 connections** across Egyptian and Sumerian figures, six tarot lenses, six narrative archetypes, contextualized Maya material, a small Dogon reading room, Bitcoin Stamps and real Counterparty assets. Search aliases, filter by tradition or theme, compare three entries, inspect the evidence behind a connection and remember it in your seeker's notebook. Source accounts, disputed accounts and VORTEX interpretations have separate labels.
@@ -100,6 +102,8 @@ The automated game walk covers both chapters from all **729** questionnaire comb
 - [Improvement plan and release status](docs/ROADMAP.md)
 - [Game review, UI fixes and completion priorities](docs/GAME_REVIEW_2026-09-12.md)
 - [Gameplay improvements and verification](docs/GAMEPLAY_PASS_2026-09-12.md)
+- [Repository, branches, hosting and Grok integration review](docs/REPOSITORY_REVIEW_2026-09-13.md)
+- [Shared mount API and remaining Grok handoff](docs/CONTINUE.md)
 - [Five-player playtest worksheet](docs/PLAYTEST_WORKSHEET.md)
 - [Living Atlas sources, encounters and verification](docs/LIVING_ATLAS.md)
 - [The lattice doctrine](docs/doctrine/THE_LATTICE.md)
