@@ -3,6 +3,8 @@
 For the next agent if this turn runs out of credit. The playable Grok app mounts `vortex/web` as `src/lib/nile` with a `mount(root)` wrapper in `main.ts`. GitHub `main` at `caabda0` is Living Atlas 0.6 plus the solar crossing.
 
 PRs opened this session (13 Sep 2026):
+**GitHub note:** PR https://github.com/arwyn6969/vortex/pull/12 is open. Branch `feel/three-verbs` is pushed (4 commits, 5 files) but GitHub's pull-create API returned 500/502 from this session. Open it from the compare view: https://github.com/arwyn6969/vortex/compare/main...feel/three-verbs?expand=1
+
 
 - `docs/grok-host` — review scores, five jobs, this handoff, NEXT.md prepend.
 - `feel/three-verbs` — authored silent Watcher, feel audio, map juice, short help. Vanilla Vite, no `mount()`, no Grok server fns.
