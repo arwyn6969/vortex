@@ -768,6 +768,55 @@ svg {
   stroke: #6a7263;
   stroke-dasharray: 3 6;
 }
+.stream.just-crossed {
+  stroke: #c7e9d5;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 6px #9fc6ac88);
+}
+.stream-letter {
+  fill: #e3f0e6;
+  font-size: 11px;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.08em;
+  paint-order: stroke;
+  stroke: #0e1d16;
+  stroke-width: 5px;
+}
+.water-note {
+  margin: 8px 0 0;
+  color: #9bada4;
+  font-size: 0.8125rem;
+  letter-spacing: 0.02em;
+}
+.felt-walk .story-panel .scene-text,
+.felt-look .temple-scene,
+.felt-reveal .stream-letter {
+  animation: shore-in 280ms ease-out;
+}
+.felt-sit .map-panel {
+  animation: still-water 500ms ease-out;
+}
+.water-haste .stream.open {
+  stroke: #7d9a86;
+}
+@keyframes shore-in {
+  from { opacity: 0.35; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes still-water {
+  from { filter: saturate(0.7); }
+  to { filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .felt-walk .story-panel .scene-text,
+  .felt-look .temple-scene,
+  .felt-reveal .stream-letter,
+  .felt-sit .map-panel,
+  .stream.just-crossed {
+    animation: none;
+    filter: none;
+  }
+}
 .node {
   fill: #12231a;
   stroke: #547963;
