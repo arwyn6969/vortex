@@ -57,6 +57,17 @@ import { chapterProgress, templeScene } from "./journey-view.ts";
 import { worldVignette } from "./world-view.ts";
 import { suggestedBoarding, boardingHelper, PASSENGERS } from "./boarding.ts";
 import type { BoardingDraft, BoardingPlan, PassengerId } from "./boarding.ts";
+import { senseWatcher } from "./watcher.ts";
+import {
+  feelEnabled,
+  setFeelEnabled,
+  unlockFeel,
+  playWalk,
+  playLook,
+  playSit,
+  playReveal,
+  leanDrone,
+} from "./feel-audio.ts";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let world = emptyWorld();
@@ -78,6 +89,8 @@ let damagedOriginal: string | null = null;
 let waitingWorker: ServiceWorker | null = null;
 let updating = false;
 let tracked: { seeker: string; story: SefirahId } | null = null;
+let lastCrossed: { id: string; letter: string } | null = null;
+let lastFeel: "walk" | "look" | "sit" | "reveal" | null = null;
 let view: "tree" | "codex" | "journal" | "rares" | "stories" | "atlas" = "tree";
 let renderedPageKey = "";
 const readingPlaces = new Map<string, { scrollY: number; details: string[] }>();
@@ -185,21 +198,38 @@ function focusView() {
   window.scrollTo({ top: place.scrollY, behavior: "instant" });
 }
 async function act(action: Action) {
+  const from = activeSeeker(world)?.current;
   await commit((w) => transition(w, action));
-  if (!messageError && action.type === "walk") focusPanel("location-title");
-  if (!messageError && action.type === "look")
+  if (messageError) return;
+  const s = activeSeeker(world);
+  if (s && action.type === "walk" && from) {
+    const path = pathBetween(from, action.to);
+    if (path) {
+      lastCrossed = { id: path.id, letter: path.letter };
+      lastFeel = (s.crossings[path.id] ?? 0) === 1 ? "reveal" : "walk";
+      if (lastFeel === "reveal") playReveal();
+      else playWalk(false);
+    }
+    focusPanel("location-title");
+  }
+  if (s && action.type === "look") {
+    lastFeel = "look";
+    playLook();
     document
       .querySelector<HTMLButtonElement>("[data-show-rite]:not(:disabled)")
       ?.focus({ preventScroll: true });
-  if (!messageError) {
-    const s = activeSeeker(world);
-    const announcement = document.getElementById("journey-announcement");
-    if (s && announcement)
-      announcement.textContent = s.journal
-        .filter((j) => j.turn === s.turns)
-        .map((j) => j.text)
-        .join(" ");
   }
+  if (s && action.type === "sit") {
+    lastFeel = "sit";
+    playSit();
+  }
+  if (s) leanDrone(s.pillars);
+  const announcement = document.getElementById("journey-announcement");
+  if (s && announcement)
+    announcement.textContent = s.journal
+      .filter((j) => j.turn === s.turns)
+      .map((j) => j.text)
+      .join(" ");
 }
 function closeDialog() {
   pendingRestore = false;
@@ -225,7 +255,11 @@ function map(s: Seeker | null) {
     const target = s && p.from === s.current ? p.to : p.from;
     const state = s && nearby ? status(world, s, target) : "distant";
     const visited = s && !!s.crossings[p.id];
+    const just = lastCrossed?.id === p.id;
+    const mx = (x(p.from) + x(p.to)) / 2;
+    const my = (y(p.from) + y(p.to)) / 2;
     return (
+      '<g class="stream-group">' +
       '<line x1="' +
       x(p.from) +
       '" y1="' +
@@ -237,7 +271,18 @@ function map(s: Seeker | null) {
       '" class="stream ' +
       state +
       (visited ? " walked" : "") +
-      '"/>'
+      (just ? " just-crossed" : "") +
+      '"/>' +
+      (just
+        ? '<text class="stream-letter" x="' +
+          mx +
+          '" y="' +
+          (my - 6) +
+          '" text-anchor="middle">' +
+          e(p.letter) +
+          "</text>"
+        : "") +
+      "</g>"
     );
   }).join("");
   const nodes = IDS.map((id, i) => {
@@ -246,8 +291,9 @@ function map(s: Seeker | null) {
       named = id !== "keter" || s?.harmony;
     const label = named ? shortPond(node.pond) : "Unnamed";
     const state = s ? status(world, s, id) : "distant";
+    const showLabel = !s || current || state === "open";
     const align = node.x < 50 ? "end" : "start";
-    const tx = node.x < 50 ? -29 : 29;
+    const tx = node.x < 50 ? -26 : 26;
     return (
       '<g transform="translate(' +
       x(id) +
@@ -285,19 +331,14 @@ function map(s: Seeker | null) {
       '<text class="node-number" text-anchor="middle" y="4">' +
       (named ? roman[i] : "·") +
       "</text>" +
-      '<text class="node-label" x="' +
-      tx +
-      '" y="3" text-anchor="' +
-      align +
-      '">' +
-      e(label) +
-      "</text>" +
-      (current
-        ? '<text class="here-label" x="' +
+      (showLabel
+        ? '<text class="node-label" x="' +
           tx +
-          '" y="21" text-anchor="' +
+          '" y="3" text-anchor="' +
           align +
-          '">YOU ARE HERE</text>'
+          '">' +
+          e(label) +
+          "</text>"
         : "") +
       "</g>"
     );
@@ -408,6 +449,7 @@ function tree(s: Seeker) {
     rites = riteCount(s);
   const following = tracked?.seeker === s.id ? tracked.story : null;
   const hint = nextStep(world, s, following, atlasTarget);
+  const felt = senseWatcher(world, s);
   const memories = [
     returnMemory(s, s.current),
     inquiryMemory(s, s.current),
@@ -422,7 +464,10 @@ function tree(s: Seeker) {
       !memories.some((text) => j.text.includes(text)),
   );
   return (
-    '<main id="main" class="play-layout"><aside class="map-panel"><div class="panel-kicker"><span>THE LATTICE</span><span>' +
+    '<main id="main" class="play-layout' +
+    (lastFeel ? " felt-" + lastFeel : "") +
+    (felt.darkSoon ? " water-haste" : "") +
+    '"><aside class="map-panel"><div class="panel-kicker"><span>THE LATTICE</span><span>' +
     String(s.turns).padStart(3, "0") +
     " TURNS</span></div>" +
     map(s) +
@@ -457,7 +502,9 @@ function tree(s: Seeker) {
         ? "<strong>Following " + e(rareAt(following).name) + "</strong><br>"
         : "") +
     e(hint.text) +
-    '</p></div><button class="secondary" data-next' +
+    "</p>" +
+    (felt.water ? '<p class="water-note">' + e(felt.water) + "</p>" : "") +
+    '</div><button class="secondary" data-next' +
     (atlasTarget ? " data-atlas-step" : "") +
     ">" +
     e(hint.label) +
@@ -733,7 +780,7 @@ function dialog(s: Seeker | null) {
   if (modal === "help") {
     title = "Before consulting the crocodile";
     body =
-      '<div class="help-list"><p><strong>Walk.</strong> Choose an available stream. The tree is connected by twenty-two paths; there are no shortcuts between unconnected offices.</p><p><strong>Look.</strong> Notice the shore before performing its rite. Looking at Boundaries reveals a quiet descent.</p><p><strong>Sit.</strong> Slow down. Darkness clears for everyone on this local tree. Your first rest at each office gently strengthens all three pillars.</p><p><strong>Return.</strong> Walk the same stream a second time to reveal its meaning in your Codex.</p><p><strong>Meet.</strong> Bring Mercy and Severity to at least 25% each, then stand in Vibe Temple. Crown opens through that meeting.</p><p><strong>Make.</strong> Complete Hod’s rite and create a short sigil. Carry it through six offices and four rites, then root your journey at Kingdom.</p><p><strong>Stories.</strong> After a temple rite, help its Rare Pepe with an errand. Carry it to another temple, complete that local rite, make the delivery, then return and choose what changes. Three unfinished stories at once.</p><p><strong>Festival.</strong> After Rooted, bring three stories home and reveal four streams. Return to Kingdom to celebrate a second ending shaped by your choices.</p><p><strong>Continue.</strong> A wallet is optional. Your journey is complete without it. Nothing here requires a payment.</p></div>';
+      '<div class="help-list"><p><strong>Walk, Look, Sit.</strong> Walk a connected stream. Look before a rite. Sit to clear shared darkness and steady the pillars.</p><p><strong>Return.</strong> A second crossing of the same stream reveals its meaning.</p><p><strong>Meet and make.</strong> Both pillars ≥ 25% at Vibe Temple names Crown. A sigil at Hod, six temples, four rites, then Root at Kingdom. A wallet is optional.</p><p><strong>Stories and Atlas.</strong> After a rite, a Rare Pepe may send you. The Living Atlas is a notebook, not a second map. At Kingdom you may look up a public address; that lookup is not saved.</p></div>';
   } else if (modal === "journeys") {
     title = "Many seekers. One tree.";
     body =
@@ -794,10 +841,10 @@ function dialog(s: Seeker | null) {
   } else if (modal === "settings") {
     title = "Make room for your own pace";
     body =
-      '<div class="setting-row"><div><strong>Ambient sound</strong><p>A quiet chord. Always off until you choose.</p></div><button class="secondary" data-sound aria-pressed="' +
-      sound +
+      '<div class="setting-row"><div><strong>Ambient sound</strong><p>A low chord that leans with your pillars, and small tones for Walk, Look and Sit. Always off until you choose.</p></div><button class="secondary" data-sound aria-pressed="' +
+      feelEnabled() +
       '">' +
-      (sound ? "On" : "Off") +
+      (feelEnabled() ? "On" : "Off") +
       '</button></div><div class="setting-row"><div><strong>Reduce motion</strong><p>Keep the water still.</p></div><button class="secondary" data-motion aria-pressed="' +
       reduced +
       '">' +
@@ -1051,22 +1098,12 @@ function download(name: string, text: string, type = "application/json") {
 }
 async function toggleSound() {
   try {
-    if (!audio) {
-      audio = new AudioContext();
-      const gain = audio.createGain();
-      gain.gain.value = 0.015;
-      gain.connect(audio.destination);
-      [110, 164.81, 220].forEach((freq) => {
-        const o = audio!.createOscillator();
-        o.type = "sine";
-        o.frequency.value = freq;
-        o.connect(gain);
-        o.start();
-      });
-    }
-    if (sound) await audio.suspend();
-    else await audio.resume();
-    sound = !sound;
+    unlockFeel();
+    const on = !feelEnabled();
+    if (!setFeelEnabled(on)) throw new Error("unavailable");
+    sound = on;
+    const s = activeSeeker(world);
+    if (on && s) leanDrone(s.pillars);
     render();
   } catch {
     sound = false;
