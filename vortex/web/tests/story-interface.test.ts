@@ -39,7 +39,7 @@ test("the interface follows a selected story, delivers it, remembers its outcome
     configurable: true,
     value: { request: async (_name: string, work: () => unknown) => work() },
   });
-  await import("../main.ts");
+  await import("../bootstrap.ts");
   const settle = async () => {
     for (let i = 0; i < 8; i++)
       await new Promise((resolve) => setImmediate(resolve));

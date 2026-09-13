@@ -14,7 +14,7 @@ Bound, stamps, and local multi-seeker remain the earlier backlog below. They are
 
 Doctrine stays in [THE_LATTICE.md](THE_LATTICE.md).
 How a session walks is [PLAY.md](PLAY.md).
-How the old CLI climbs is [STAIRCASE.md](STAIRCASE.md).
+The historical CLI proposals and resolved freeze are in [STAIRCASE.md](STAIRCASE.md).
 
 This file is the living backlog after the 2026 lattice review.
 Items here are suggestions. They must still obey the four stacked worlds
@@ -29,7 +29,7 @@ and the ten offices do more work.
 | Kernel (Python) | 22 letters in `paths.py`. Crown / Qoph / haste in `veils.py`. `Lattice` is topological. |
 | Kernel (web) | `vortex/web/paths.ts` + `lattice.ts` must stay twins of the Python tables. |
 | Playable face | `vortex/web` on GitHub (save `vortex-world-v3`, schema 5). Grok App Builder mounts the same kernel. |
-| CLI `Game.start()` | Still a different temple. Wire it to the lattice or freeze it. Do not let it invent a third map. |
+| CLI `Game.start()` | Frozen legacy experiment. Supported Python commands serve the browser game; see [LEGACY.md](../LEGACY.md). |
 
 The greatest game in this project is not more rooms. It is the
 **correspondence engine**: the same ten offices spoken in two dialects,

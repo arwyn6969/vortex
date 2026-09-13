@@ -768,7 +768,7 @@ svg {
   stroke: #6a7263;
   stroke-dasharray: 3 6;
 }
-.stream.just-crossed {
+.stream.just-crossed:not(.dark):not(.veiled) {
   stroke: #c7e9d5;
   stroke-width: 2.4;
   filter: drop-shadow(0 0 6px #9fc6ac88);
@@ -800,12 +800,22 @@ svg {
   stroke: #7d9a86;
 }
 @keyframes shore-in {
-  from { opacity: 0.35; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0.35;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 @keyframes still-water {
-  from { filter: saturate(0.7); }
-  to { filter: none; }
+  from {
+    filter: saturate(0.7);
+  }
+  to {
+    filter: none;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .felt-walk .story-panel .scene-text,

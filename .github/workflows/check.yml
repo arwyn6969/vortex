@@ -1,7 +1,7 @@
 name: Game checks
 on:
   push:
-    branches: [main, "codex/**"]
+    branches: ["**"]
   pull_request:
 permissions:
   contents: read

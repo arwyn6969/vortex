@@ -119,7 +119,7 @@ test("interface isolates seekers, preserves onboarding drafts, focuses choices a
     await settle();
   };
   try {
-    await import("../main.ts");
+    await import("../bootstrap.ts");
     await settle();
     assert.equal(
       window.document.querySelector(".guide-quote p")!.textContent,

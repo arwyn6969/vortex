@@ -1,5 +1,7 @@
 # Grok host: what to do next
 
+**Review record:** the scores and host claims below were supplied by the Grok session. The [independent repository review](REPOSITORY_REVIEW_2026-09-13.md) records what was verified and integrated. [CONTINUE.md](CONTINUE.md) is the current handoff. The CLI freeze is already resolved; the hosted stills and server functions remain outside this repository.
+
 Suggestions, not doctrine. The lattice law stays in [doctrine/THE_LATTICE.md](doctrine/THE_LATTICE.md). Play stays in [doctrine/PLAY.md](doctrine/PLAY.md). This file records a 13 September 2026 review of the Living Atlas (0.6) session **as hosted inside Grok App Builder**, and the jobs that follow from it.
 
 Do not add ponds. Do not invent tokens. Do not ask for keys. Do not give the Watcher a chat bubble.
@@ -46,7 +48,7 @@ See [CONTINUE.md](CONTINUE.md).
 
 - Copy office stills into GitHub `vortex/web/public/temples/` when a binary-friendly path exists.
 - Point GitHub `templeScene` at those stills the same way as the Grok wrap.
-- CLI: wire or freeze. Do not invent a third map.
+- CLI: resolved by the browser launcher and legacy freeze; see [LEGACY.md](LEGACY.md).
 - Do not spend quota on every turn. Do not name the Watcher in player-facing copy.
 
 ## Non-goals that stay out

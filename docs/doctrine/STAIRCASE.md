@@ -1,5 +1,7 @@
 # Staircase — wiring the existing repo to the lattice
 
+**Resolved (13 September 2026 review):** the CLI is frozen as a separate game. The supported Python commands serve the browser build, whose reducer owns play and saves. See [LEGACY.md](../LEGACY.md). The wiring list below is historical context, not outstanding release work.
+
 The lattice was already drawn in zone files, Pepe guides, sefirot paths,
 The Watcher, and the Bitcoin tools. The running `Game.start()` path did
 not climb those stairs. This document is the missing middle for the CLI.
@@ -24,7 +26,7 @@ Play-layer work after veils lives in [NEXT.md](NEXT.md).
     Qoph after Look at Netzach, Watcher-dark for haste.
 12. Playable web session described in [PLAY.md](PLAY.md).
 
-## Still to wire on the CLI (keep PRs small)
+## Historical CLI wiring proposals (deferred with the legacy runtime)
 
 These are leftover `Game.start()` stairs. Alternative: freeze the CLI
 and treat the web kernel as source of truth. See [NEXT.md](NEXT.md) §5.

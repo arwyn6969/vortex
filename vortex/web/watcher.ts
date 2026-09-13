@@ -21,7 +21,9 @@ export type WatcherSense = {
  * on page load.
  */
 export function authoredDirective(world: World, s: Seeker): WatcherDirective {
-  const open = neighbors(s.current).filter((n) => status(world, s, n) === "open");
+  const open = neighbors(s.current).filter(
+    (n) => status(world, s, n) === "open",
+  );
   if (s.walks >= 2 && open.length > 1) return "haste";
   const lean = Math.abs(s.pillars.mercy - s.pillars.severity);
   if (lean >= 0.35 && s.pillars.balance < 0.2) return "tilt";

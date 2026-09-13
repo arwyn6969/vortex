@@ -8,10 +8,13 @@ type Mixer = {
 
 let mixer: Mixer | null = null;
 let enabled = false;
+let intent = 0;
+let pending: Promise<boolean> = Promise.resolve(true);
 
 function bus(ctx: AudioContext) {
   const master = ctx.createGain();
-  master.gain.value = 0.22;
+  // Stay silent until an explicit enable finishes successfully.
+  master.gain.value = 0;
   master.connect(ctx.destination);
   const music = ctx.createGain();
   music.gain.value = 0.45;
@@ -49,22 +52,37 @@ function beep(
 ) {
   const m = mixer;
   if (!m || !enabled) return;
-  const t = m.ctx.currentTime + when;
-  const o = m.ctx.createOscillator();
-  const g = m.ctx.createGain();
-  o.type = type;
-  o.frequency.setValueAtTime(freq, t);
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(gain, t + 0.012);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g);
-  g.connect(m.sfx);
-  o.start(t);
-  o.stop(t + dur + 0.02);
-  o.onended = () => {
-    o.disconnect();
-    g.disconnect();
-  };
+  try {
+    const t = m.ctx.currentTime + when;
+    const o = m.ctx.createOscillator();
+    const g = m.ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g);
+    g.connect(m.sfx);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+    o.onended = () => {
+      o.disconnect();
+      g.disconnect();
+    };
+  } catch {
+    failSilent(m);
+  }
+}
+
+function failSilent(m: Mixer) {
+  enabled = false;
+  intent++;
+  try {
+    m.master.gain.value = 0;
+  } catch {
+    /* Device may already be gone. */
+  }
+  void m.ctx.suspend().catch(() => {});
 }
 
 export function feelEnabled() {
@@ -72,38 +90,86 @@ export function feelEnabled() {
 }
 
 export function unlockFeel() {
-  const m = ensure();
-  if (!m) return false;
-  if (m.ctx.state === "suspended") void m.ctx.resume();
-  return true;
+  // Game actions must never construct or resume a context, especially after Off.
+  return enabled && mixer?.ctx.state === "running";
 }
 
-export function setFeelEnabled(on: boolean) {
-  const m = ensure();
-  if (!m) return false;
+export function setFeelEnabled(on: boolean): Promise<boolean> {
+  const request = ++intent;
   enabled = on;
-  if (on) {
-    if (m.ctx.state === "suspended") void m.ctx.resume();
-    if (!m.drones.length) {
-      const specs: [number, OscillatorType, number][] = [
-        [92, "sine", 0.18],
-        [138, "triangle", 0.1],
-        [184, "sine", 0.06],
-      ];
-      for (const [freq, type, vol] of specs) {
-        const o = m.ctx.createOscillator();
-        const g = m.ctx.createGain();
-        o.type = type;
-        o.frequency.value = freq;
-        g.gain.value = vol;
-        o.connect(g);
-        g.connect(m.music);
-        o.start();
-        m.drones.push(o);
+  // Mute immediately; a pending resume must not undo a newer Off request.
+  if (mixer) mixer.master.gain.value = 0;
+  const change = async (): Promise<boolean> => {
+    if (request !== intent) return false;
+    if (!on) {
+      try {
+        await mixer?.ctx.suspend();
+      } catch {
+        /* Already muted. */
       }
+      return request === intent;
     }
-  } else if (m.ctx.state === "running") void m.ctx.suspend();
-  return true;
+    const m = ensure();
+    if (!m) {
+      enabled = false;
+      return false;
+    }
+    try {
+      await m.ctx.resume();
+      if (request !== intent || !enabled || mixer !== m) return false;
+      if (m.ctx.state !== "running") throw new Error("Audio is unavailable");
+      if (!m.drones.length) {
+        const specs: [number, OscillatorType, number][] = [
+          [92, "sine", 0.18],
+          [138, "triangle", 0.1],
+          [184, "sine", 0.06],
+        ];
+        for (const [freq, type, vol] of specs) {
+          const o = m.ctx.createOscillator();
+          const g = m.ctx.createGain();
+          o.type = type;
+          o.frequency.value = freq;
+          g.gain.value = vol;
+          o.connect(g);
+          g.connect(m.music);
+          o.start();
+          m.drones.push(o);
+        }
+      }
+      m.master.gain.value = 0.22;
+      return true;
+    } catch {
+      m.master.gain.value = 0;
+      if (request === intent) enabled = false;
+      return false;
+    }
+  };
+  // Browsers can settle resume/suspend out of order. Serialize those operations.
+  const result = pending.then(change, change);
+  pending = result;
+  return result;
+}
+
+export async function disposeFeel() {
+  enabled = false;
+  intent++;
+  const m = mixer;
+  mixer = null;
+  if (!m) return;
+  m.master.gain.value = 0;
+  for (const oscillator of m.drones) {
+    try {
+      oscillator.stop();
+      oscillator.disconnect();
+    } catch {
+      /* Already stopped. */
+    }
+  }
+  try {
+    await m.ctx.close();
+  } catch {
+    /* Unloading is still safe. */
+  }
 }
 
 export function leanDrone(pillars: {
@@ -113,10 +179,14 @@ export function leanDrone(pillars: {
 }) {
   const m = mixer;
   if (!m || !enabled || m.drones.length < 3) return;
-  const t = m.ctx.currentTime;
-  m.drones[0].frequency.setTargetAtTime(82 + pillars.mercy * 40, t, 0.4);
-  m.drones[1].frequency.setTargetAtTime(130 + pillars.severity * 50, t, 0.4);
-  m.drones[2].frequency.setTargetAtTime(170 + pillars.balance * 60, t, 0.4);
+  try {
+    const t = m.ctx.currentTime;
+    m.drones[0].frequency.setTargetAtTime(82 + pillars.mercy * 40, t, 0.4);
+    m.drones[1].frequency.setTargetAtTime(130 + pillars.severity * 50, t, 0.4);
+    m.drones[2].frequency.setTargetAtTime(170 + pillars.balance * 60, t, 0.4);
+  } catch {
+    failSilent(m);
+  }
 }
 
 export function playWalk(firstCrossing: boolean) {

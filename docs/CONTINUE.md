@@ -1,77 +1,65 @@
-# Handoff — feel the lattice
+# Handoff — shared game and Grok host
 
-For the next agent if this turn runs out of credit. The playable Grok app mounts `vortex/web` as `src/lib/nile` with a `mount(root)` wrapper in `main.ts`. GitHub `main` at `caabda0` is Living Atlas 0.6 plus the solar crossing.
+Updated 13 September 2026. The repository review and integration are in `codex/grok-handoff`; see [the findings and verification](REPOSITORY_REVIEW_2026-09-13.md). Grok's four `feel/three-verbs` commits, the three `docs/grok-host` commits and Dependabot PRs 9–11 are integrated with audio, feedback and lifecycle fixes. This handoff supersedes the earlier request to create a PR for `feel/three-verbs`.
 
-PRs opened this session (13 Sep 2026):
-**GitHub note:** PR https://github.com/arwyn6969/vortex/pull/12 is open. Branch `feel/three-verbs` is pushed (4 commits, 5 files) but GitHub's pull-create API returned 500/502 from this session. Open it from the compare view: https://github.com/arwyn6969/vortex/compare/main...feel/three-verbs?expand=1
+## Current shared code
 
+- Ten offices, twenty-two streams, two chapters, solar boarding puzzle, consequential stories and Living Atlas.
+- Contextual map labels, last-crossed stream name, one-action animation and authored water feedback.
+- Ambient drone and Walk/Look/Sit/reveal tones, off until explicitly chosen. Off stays silent and unmount closes the context.
+- One browser core in `vortex/web`, localStorage `vortex-world-v3`, schema 5. No auth or database required.
+- `main.ts` exports `mount(root, options?)`, returning an idempotent cleanup function. Import is safe during server rendering; call mount only in a browser. One mounted game is supported at a time.
+- `bootstrap.ts` starts the standalone Vite game with `{ offline: true }`. Default `mount(root)` does not register `/sw.js`, so a host can own its PWA behavior.
+- 76 JavaScript tests and 22 maintained Python tests passed, alongside typecheck, build, canon and native Chromium/offline checks. See the review for exact limits.
 
-- `docs/grok-host` — review scores, five jobs, this handoff, NEXT.md prepend.
-- `feel/three-verbs` — authored silent Watcher, feel audio, map juice, short help. Vanilla Vite, no `mount()`, no Grok server fns.
+## Embed in the Grok wrapper
 
-## Status (13 Sep 2026, Grok session)
+Copy the reviewed shared modules together, preserving relative imports and public asset paths. Do not import `bootstrap.ts` in the TanStack/React host. A client effect can own the lifecycle:
 
-**Done in the Grok-hosted app:**
+```tsx
+import { useEffect, useRef } from "react";
+import { mount } from "@/lib/nile/main";
 
-- One tree: unused React lattice deleted. Only `NileHost.tsx` remains.
-- Map: labels only on current + legal neighbours. Last stream named at midpoint.
-- Feel audio: Settings → Ambient sound. Drone leans with pillars. Walk / Look / Sit / first-crossing tones.
-- Silent Watcher *felt*: water line under the compass (`haste` / `tilt` / `thin`). Never named.
-- Optional “Let the water think”: `consultWatcher` after opt-in, every 4 turns, never on page load. Gameplay darkness stays authored.
-- Optional “Speak the guides”: `speakGuide` on Look of `voice(s)` only. Cache. Silence fallback.
-- Ten office stills in `public/temples/<id>.jpg`. `templeScene` uses them. Original card after Look.
-- Short help. Dialog inset. Gold brand retinted to mint/ink. Mobile trio capped.
-- Server contracts: `src/lib/watcher.server.ts`, `src/lib/voice.server.ts`. Client bridge: `src/lib/nile/grok-feel.ts`.
-
-**Not done / do not regress:**
-
-- GitHub vanilla kernel in PR `feel/three-verbs` has feel + authored Watcher. It does **not** import `@/lib/watcher.server` (Grok-only).
-- Office still binaries are Grok-host only. Copy into `vortex/web/public/temples/` later; then point GitHub `journey-view.ts` `templeScene` at `/temples/<id>.jpg`.
-- Do not register `/sw.js` in the Grok wrap. GitHub may keep its own SW.
-- Auth off. Database off. localStorage `vortex-world-v3` / schema 5.
-
-## Doctrine you must not break
-
-- Ten offices, twenty-two streams. No extra ponds.
-- Watcher has no chat UI and is never named in player-facing copy.
-- No private keys, seeds, or WIF. Bound is signature-only at Malkhut.
-- No invented tokens. Real Rare Pepe art stays attributed.
-- Grok App Builder: TanStack Start, preview on the platform port, keep `grokPwaPlugin`, `PreviewHostBridge`, `startup.sh`.
-
-## Kernel files
-
-| File | Job |
-|---|---|
-| `vortex/web/watcher.ts` | Authored silent referee: `haste` / `tilt` / `thin` / `still`. Override may change water copy only. |
-| `vortex/web/feel-audio.ts` | Mixer + drone lean + Walk/Look/Sit/reveal tones. Off until Settings. |
-| `vortex/web/tests/watcher.test.ts` | Directives never mention “Watcher”; Sit clears darkness; override ≠ gameplay. |
-| `src/lib/nile/grok-feel.ts` | Grok-only opt-in bridge. Dynamic-import server fns. |
-| `src/lib/watcher.server.ts` | `consultWatcher`: grok-4.5, max_tokens 8, enum only. |
-| `src/lib/voice.server.ts` | `speakGuide`: TTS eve, cache, 400 char cap. |
-| `public/temples/<id>.jpg` | Ten stills. Referenced from OFFICE_RARE cards + nile-world. |
-| `src/lib/nile/*` | Grok-hosted copy of the kernel. Keep twins with `vortex/web`. |
-
-## Remaining jobs
-
-### A. GitHub stills (binaries)
-
-Copy `public/temples/*.jpg` into `vortex/web/public/temples/`. Patch GitHub `journey-view.ts` the same way as `src/lib/nile/journey-view.ts` (`TEMPLE_STILLS`). Do not invent a token.
-
-### B. CLI: wire or freeze
-
-`STAIRCASE.md`. Pick one. Do not grow a second correspondence table.
-
-### C. Checks
-
-```
-npx tsc --noEmit
-node --experimental-strip-types --test src/lib/nile/tests/*.test.ts
-node scripts/browser-smoke.mjs
-npm run build
+export function NileHost() {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!root.current) return;
+    return mount(root.current);
+  }, []);
+  return <div ref={root} />;
+}
 ```
 
-Kernel tests that import `main.ts` expect auto-start on GitHub; the Grok wrap uses `export function mount`. Do not boot at import time (SSR). `grok-feel.ts` must keep server imports dynamic so vanilla tests do not load TanStack server fns.
+This is an integration example, not a claim that the unavailable host build was tested. Retain Grok's `grokPwaPlugin`, `PreviewHostBridge`, `startup.sh`, platform port and share-card configuration. Do not replace its service worker with the standalone Vite worker. Keep host dialog controls outside the mounted root.
 
-## What “done” looks like
+The current core has no hosted voice/enum settings. Before replacing the host's modified `main.ts`, reconcile those existing settings, bridge calls and privacy copy against the reviewed shared changes. Do not silently remove the host's opt-ins or keep a claim that no model calls occur while enabling them. Keep host adapters separate from the reducer and include them in a source backup; avoid editing two divergent kernels by hand.
 
-A player walks. The stream they used lights and is named. Look ticks a small tone, uncovers the original card, and (if spoken guides are on) speaks the authored line. Sit lifts darkness on the map. After hurried walks a stream stills and the compass mentions still water — never a director. Sound and hosted thinking stay off until chosen. Help fits on a phone. There is one map. Each office has its own still, cut from a real card.
+## Grok-only work still unavailable here
+
+The following were reported complete by Grok, but neither these files nor a Grok project URL were in GitHub at review time. Retrieve the source/export before claiming they are reviewed or backed up:
+
+| Host path | Reported behavior and follow-up |
+| --- | --- |
+| `src/lib/nile/grok-feel.ts` | Optional bridge with dynamic server imports. Review opt-in, cancellation, fallback and calls after unmount; never send complete saves or guide questions. |
+| `src/lib/watcher.server.ts` | `consultWatcher`, `grok-4.5`, max 8 tokens, one of `haste/tilt/thin/still`, every fourth turn only after explicit opt-in. Independently verify server validation, request/cost bounds and failure handling. Gameplay authority stays in the authored reducer. |
+| `src/lib/voice.server.ts` | `speakGuide`: authored `voice(s)` only, Eve, 400-character cap, cache and silence fallback. Verify both server limits and client opt-in/stop behavior. |
+| `public/temples/<id>.jpg` | Ten office stills derived from the verified Rare Pepe cards. Recover originals, record provenance, inspect/compress, copy into `vortex/web/public/temples/`, and port the host's `TEMPLE_STILLS` scene treatment. Keep original card art after Look and useful fallbacks. Recheck offline asset coverage. |
+| `NileHost.tsx` and platform config | Review the actual wrapper, update to the mount contract, retain platform integration, and test navigation/remount, phone dialogs, saves and platform updates in that host. |
+
+Do not recreate missing art and pass it off as recovered Grok work. No Grok-only model calls or credentials were added to the shared core. The existing attributed art and illustrated scenes remain available.
+
+## Hosting and deployment
+
+The verified Sites deployment is [VORTEX](https://vortex-living-lattice.azzybee.chatgpt.site), restricted to its owner, with a version-5 build from `519098a`. It predates this integration. The separate Grok deployment's URL/version remain unknown. No deployment or access changes were made during this pass.
+
+Before using Grok to put this live, synchronize the reviewed GitHub source and recovered host files; run the host's typecheck, tests, browser smoke and production build. Export a real save, check both chapters, sound Off/On/Off, guide opt-ins, 320px dialogs and refresh/remount. Exercise the actual platform update with an existing schema-5 save. Moving between hosting domains requires export/import; localStorage is not shared.
+
+## Resolved and deferred work
+
+The CLI decision is **resolved**: `run_game.py`, `python -m vortex.src.main` and the installed `vortex` command serve the browser build. Old game/AI experiments are frozen; see [LEGACY.md](LEGACY.md). Do not wire another travel model.
+
+The [five-player worksheet](PLAYTEST_WORKSHEET.md), Safari/Firefox/Android, assistive technology, real hosted update/rollback and specialist cultural review remain outstanding. No human observations or unavailable-host test results have been invented.
+
+## Doctrine
+
+Ten offices, twenty-two streams. No new ponds or invented tokens. Keep original art attributed. Keep the silent referee unnamed in player-facing copy and without a chat UI. Keys, seeds and WIF never belong in the game; Bound is signature-only at Kingdom. Optional host AI must have an explicit choice, bounded requests and an authored fallback; it never changes gameplay authority.

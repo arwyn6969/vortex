@@ -105,7 +105,7 @@ test("Kingdom lookup is opt-in, never changes the save, links to real characters
       configurable: true,
       value: { request: async (_name: string, work: () => unknown) => work() },
     });
-    await import("../main.ts");
+    await import("../bootstrap.ts");
     await settle();
     await click('[data-modal="collection"]');
     assert.equal(requests, 0);
