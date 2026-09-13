@@ -6,6 +6,8 @@ The subsequent [game/UI review](GAME_REVIEW_2026-09-12.md) compares the implemen
 
 ## Local review improvements awaiting release
 
+The [host backup follow-up](GROK_HOST_FOLLOWUP_2026-09-13.md) recovers all ten temple stills into the shared game and fixes host-only optional feedback and request boundaries. Both repositories are ready for the final Grok build/republish step; the public URL still served an older schema-4 build at the latest check.
+
 The [13 September repository/hosting review](REPOSITORY_REVIEW_2026-09-13.md) integrates Grok's authored water, contextual map labels and movement/audio feedback, with fixes for audio restarting after Off, delayed highlights and feedback leaking between seekers. A shared mount/cleanup API supports the Grok wrapper without duplicate startup code. Verification passes 76 browser/game tests and 22 Python tests, plus native Chromium and production offline checks. See [the current handoff](CONTINUE.md) for the unexported Grok-only assets and server code. GitHub integration does not publish either hosted copy.
 
 Chapter progress beside the next action; temple-specific scene framing and original cards; visible choice inscriptions; earlier rite controls; optional encounter disclosure; reduced duplicate aftermath; seeker draft isolation; complete/consistent Atlas results; onboarding and keyboard-focus repairs; tablet/narrow-screen reflow; and content-sensitive offline cache versions. Verification reached both chapters in Chromium, passed 55 browser/game and 22 Python tests, checked 48 view/width combinations and exercised production offline save/resume. See the review for limits and acceptance criteria.

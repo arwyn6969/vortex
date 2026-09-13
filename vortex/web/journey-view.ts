@@ -21,6 +21,20 @@ const SHORES: Record<SefirahId, { position: string; accent: string }> = {
   malkhut: { position: "95% 75%", accent: "#d5ceaa" },
 };
 
+/** Referenced stills of the ten verified cards. Never invented tokens. */
+export const TEMPLE_STILLS: Record<SefirahId, string> = {
+  keter: "/temples/keter.jpg",
+  chokhmah: "/temples/chokhmah.jpg",
+  binah: "/temples/binah.jpg",
+  chesed: "/temples/chesed.jpg",
+  gevurah: "/temples/gevurah.jpg",
+  tiferet: "/temples/tiferet.jpg",
+  netzach: "/temples/netzach.jpg",
+  hod: "/temples/hod.jpg",
+  yesod: "/temples/yesod.jpg",
+  malkhut: "/temples/malkhut.jpg",
+};
+
 export function chapterProgress(s: Seeker): string {
   const items: { label: string; count: number; goal: number }[] =
     s.festival !== null
@@ -59,6 +73,7 @@ export function templeScene(s: Seeker): string {
   const c = CONTENT[s.current],
     r = rareAt(s.current),
     shore = SHORES[s.current];
+  const still = TEMPLE_STILLS[s.current];
   const choice =
     s.current === "hod" && s.inquiries.tablet !== null
       ? TABLET_CHOICES[s.inquiries.tablet]
@@ -70,7 +85,7 @@ export function templeScene(s: Seeker): string {
             ? c.rite.choices[s.rites[s.current]!]
             : null;
   return `<div class="temple-scene" style="--shore-position:${shore.position};--shore-accent:${shore.accent}">
-    <img class="scene-panorama" src="/nile-world.jpg" width="1672" height="941" alt="A detail of the illustrated Nile temple, a VORTEX interpretation">
+    <img class="scene-panorama" src="${still}" width="1792" height="1008" alt="A VORTEX still of ${e(c.subtitle)}, referenced from the original ${e(r.name)} card">
     <div class="scene-inscription"><span>${choice ? "YOUR CHOICE LIVES HERE" : "A SMALL PROBLEM AT THIS SHORE"}</span><strong>${e(choice ?? c.rite.name)}</strong>${choice ? "<small>The temple remembers.</small>" : "<small>Look around, then choose a rite.</small>"}</div>
     ${s.looked.includes(s.current) ? `<button class="scene-token" data-rare="${r.name}" aria-label="Inspect original ${r.name} artwork and token record"><img src="${r.image}" width="400" height="560" alt="Original ${r.name} artwork"><span>${r.name} ↗</span><small>ORIGINAL RARE PEPE</small></button>` : ""}
   </div>`;

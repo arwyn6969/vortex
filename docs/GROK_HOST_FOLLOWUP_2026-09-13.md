@@ -1,0 +1,11 @@
+# Host backup follow-up — 13 September 2026
+
+The owner supplied [VortexSquared at 531e33d](https://github.com/arwyn6969/VortexSquared/commit/531e33d). It is a private host backup, integrated from shared `vortex` commit `70da735`. Its source contains the Living Atlas, mount/cleanup wrapper, schema-5 saves, host-only settings and all ten office stills. The older missing-source statements in the earlier reviews describe the situation before this backup was provided.
+
+Codex reviewed the actual source and pushed [host corrections at 7c1e719](https://github.com/arwyn6969/VortexSquared/commit/7c1e719): hosted water wiring, late-response cancellation, per-seeker consult cadence, server validation, authored-only speech, caching/deduplication, bounded requests and removal of tracked generated output. Full implementation details remain in the host's `docs/CODEX_HOST_REVIEW.md`. Tests used simulated provider responses; no paid model requests were made. The platform's account-wide limits still govern total provider spending.
+
+The ten stills were also copied unchanged into this repository and integrated into the temple scene. They total approximately 8.6 MiB; no compression or regeneration changed the recovered bytes. The [manifest](references/grok-temple-stills.json) records SHA-256 digests and source provenance. Original Rare Pepe art remains independently inspectable.
+
+Validation: the shared game passes 76 tests, typecheck, build and a 29-file offline cache check. Native Chromium decoded all ten new images while offline. The host passes its eight targeted regression tests, typecheck and production build. Native dev and built-host checks covered onboarding, Look/Walk, Samekh naming, save/reload and all six views plus Settings at 320px and 768px, without overflow or duplicate IDs. Desktop/mobile renders were inspected; final console/page-error checks were clean.
+
+The public [Grok site](https://pepevortex.grok.me) still returned the old schema-4 application when rechecked, with no Atlas and the checked temple-image URL missing. No publication was performed here. This does not prove the exact reason Grok's platform registration failed to update the URL; a successful republish and verification of the public asset version are still required. Use [the updated message](GROK_FINISH_MESSAGE.md) for that final step.

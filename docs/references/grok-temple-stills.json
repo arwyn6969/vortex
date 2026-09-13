@@ -1,0 +1,58 @@
+{
+  "source_repository": "https://github.com/arwyn6969/VortexSquared",
+  "source_commit": "be76bb9b82bf60fb58b2c7faa1dbedfe91f0bd76",
+  "retrieved": "2026-09-13",
+  "note": "Unchanged Grok-host game illustrations. Original generation prompts were not in the backup; card derivation is reported by the Grok handoff, not independently reproduced. Original Rare Pepe art remains separate.",
+  "files": {
+    "binah": {
+      "path": "/temples/binah.jpg",
+      "bytes": 800414,
+      "sha256": "306f85921734854ca2e32ec0b17e039641454fec02e5dbda56d61b8f034b34c6"
+    },
+    "chesed": {
+      "path": "/temples/chesed.jpg",
+      "bytes": 994393,
+      "sha256": "52bf3fcdb34fabbf691ab5f07a758a3fa80afa69627c5ceeeae06a07eab5f1e4"
+    },
+    "chokhmah": {
+      "path": "/temples/chokhmah.jpg",
+      "bytes": 957196,
+      "sha256": "897ad2f89f282bcf1cf5a2f01f90606adfb831bd0e781665e7fb80ff1067b169"
+    },
+    "gevurah": {
+      "path": "/temples/gevurah.jpg",
+      "bytes": 798599,
+      "sha256": "f90c66ad8b410c62806f964afb1271e0e0b41a09548ed550370ee6f3f2f32b5c"
+    },
+    "hod": {
+      "path": "/temples/hod.jpg",
+      "bytes": 1008091,
+      "sha256": "374aa05bbe088558a59680955bca5d59f87bdeabb616b01d8609f731136b62ef"
+    },
+    "keter": {
+      "path": "/temples/keter.jpg",
+      "bytes": 846788,
+      "sha256": "8af44e3e0071ef26071bdb9fd40a2e26713ad2a8dc2a8052a241823f4c267497"
+    },
+    "malkhut": {
+      "path": "/temples/malkhut.jpg",
+      "bytes": 841660,
+      "sha256": "6a142b230aa741a3b6263c1244f56c05dbc4ef7638f32e63e59a1191627d25c3"
+    },
+    "netzach": {
+      "path": "/temples/netzach.jpg",
+      "bytes": 978700,
+      "sha256": "de97b6862046ce3c17ad2202eae146552b5dcfa9c864562907429ef960a812c9"
+    },
+    "tiferet": {
+      "path": "/temples/tiferet.jpg",
+      "bytes": 897705,
+      "sha256": "8e7c5780f23805889f67bd3512ada7a256f237a7bb0e6fc008dd9379e8e21b0c"
+    },
+    "yesod": {
+      "path": "/temples/yesod.jpg",
+      "bytes": 909406,
+      "sha256": "5601a08e3542872affb8157998a4e3bdec83d492713342bfa2cc82f80f433a90"
+    }
+  }
+}

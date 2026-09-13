@@ -31,3 +31,9 @@ Original images live under `vortex/web/public/rarepepe/`. Their visible credits 
 Both were generated with the built-in image tool. Five original images were attached; SPHINXPEPE was inspected and described because the tool permits five references. The final scene's chest emblem was changed to a plain jewel. The PNG outputs were encoded as JPEG for delivery; the composition was not changed by that encoding.
 
 [Exact prompts and reference mapping](references/art-prompts.json) make the derivation reviewable. New scenes, dialogue, temple associations and story roles are VORTEX fiction. Original token images are presented separately in the archive with source links. The game does not sell, mint, award, or represent possession of these tokens.
+
+## Recovered Grok temple stills
+
+The ten images under `vortex/web/public/temples/` were recovered unchanged from the owner's Grok host backup, `arwyn6969/VortexSquared` at `be76bb9`, on 13 September 2026. Each is a 1792×1008 JPEG. [The recovery manifest](references/grok-temple-stills.json) records source commit, byte sizes and SHA-256 digests. All ten were visually inspected and decoded successfully in the browser, including offline use in the standalone build.
+
+Grok's handoff describes these as game interpretations derived from the ten verified card references. The original generation prompts were not included in that backup, so that derivation has not been independently reproduced. These images illustrate the fictional office scenes; original Rare Pepe artwork remains unchanged and separately inspectable after Look. No new token, ownership claim or artist endorsement is implied.

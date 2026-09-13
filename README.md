@@ -104,6 +104,7 @@ The automated game walk covers both chapters from all **729** questionnaire comb
 - [Gameplay improvements and verification](docs/GAMEPLAY_PASS_2026-09-12.md)
 - [Repository, branches, hosting and Grok integration review](docs/REPOSITORY_REVIEW_2026-09-13.md)
 - [Shared mount API and remaining Grok handoff](docs/CONTINUE.md)
+- [Grok host fixes, recovered temple art and republish status](docs/GROK_HOST_FOLLOWUP_2026-09-13.md)
 - [Five-player playtest worksheet](docs/PLAYTEST_WORKSHEET.md)
 - [Living Atlas sources, encounters and verification](docs/LIVING_ATLAS.md)
 - [The lattice doctrine](docs/doctrine/THE_LATTICE.md)
